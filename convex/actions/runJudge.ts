@@ -167,7 +167,7 @@ export const run = internalAction({
             event: "llm_turn",
             payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.judge, [
               "feature:adjudication",
-            ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback }),
+            ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback, provider: result.provider }),
           });
 
           if (result.output.verdict === "ALIGNED") {
@@ -246,7 +246,7 @@ export const run = internalAction({
           event: "llm_turn",
           payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.gapFiller, [
             "feature:gap-filler",
-          ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback }),
+          ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback, provider: result.provider }),
         });
 
         if (result.output.gapFills.length > 0) gapFills = result.output.gapFills;
@@ -254,6 +254,17 @@ export const run = internalAction({
         // template fallback
       }
     }
+
+    await ctx.runMutation(internal.audits.logSessionEvent, {
+      auditId: args.auditId,
+      agent: AGENTS.workers.gapFiller,
+      event: "worker_report",
+      payload: workerReportPayload(
+        AGENTS.workers.gapFiller,
+        `Gap fills: ${gapFills.length} draft patches for forked claims`,
+        { gapFillCount: gapFills.length }
+      ),
+    });
 
     const forked = findings.filter((f) => f.verdict === "FORKED");
 
@@ -327,6 +338,16 @@ export const run = internalAction({
       await ctx.runMutation(internal.audits.patchStatus, {
         auditId: args.auditId,
         status: "blocked",
+      });
+      await ctx.runMutation(internal.audits.logSessionEvent, {
+        auditId: args.auditId,
+        agent: AGENTS.ruler,
+        event: "delegate",
+        payload: {
+          action: "blocked",
+          reason: "SSH approval required before runtime verify",
+          userRequest: "SSH",
+        },
       });
     } else {
       await ctx.runMutation(internal.audits.patchStatus, {

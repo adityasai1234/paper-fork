@@ -36,6 +36,10 @@ export default defineSchema({
     }),
     error: v.optional(v.string()),
     scaleRound: v.optional(v.number()),
+    telegramChatId: v.optional(v.string()),
+    ingressSource: v.optional(
+      v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
+    ),
     createdAt: v.number(),
   }).index("by_created", ["createdAt"]),
 

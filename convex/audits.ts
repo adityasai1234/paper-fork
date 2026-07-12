@@ -34,10 +34,18 @@ export const createAudit = mutation({
     paperId: v.string(),
     paperIdType: v.union(v.literal("arxiv"), v.literal("doi")),
     githubUrl: v.string(),
+    telegramChatId: v.optional(v.string()),
+    ingressSource: v.optional(
+      v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
+    ),
   },
   handler: async (ctx, args) => {
     const auditId = await ctx.db.insert("audits", {
-      ...args,
+      paperId: args.paperId,
+      paperIdType: args.paperIdType,
+      githubUrl: args.githubUrl,
+      telegramChatId: args.telegramChatId,
+      ingressSource: args.ingressSource ?? "web",
       status: "queued",
       chips: { literature: "pending", repo: "pending", web: "pending", methods: "pending" },
       scaleRound: 0,

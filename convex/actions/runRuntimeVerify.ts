@@ -3,15 +3,16 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
   handler: async (ctx, args) => {
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "runtime",
+      agent: AGENTS.workers.runtime,
       event: "start",
-      payload: {},
+      payload: { reportsTo: AGENTS.ruler },
     });
 
     const payload = {
@@ -29,7 +30,17 @@ export const run = internalAction({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "runtime",
+      agent: AGENTS.workers.runtime,
+      event: "worker_report",
+      payload: workerReportPayload(
+        AGENTS.workers.runtime,
+        "Simulated runtime verify; macro F1 0.891 (pending SSH)",
+        { verified: false }
+      ),
+    });
+    await ctx.runMutation(internal.audits.logSessionEvent, {
+      auditId: args.auditId,
+      agent: AGENTS.workers.runtime,
       event: "done",
       payload,
     });

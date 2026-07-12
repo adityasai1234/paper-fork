@@ -1,5 +1,6 @@
 "use node";
 
+import { createGroq } from "@ai-sdk/groq";
 import {
   APICallError,
   generateText,
@@ -11,9 +12,20 @@ import type { z } from "zod";
 
 const DEFAULT_MODEL = process.env.PAPERFORK_LLM_MODEL ?? "openai/gpt-5.4";
 const FALLBACK_MODEL = "anthropic/claude-sonnet-4.6";
+const GROQ_GATEWAY_MODEL =
+  process.env.PAPERFORK_LLM_GROQ_MODEL ?? "groq/llama-3.3-70b-versatile";
+const GROQ_DIRECT_MODEL = process.env.PAPERFORK_GROQ_MODEL ?? "llama-3.3-70b-versatile";
+
+export function isGatewayAvailable(): boolean {
+  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+}
+
+export function isGroqDirectAvailable(): boolean {
+  return Boolean(process.env.GROQ_API_KEY);
+}
 
 export function isLlmAvailable(): boolean {
-  return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
+  return isGatewayAvailable() || isGroqDirectAvailable();
 }
 
 /** Deterministic mock for local eval / dry-run (no Gateway calls). */
@@ -40,6 +52,7 @@ export type ExtractStructuredResult<T> = {
   model: string;
   primaryModel: string;
   usedFallback: boolean;
+  provider: "gateway" | "groq" | "mock";
 };
 
 const ZERO_USAGE: LanguageModelUsage = {
@@ -61,36 +74,61 @@ export async function extractStructured<T extends z.ZodTypeAny>(
       model: "mock",
       primaryModel: "mock",
       usedFallback: false,
+      provider: "mock",
     };
   }
 
-  try {
-    const result = await callExtract(args, primaryModel, primaryModel, false);
-    return result;
-  } catch (error) {
-    if (
-      primaryModel !== FALLBACK_MODEL &&
-      (NoObjectGeneratedError.isInstance(error) ||
-        (APICallError.isInstance(error) && error.isRetryable))
-    ) {
-      return await callExtract(args, FALLBACK_MODEL, primaryModel, true);
+  if (isGatewayAvailable()) {
+    try {
+      return await callGatewayExtract(args, primaryModel, primaryModel, false);
+    } catch (error) {
+      if (shouldTryGatewayFallback(error)) {
+        try {
+          return await callGatewayExtract(args, FALLBACK_MODEL, primaryModel, true);
+        } catch (fallbackError) {
+          if (isGroqDirectAvailable() && shouldTryDirectGroq(fallbackError)) {
+            return await callGroqDirectExtract(args, primaryModel);
+          }
+          throw mapGatewayError(fallbackError);
+        }
+      }
+      if (isGroqDirectAvailable() && shouldTryDirectGroq(error)) {
+        return await callGroqDirectExtract(args, primaryModel);
+      }
+      throw mapGatewayError(error);
     }
-    throw mapGatewayError(error);
   }
+
+  if (isGroqDirectAvailable()) {
+    return await callGroqDirectExtract(args, primaryModel);
+  }
+
+  throw new Error("No LLM provider configured (AI_GATEWAY_API_KEY or GROQ_API_KEY)");
 }
 
-async function callExtract<T extends z.ZodTypeAny>(
+function shouldTryGatewayFallback(error: unknown): boolean {
+  return (
+    NoObjectGeneratedError.isInstance(error) ||
+    (APICallError.isInstance(error) && error.isRetryable)
+  );
+}
+
+function shouldTryDirectGroq(error: unknown): boolean {
+  if (NoObjectGeneratedError.isInstance(error)) return false;
+  if (APICallError.isInstance(error)) {
+    const code = error.statusCode ?? 0;
+    return code === 402 || code === 429 || code >= 500 || error.isRetryable;
+  }
+  return true;
+}
+
+async function callGatewayExtract<T extends z.ZodTypeAny>(
   args: ExtractStructuredArgs<T>,
   model: string,
   primaryModel: string,
   usedFallback: boolean
 ): Promise<ExtractStructuredResult<z.infer<T>>> {
-  const gatewayTags = [
-    "feature:micro-audit",
-    ...(args.worker ? [`worker:${args.worker}`] : []),
-    ...(args.auditId ? [`audit:${args.auditId}`] : []),
-    ...(args.tags ?? []),
-  ];
+  const gatewayTags = buildGatewayTags(args);
 
   const { output, usage } = await generateText({
     model,
@@ -106,14 +144,59 @@ async function callExtract<T extends z.ZodTypeAny>(
     maxRetries: 2,
     providerOptions: {
       gateway: {
-        models: [FALLBACK_MODEL],
+        models: [FALLBACK_MODEL, GROQ_GATEWAY_MODEL],
         tags: gatewayTags,
         ...(args.auditId ? { user: args.auditId } : {}),
       },
     },
   });
 
-  return { output, usage, model, primaryModel, usedFallback };
+  return {
+    output,
+    usage,
+    model,
+    primaryModel,
+    usedFallback,
+    provider: "gateway",
+  };
+}
+
+async function callGroqDirectExtract<T extends z.ZodTypeAny>(
+  args: ExtractStructuredArgs<T>,
+  primaryModel: string
+): Promise<ExtractStructuredResult<z.infer<T>>> {
+  const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
+  const { output, usage } = await generateText({
+    model: groq(GROQ_DIRECT_MODEL),
+    output: Output.object({
+      name: args.name,
+      description: args.description,
+      schema: args.schema,
+    }),
+    system: args.system,
+    prompt: args.prompt,
+    temperature: 0,
+    maxOutputTokens: args.maxOutputTokens ?? 2048,
+    maxRetries: 2,
+  });
+
+  return {
+    output,
+    usage,
+    model: `groq/${GROQ_DIRECT_MODEL}`,
+    primaryModel,
+    usedFallback: true,
+    provider: "groq",
+  };
+}
+
+function buildGatewayTags(args: ExtractStructuredArgs<z.ZodTypeAny>): string[] {
+  return [
+    "feature:micro-audit",
+    ...(args.worker ? [`worker:${args.worker}`] : []),
+    ...(args.auditId ? [`audit:${args.auditId}`] : []),
+    ...(args.tags ?? []),
+  ];
 }
 
 function mockStructuredOutput(name: string): unknown {
@@ -126,6 +209,12 @@ function mockStructuredOutput(name: string): unknown {
       hardware: null,
       checkpointPolicy: null,
     };
+  }
+  if (name === "GapFills") {
+    return { gapFills: [] };
+  }
+  if (name === "Adjudication") {
+    return { verdict: "UNVERIFIABLE", reasoning: "mock" };
   }
   return {
     evalProtocol: {
@@ -165,7 +254,7 @@ export function llmTurnPayload(
   usage: LanguageModelUsage,
   worker: string,
   tags: string[],
-  extras?: { primaryModel?: string; usedFallback?: boolean }
+  extras?: { primaryModel?: string; usedFallback?: boolean; provider?: string }
 ) {
   return {
     model,
@@ -176,5 +265,6 @@ export function llmTurnPayload(
     totalTokens: usage.totalTokens,
     ...(extras?.primaryModel ? { primaryModel: extras.primaryModel } : {}),
     ...(extras?.usedFallback ? { usedFallback: true } : {}),
+    ...(extras?.provider ? { provider: extras.provider } : {}),
   };
 }

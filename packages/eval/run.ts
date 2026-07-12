@@ -10,17 +10,25 @@
  * - Gateway: structured evalProtocol + sectionClaims; required for full micro-audit depth.
  * - PAPERFORK_LLM_MOCK=1: dry-run Gateway calls in Convex actions (empty structured output).
  */
+import { parseAuditMessage } from "../../convex/lib/hermes-parse";
 import { parseArxivAtom } from "../../convex/lib/arxiv-fetch";
 import { scoreFixture, scoreMethodsFixture } from "./rubric";
 
 const noLlm = process.argv.includes("--no-llm");
 
-// ponytail: atom parser sanity (issue #31)
 const atomSample = parseArxivAtom(
   '<feed><title>Feed</title><entry><title>Paper Title</title><summary>5-fold CV.</summary></entry></feed>'
 );
 if (atomSample.title !== "Paper Title" || !atomSample.abstract?.includes("5-fold")) {
   console.log("Paperfork eval: FAIL (arxiv atom parser)");
+  process.exit(1);
+}
+
+const hermesSample = parseAuditMessage(
+  "audit arXiv:2401.12345 https://github.com/owner/demo-fork"
+);
+if (!hermesSample || hermesSample.paperIdType !== "arxiv") {
+  console.log("Paperfork eval: FAIL (hermes parse)");
   process.exit(1);
 }
 

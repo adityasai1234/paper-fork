@@ -65,7 +65,22 @@ DM your bot:
 audit arXiv:2401.12345 https://github.com/owner/demo-fork
 ```
 
-Hermes skill parses the message and calls the webhook. Reply includes audit and report URLs.
+**Deterministic harness** (no Hermes model for parsing):
+
+```bash
+export CONVEX_AUDIT_URL=https://<deployment>.convex.site/audit
+export PAPERFORK_WEBHOOK_SECRET=your-secret
+export TELEGRAM_CHAT_ID=<chat id from DM>
+./scripts/hermes-audit.sh 'audit arXiv:2401.12345 https://github.com/owner/demo-fork'
+```
+
+Hermes skill should call `scripts/hermes-audit.sh` for messages starting with `audit `. Reply includes audit and report URLs; Ruler voice relays via Telegram when `telegramChatId` is set.
+
+## LLM providers (Convex only)
+
+- Primary: Vercel AI Gateway (`AI_GATEWAY_API_KEY`)
+- Gateway fallback chain: Claude Sonnet, Groq via gateway (`PAPERFORK_LLM_GROQ_MODEL`)
+- Last resort: direct Groq (`GROQ_API_KEY`) when Gateway is unavailable
 
 ## 6. Memory + cron
 

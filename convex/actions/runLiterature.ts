@@ -153,7 +153,7 @@ export const run = internalAction({
               result.usage,
               AGENTS.workers.literature,
               ["section:abstract"],
-              { primaryModel: result.primaryModel, usedFallback: result.usedFallback }
+              { primaryModel: result.primaryModel, usedFallback: result.usedFallback, provider: result.provider }
             ),
           });
 

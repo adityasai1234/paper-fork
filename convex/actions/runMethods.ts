@@ -79,39 +79,60 @@ export const run = internalAction({
       let output: MethodsOutput;
 
       if (isLlmAvailable() && toExtract.length > 0) {
-        const partials: MethodsOutput[] = [];
+        type ExtractJob = { name: string; chunkLabel: string; text: string; chunkTag?: string };
+        const jobs: ExtractJob[] = [];
         for (const { name, text } of toExtract) {
           const chunks = chunkText(text, 48_000);
           for (let ci = 0; ci < chunks.length; ci++) {
-            const chunkLabel = chunks.length > 1 ? `${name} (part ${ci + 1}/${chunks.length})` : name;
-            const result = await extractStructured({
-              schema: methodsOutputSchema,
-              name: "MethodsExtraction",
-              description: "Extract evaluation protocol and section claims from a paper section",
-              system:
-                "Extract structured evaluation protocol and falsifiable claims from academic paper text. " +
-                "Use null for missing fields. Do not invent data.",
-              prompt: `Paper section: ${chunkLabel}\n\n---\n${chunks[ci]}\n---`,
-              auditId: args.auditId,
-              worker: AGENTS.workers.methods,
-              tags: [`section:${name}`, ...(chunks.length > 1 ? [`chunk:${ci + 1}`] : [])],
+            jobs.push({
+              name,
+              chunkLabel: chunks.length > 1 ? `${name} (part ${ci + 1}/${chunks.length})` : name,
+              text: chunks[ci],
+              chunkTag: chunks.length > 1 ? `chunk:${ci + 1}` : undefined,
             });
-
-            await ctx.runMutation(internal.audits.logSessionEvent, {
-              auditId: args.auditId,
-              agent: AGENTS.workers.methods,
-              event: "llm_turn",
-              payload: llmTurnPayload(
-                result.model,
-                result.usage,
-                AGENTS.workers.methods,
-                [`section:${name}`],
-                { primaryModel: result.primaryModel, usedFallback: result.usedFallback }
-              ),
-            });
-
-            partials.push(result.output);
           }
+        }
+
+        const partials: MethodsOutput[] = [];
+        const CONCURRENCY = 3;
+        for (let i = 0; i < jobs.length; i += CONCURRENCY) {
+          const batch = jobs.slice(i, i + CONCURRENCY);
+          const batchOutputs = await Promise.all(
+            batch.map(async (job) => {
+              const result = await extractStructured({
+                schema: methodsOutputSchema,
+                name: "MethodsExtraction",
+                description: "Extract evaluation protocol and section claims from a paper section",
+                system:
+                  "Extract structured evaluation protocol and falsifiable claims from academic paper text. " +
+                  "Use null for missing fields. Do not invent data.",
+                prompt: `Paper section: ${job.chunkLabel}\n\n---\n${job.text}\n---`,
+                auditId: args.auditId,
+                worker: AGENTS.workers.methods,
+                tags: [`section:${job.name}`, ...(job.chunkTag ? [job.chunkTag] : [])],
+              });
+
+              await ctx.runMutation(internal.audits.logSessionEvent, {
+                auditId: args.auditId,
+                agent: AGENTS.workers.methods,
+                event: "llm_turn",
+                payload: llmTurnPayload(
+                  result.model,
+                  result.usage,
+                  AGENTS.workers.methods,
+                  [`section:${job.name}`],
+                  {
+                    primaryModel: result.primaryModel,
+                    usedFallback: result.usedFallback,
+                    provider: result.provider,
+                  }
+                ),
+              });
+
+              return result.output;
+            })
+          );
+          partials.push(...batchOutputs);
         }
         output = mergeMethodsOutputs(partials);
       } else if (toExtract.length > 0) {

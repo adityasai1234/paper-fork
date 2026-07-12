@@ -143,7 +143,7 @@ export const run = internalAction({
             event: "llm_turn",
             payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.repo, [
               "feature:repo-extraction",
-            ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback }),
+            ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback, provider: result.provider }),
           });
 
           repoEvalSignals = result.output;
