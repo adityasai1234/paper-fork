@@ -1092,6 +1092,90 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
   .research-report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Live research layout isolation: prevent generic pre/card styles from leaking in. */
+html,
+body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: clip;
+}
+
+.app-shell .sidebar {
+  padding-left: 24px;
+  padding-right: 24px;
+  overflow: hidden;
+}
+
+.app-shell .workspace,
+.app-shell .main-surface,
+.app-shell .audit-demo-grid,
+.app-shell .audit-demo-grid > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-shell .topbar {
+  gap: 24px;
+  overflow: hidden;
+}
+
+.app-shell .topbar > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell .research-terminal-wrap {
+  border-color: #343842;
+  background: #0b0e14;
+}
+
+.app-shell .research-terminal {
+  padding: 16px 18px;
+  color: #d7f9e5;
+  scrollbar-color: #46504c transparent;
+}
+
+.app-shell .research-terminal .research-terminal-line {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 0 14px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #d7f9e5;
+  font: 12px/1.65 var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.app-shell .research-terminal .research-terminal-line.muted {
+  color: #8d9792;
+}
+
+.app-shell .research-terminal .research-terminal-cursor {
+  color: #69e59f;
+}
+
+@media (max-width: 900px) {
+  .app-shell .sidebar {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  .app-shell .main-surface {
+    width: min(100% - 32px, 760px);
+  }
+}
+
 .marketing-topbar-nav {
   display: flex;
   gap: 1rem;
