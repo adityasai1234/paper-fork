@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import { useParams } from "next/navigation";
 import { Checklist } from "@/components/Checklist";
 import { CronScheduleCard } from "@/components/CronScheduleCard";
+import { EvalProtocol } from "@/components/EvalProtocol";
 import { ForkLedger } from "@/components/ForkLedger";
 import { GapFills } from "@/components/GapFills";
 import { NeighborTable } from "@/components/NeighborTable";
@@ -31,6 +32,7 @@ export default function ReportPage() {
       <p className="subtitle">{report.paper.title}</p>
       <p style={{ marginBottom: "1rem", color: "#999" }}>{report.repo.url}</p>
 
+      <EvalProtocol protocol={report.evalProtocol} />
       <ForkLedger items={report.forkLedger} />
       <NeighborTable neighbors={report.neighbors} />
       <Checklist items={report.checklist} />

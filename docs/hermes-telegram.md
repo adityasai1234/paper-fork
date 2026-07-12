@@ -2,11 +2,19 @@
 
 Paperfork audits can be triggered from Hermes Telegram gateway via the Convex HTTP webhook.
 
-## 1. Install Hermes
+## 1. Install Hermes (harness only)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-hermes model
+```
+
+Paperfork audits do **not** use `hermes model` for intelligence. Hermes is the Telegram gateway + skill harness; all audit LLM runs in Convex via Vercel AI Gateway.
+
+Optional harness-side chat (not audit workers) in `~/.hermes/.env`:
+
+```
+ANTHROPIC_BASE_URL=https://ai-gateway.vercel.sh
+AI_GATEWAY_API_KEY=your-key
 ```
 
 ## 2. Configure gateway

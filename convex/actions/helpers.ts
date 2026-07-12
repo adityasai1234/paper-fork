@@ -13,6 +13,7 @@ export const getAgentOutput = internalQuery({
       v.literal("literature"),
       v.literal("repo"),
       v.literal("web"),
+      v.literal("methods"),
       v.literal("structure"),
       v.literal("runtime")
     ),
@@ -41,6 +42,7 @@ export const insertAgentOutput = internalMutation({
       v.literal("literature"),
       v.literal("repo"),
       v.literal("web"),
+      v.literal("methods"),
       v.literal("structure"),
       v.literal("runtime")
     ),

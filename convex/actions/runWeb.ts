@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
@@ -14,7 +15,7 @@ export const run = internalAction({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "web",
+      agent: AGENTS.workers.web,
       event: "start",
       payload: {},
     });
@@ -115,9 +116,13 @@ export const run = internalAction({
       });
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
-        agent: "web",
-        event: "done",
-        payload: { sourceCount: payload.linkup_sources.length },
+        agent: AGENTS.workers.web,
+        event: "worker_report",
+        payload: workerReportPayload(
+          AGENTS.workers.web,
+          `Linkup: ${payload.linkup_sources.length} sources; ${payload.external_metrics.length} metrics`,
+          { sourceCount: payload.linkup_sources.length }
+        ),
       });
       await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
     } catch (e) {
@@ -128,7 +133,7 @@ export const run = internalAction({
       });
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
-        agent: "web",
+        agent: AGENTS.workers.web,
         event: "error",
         payload: { message: String(e) },
       });

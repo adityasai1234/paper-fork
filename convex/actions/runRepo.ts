@@ -3,6 +3,13 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
+import { repoEvalSignalsSchema } from "../lib/audit-registry";
+import {
+  extractStructured,
+  isLlmAvailable,
+  llmTurnPayload,
+} from "../lib/ai-gateway";
 import { parseGithubUrl } from "../lib/fork-rules";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -51,7 +58,7 @@ export const run = internalAction({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "repo",
+      agent: AGENTS.workers.repo,
       event: "start",
       payload: parsed,
     });
@@ -81,7 +88,7 @@ export const run = internalAction({
         : { tree: [] };
 
       const pattern = /(readme|eval|train|test|config|requirements|pyproject)/i;
-      const files: Array<{ path: string; snippet: string }> = [];
+      const files: Array<{ path: string; snippet: string; fullContent?: string }> = [];
       const seeds_found: string[] = [];
       const splits_found: string[] = [];
       const metrics_found: Array<{ name: string; file: string; line: number; snippet: string }> = [];
@@ -97,7 +104,7 @@ export const run = internalAction({
         try {
           const fileData = await ghFetch(`/repos/${owner}/${repo}/contents/${p}`);
           const content = Buffer.from(fileData.content, "base64").toString("utf-8").slice(0, 8000);
-          files.push({ path: p, snippet: content.slice(0, 500) });
+          files.push({ path: p, snippet: content.slice(0, 500), fullContent: content });
           const extracted = extractFromContent(p, content);
           seeds_found.push(...extracted.seeds);
           splits_found.push(...extracted.splits);
@@ -112,16 +119,50 @@ export const run = internalAction({
 
       const configChain = files.filter((f) => /config/i.test(f.path)).map((f) => f.path);
 
+      let repoEvalSignals;
+      const evalFiles = files.filter((f) => /eval|train|config/i.test(f.path)).slice(0, 5);
+      if (isLlmAvailable() && evalFiles.length > 0) {
+        try {
+          const codeBundle = evalFiles
+            .map((f) => `### ${f.path}\n${f.fullContent?.slice(0, 3000) ?? f.snippet}`)
+            .join("\n\n");
+          const result = await extractStructured({
+            schema: repoEvalSignalsSchema,
+            name: "RepoEvalSignals",
+            description: "Extract evaluation signals from repo code",
+            system: "Extract how this repo evaluates models. Use null when absent.",
+            prompt: codeBundle,
+            auditId: args.auditId,
+            worker: AGENTS.workers.repo,
+            tags: ["feature:repo-extraction"],
+          });
+
+          await ctx.runMutation(internal.audits.logSessionEvent, {
+            auditId: args.auditId,
+            agent: AGENTS.workers.repo,
+            event: "llm_turn",
+            payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.repo, [
+              "feature:repo-extraction",
+            ]),
+          });
+
+          repoEvalSignals = result.output;
+        } catch {
+          // regex-only payload
+        }
+      }
+
       const payload = {
         sha,
         defaultBranch: repoMeta.default_branch,
         readme,
-        files,
+        files: files.map(({ path, snippet }) => ({ path, snippet })),
         seeds_found: [...new Set(seeds_found)],
         splits_found: [...new Set(splits_found)],
         metrics_found,
         baselines_in_code: files.filter((f) => /baseline/i.test(f.path)).map((f) => f.path),
         deps,
+        repoEvalSignals,
         structure: {
           entrypoints,
           moduleCount: (treeData.tree ?? []).filter((n: { type: string }) => n.type === "blob").length,
@@ -146,9 +187,13 @@ export const run = internalAction({
       });
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
-        agent: "repo",
-        event: "done",
-        payload: { fileCount: files.length },
+        agent: AGENTS.workers.repo,
+        event: "worker_report",
+        payload: workerReportPayload(
+          AGENTS.workers.repo,
+          `Scanned ${files.length} files; ${seeds_found.length} seeds; ${splits_found.length} splits`,
+          { fileCount: files.length }
+        ),
       });
       await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
     } catch (e) {
@@ -159,7 +204,7 @@ export const run = internalAction({
       });
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
-        agent: "repo",
+        agent: AGENTS.workers.repo,
         event: "error",
         payload: { message: String(e) },
       });

@@ -12,6 +12,19 @@ function isWorker(agent: string) {
   return agent.startsWith("worker:");
 }
 
+function formatPayload(event: string, payload: unknown): string {
+  if (!payload || typeof payload !== "object") return "";
+  const p = payload as Record<string, unknown>;
+  if (event === "worker_report" && typeof p.summary === "string") return p.summary;
+  if (event === "llm_turn") {
+    const model = p.model ?? "?";
+    const tokens = p.totalTokens ?? p.outputTokens ?? "?";
+    const worker = p.worker ?? "";
+    return `${worker} ${model} (${tokens} tokens)`;
+  }
+  return "";
+}
+
 export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
   const sessions = useQuery(api.audits.listSessions, { auditId });
 
@@ -19,6 +32,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
 
   const rulerEvents = sessions.filter((s) => isRuler(s.agent));
   const workerEvents = sessions.filter((s) => isWorker(s.agent));
+  const llmEvents = sessions.filter((s) => s.event === "llm_turn");
 
   return (
     <div className="card">
@@ -32,6 +46,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
         <thead>
           <tr>
             <th>Event</th>
+            <th>Detail</th>
             <th>Time</th>
           </tr>
         </thead>
@@ -39,12 +54,15 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
           {rulerEvents.map((s) => (
             <tr key={s._id}>
               <td>{s.event}</td>
+              <td style={{ color: "#aaa", fontSize: "0.85rem" }}>
+                {formatPayload(s.event, s.payload)}
+              </td>
               <td>{new Date(s.ts).toLocaleTimeString()}</td>
             </tr>
           ))}
           {rulerEvents.length === 0 && (
             <tr>
-              <td colSpan={2} style={{ color: "#666" }}>No ruler events yet</td>
+              <td colSpan={3} style={{ color: "#666" }}>No ruler events yet</td>
             </tr>
           )}
         </tbody>
@@ -56,6 +74,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
           <tr>
             <th>Agent</th>
             <th>Event</th>
+            <th>Detail</th>
             <th>Time</th>
           </tr>
         </thead>
@@ -64,11 +83,43 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
             <tr key={s._id}>
               <td>{s.agent}</td>
               <td>{s.event}</td>
+              <td style={{ color: "#aaa", fontSize: "0.85rem" }}>
+                {formatPayload(s.event, s.payload)}
+              </td>
               <td>{new Date(s.ts).toLocaleTimeString()}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {llmEvents.length > 0 && (
+        <>
+          <h3 style={{ marginTop: "1rem", fontSize: "0.95rem" }}>LLM turns (AI Gateway)</h3>
+          <table style={{ marginTop: "0.5rem" }}>
+            <thead>
+              <tr>
+                <th>Worker</th>
+                <th>Model</th>
+                <th>Tokens</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {llmEvents.map((s) => {
+                const p = (s.payload ?? {}) as Record<string, unknown>;
+                return (
+                  <tr key={s._id}>
+                    <td>{String(p.worker ?? s.agent)}</td>
+                    <td>{String(p.model ?? "-")}</td>
+                    <td>{String(p.totalTokens ?? "-")}</td>
+                    <td>{new Date(s.ts).toLocaleTimeString()}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </>
+      )}
 
       <button
         className="secondary"

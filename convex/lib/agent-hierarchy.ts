@@ -8,6 +8,7 @@ export const AGENTS = {
     literature: "worker:literature",
     repo: "worker:repo",
     web: "worker:web",
+    methods: "worker:methods",
     runtime: "worker:runtime",
     judge: "worker:judge",
     gapFiller: "worker:gap-filler",

@@ -1,50 +1,54 @@
 "use node";
 
 import { v } from "convex/values";
+import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
+import {
+  buildChecklistFromRegistry,
+  emptyEvalProtocol,
+} from "../lib/audit-registry";
+import {
+  extractStructured,
+  isLlmAvailable,
+  llmTurnPayload,
+} from "../lib/ai-gateway";
 import {
   buildIssueBody,
   buildReadmePatch,
   parseGithubUrl,
   runForkRules,
+  type ForkFinding,
   type LiteraturePayload,
+  type MethodsPayload,
   type RepoPayload,
   type WebPayload,
 } from "../lib/fork-rules";
 
-const CHECKLIST_ITEMS = [
-  "seeds",
-  "splits",
-  "metrics",
-  "baselines",
-  "data leakage",
-  "deps",
-  "hardware",
-  "checkpoints",
-] as const;
+const gapFillSchema = z.object({
+  gapFills: z.array(
+    z.object({
+      type: z.enum(["readme", "baseline", "citation", "code"]),
+      content: z.string(),
+      evidence: z.string(),
+    })
+  ),
+});
 
-function buildChecklist(repo: RepoPayload, findings: ReturnType<typeof runForkRules>) {
-  return CHECKLIST_ITEMS.map((item) => {
-    const related = findings.find((f) => f.claim.toLowerCase().includes(item));
-    if (related?.verdict === "FORKED") {
-      return { item, status: "red" as const, evidence: related.repoEvidence ?? related.claim };
-    }
-    if (item === "seeds" && repo.seeds_found.length > 1) {
-      return { item, status: "green" as const, evidence: `${repo.seeds_found.length} seed refs` };
-    }
-    if (item === "splits" && repo.splits_found.length > 0) {
-      return { item, status: "green" as const, evidence: repo.splits_found.join(", ") };
-    }
-    if (item === "deps" && repo.deps.length > 0) {
-      return { item, status: "green" as const, evidence: `${repo.deps.length} deps listed` };
-    }
-    return { item, status: "amber" as const, evidence: "NEEDS_USER" };
-  });
-}
+const adjudicationSchema = z.object({
+  verdict: z.enum(["ALIGNED", "UNVERIFIABLE"]),
+  reasoning: z.string(),
+});
 
-function buildGapFills(findings: ReturnType<typeof runForkRules>, repo: RepoPayload) {
-  const gapFills: Array<{ type: "readme" | "baseline" | "citation" | "code"; content: string; evidence: string }> = [];
+type GapFill = {
+  type: "readme" | "baseline" | "citation" | "code";
+  content: string;
+  evidence: string;
+};
+
+function buildGapFillsTemplate(findings: ForkFinding[], repo: RepoPayload): GapFill[] {
+  const gapFills: GapFill[] = [];
   for (const f of findings.filter((x) => x.verdict === "FORKED")) {
     if (f.suggestedFix === "AUTO_DRAFT_README_SECTION") {
       gapFills.push({
@@ -71,6 +75,12 @@ function buildGapFills(findings: ReturnType<typeof runForkRules>, repo: RepoPayl
         content: `# scripts/baseline_neighbor.py\n# TODO: Implement baseline per neighbor paper\nraise NotImplementedError`,
         evidence: f.paperSource,
       });
+    } else if (f.suggestedFix) {
+      gapFills.push({
+        type: "code",
+        content: f.suggestedFix,
+        evidence: f.repoEvidence ?? f.claim,
+      });
     }
   }
   if (gapFills.length === 0 && repo.readme) {
@@ -96,7 +106,7 @@ export const run = internalAction({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "judge",
+      agent: AGENTS.workers.judge,
       event: "start",
       payload: {},
     });
@@ -113,6 +123,11 @@ export const run = internalAction({
       auditId: args.auditId,
       agent: "web",
     }))?.payload as WebPayload | undefined;
+    const methodsRow = await ctx.runQuery(internal.actions.helpers.getAgentOutput, {
+      auditId: args.auditId,
+      agent: "methods",
+    });
+    const methods = methodsRow?.payload as MethodsPayload | undefined;
 
     if (!lit || !repo) {
       await ctx.runMutation(internal.audits.patchStatus, {
@@ -124,7 +139,49 @@ export const run = internalAction({
     }
 
     const webPayload: WebPayload = web ?? { linkup_sources: [], external_metrics: [] };
-    const findings = runForkRules(lit, repo, webPayload);
+    let findings = runForkRules({ literature: lit, repo, web: webPayload, methods });
+
+    if (isLlmAvailable()) {
+      const unverifiable = findings.filter((f) => f.verdict === "UNVERIFIABLE").slice(0, 3);
+      for (const f of unverifiable) {
+        try {
+          const result = await extractStructured({
+            schema: adjudicationSchema,
+            name: "Adjudication",
+            description: "Soft adjudication for unverifiable claims only",
+            system:
+              "Classify as ALIGNED only with strong repo evidence. Never downgrade FORKED. UNVERIFIABLE if uncertain.",
+            prompt: JSON.stringify({
+              claim: f.claim,
+              repoEvidence: f.repoEvidence,
+              paperSource: f.paperSource,
+            }),
+            auditId: args.auditId,
+            worker: AGENTS.workers.judge,
+            tags: ["feature:adjudication"],
+          });
+
+          await ctx.runMutation(internal.audits.logSessionEvent, {
+            auditId: args.auditId,
+            agent: AGENTS.workers.judge,
+            event: "llm_turn",
+            payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.judge, [
+              "feature:adjudication",
+            ]),
+          });
+
+          if (result.output.verdict === "ALIGNED") {
+            findings = findings.map((x) =>
+              x.claim === f.claim && x.paperSource === f.paperSource
+                ? { ...x, verdict: "ALIGNED" as const, repoEvidence: result.output.reasoning }
+                : x
+            );
+          }
+        } catch {
+          // keep UNVERIFIABLE
+        }
+      }
+    }
 
     const parsed = parseGithubUrl(audit.githubUrl);
     const repoOwner = parsed?.owner ?? "unknown";
@@ -157,12 +214,47 @@ export const run = internalAction({
       citationKeyDraft: `@article{${n.s2Id}, title={${n.title}}, year={${n.year ?? ""}}}`,
     }));
 
-    const checklist = buildChecklist(repo, findings);
+    const evalProtocol = methods?.evalProtocol ?? emptyEvalProtocol(
+      "Evaluation protocol not extracted from paper sections."
+    );
+
+    const checklist = buildChecklistFromRegistry(repo, methods, findings);
     for (const boost of memoryBoost) {
       checklist.push({ item: boost, status: "amber", evidence: "retrofit memory" });
     }
 
-    const gapFills = buildGapFills(findings, repo);
+    let gapFills = buildGapFillsTemplate(findings, repo);
+    if (isLlmAvailable() && findings.some((f) => f.verdict === "FORKED")) {
+      try {
+        const result = await extractStructured({
+          schema: gapFillSchema,
+          name: "GapFills",
+          description: "Draft README/code/baseline patches for forked claims",
+          system: "Draft minimal fixes for each FORKED claim. Cite evidence.",
+          prompt: JSON.stringify({
+            forked: findings.filter((f) => f.verdict === "FORKED"),
+            readme: repo.readme?.slice(0, 2000),
+          }),
+          auditId: args.auditId,
+          worker: AGENTS.workers.gapFiller,
+          tags: ["feature:gap-filler"],
+        });
+
+        await ctx.runMutation(internal.audits.logSessionEvent, {
+          auditId: args.auditId,
+          agent: AGENTS.workers.gapFiller,
+          event: "llm_turn",
+          payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.gapFiller, [
+            "feature:gap-filler",
+          ]),
+        });
+
+        if (result.output.gapFills.length > 0) gapFills = result.output.gapFills;
+      } catch {
+        // template fallback
+      }
+    }
+
     const forked = findings.filter((f) => f.verdict === "FORKED");
 
     const report = {
@@ -178,16 +270,17 @@ export const run = internalAction({
         defaultBranch: repo.defaultBranch,
       },
       forkLedger: findings,
+      evalProtocol,
       neighbors,
       checklist,
       reproAppendix: {
         install: "pip install -r requirements.txt",
         train: repo.structure?.entrypoints?.find((e) => /train/i.test(e)) ?? "python train.py --seed 42",
         eval: repo.structure?.entrypoints?.find((e) => /eval/i.test(e)) ?? "python eval.py",
-        seeds: repo.seeds_found.join(", ") || "NEEDS_USER",
-        dataPath: "NEEDS_USER",
-        hardware: "NEEDS_USER",
-        checkpoints: "NEEDS_USER",
+        seeds: evalProtocol.seeds ?? (repo.seeds_found.join(", ") || "NEEDS_USER"),
+        dataPath: evalProtocol.datasets.join(", ") || "NEEDS_USER",
+        hardware: evalProtocol.hardware ?? "NEEDS_USER",
+        checkpoints: evalProtocol.checkpointPolicy ?? "NEEDS_USER",
       },
       gapFills,
       linkupSources: webPayload.linkup_sources.map((s) => ({
@@ -201,12 +294,7 @@ export const run = internalAction({
       report,
     });
 
-    const issueBody = buildIssueBody(
-      args.auditId,
-      audit.paperId,
-      audit.githubUrl,
-      findings
-    );
+    const issueBody = buildIssueBody(args.auditId, audit.paperId, audit.githubUrl, findings);
     const readmePatch = buildReadmePatch(report.reproAppendix, forked);
 
     await ctx.runMutation(internal.actions.helpers.insertGithubOutput, {
@@ -215,9 +303,7 @@ export const run = internalAction({
       readmePatch,
     });
 
-    await ctx.scheduler.runAfter(0, internal.actions.emitOutputs.run, {
-      auditId: args.auditId,
-    });
+    await ctx.scheduler.runAfter(0, internal.actions.emitOutputs.run, { auditId: args.auditId });
     await ctx.scheduler.runAfter(0, internal.actions.generateVoiceBrief.run, {
       auditId: args.auditId,
     });
@@ -227,10 +313,7 @@ export const run = internalAction({
       checklistBoost: [f.claim],
     }));
     if (patterns.length > 0) {
-      await ctx.runMutation(internal.memories.upsertFromLedger, {
-        repoOwner,
-        patterns,
-      });
+      await ctx.runMutation(internal.memories.upsertFromLedger, { repoOwner, patterns });
     }
 
     const needsSsh = forked.some((f) => /full test|eval/i.test(f.claim));
@@ -254,7 +337,17 @@ export const run = internalAction({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "judge",
+      agent: AGENTS.workers.judge,
+      event: "worker_report",
+      payload: workerReportPayload(
+        AGENTS.workers.judge,
+        `Verdict: ${forked.length} forked, ${unverifiableCount} unverifiable`,
+        { forkedCount: forked.length }
+      ),
+    });
+    await ctx.runMutation(internal.audits.logSessionEvent, {
+      auditId: args.auditId,
+      agent: AGENTS.workers.judge,
       event: "done",
       payload: { forkedCount: forked.length },
     });

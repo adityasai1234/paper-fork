@@ -3,10 +3,16 @@ type ChipStatus = "pending" | "running" | "done" | "error";
 export function AgentChips({
   chips,
 }: {
-  chips: { literature: ChipStatus; repo: ChipStatus; web: ChipStatus };
+  chips: {
+    literature: ChipStatus;
+    repo: ChipStatus;
+    web: ChipStatus;
+    methods?: ChipStatus;
+  };
 }) {
   const items = [
     { label: "Literature", status: chips.literature },
+    { label: "Methods", status: chips.methods ?? "done" },
     { label: "Repo", status: chips.repo },
     { label: "Web", status: chips.web },
   ];

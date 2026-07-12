@@ -39,7 +39,7 @@ export const createAudit = mutation({
     const auditId = await ctx.db.insert("audits", {
       ...args,
       status: "queued",
-      chips: { literature: "pending", repo: "pending", web: "pending" },
+      chips: { literature: "pending", repo: "pending", web: "pending", methods: "pending" },
       scaleRound: 0,
       createdAt: Date.now(),
     });
@@ -80,7 +80,12 @@ export const listSessions = query({
 export const patchChip = internalMutation({
   args: {
     auditId: v.id("audits"),
-    agent: v.union(v.literal("literature"), v.literal("repo"), v.literal("web")),
+    agent: v.union(
+      v.literal("literature"),
+      v.literal("repo"),
+      v.literal("web"),
+      v.literal("methods")
+    ),
     status: v.union(
       v.literal("pending"),
       v.literal("running"),
@@ -127,6 +132,13 @@ export const tryScheduleJudge = internalMutation({
     const required = new Set(["literature", "repo", "web"]);
     for (const o of outputs) required.delete(o.agent);
     if (required.size > 0) return;
+
+    const lit = outputs.find((o) => o.agent === "literature");
+    const litPayload = lit?.payload as { methodsScheduled?: boolean } | undefined;
+    if (litPayload?.methodsScheduled) {
+      const methodsDone = outputs.some((o) => o.agent === "methods");
+      if (!methodsDone) return;
+    }
 
     const existing = await ctx.db
       .query("reports")

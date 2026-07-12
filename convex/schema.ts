@@ -32,6 +32,7 @@ export default defineSchema({
       literature: chipStatus,
       repo: chipStatus,
       web: chipStatus,
+      methods: v.optional(chipStatus),
     }),
     error: v.optional(v.string()),
     scaleRound: v.optional(v.number()),
@@ -44,6 +45,7 @@ export default defineSchema({
       v.literal("literature"),
       v.literal("repo"),
       v.literal("web"),
+      v.literal("methods"),
       v.literal("structure"),
       v.literal("runtime")
     ),
@@ -72,6 +74,21 @@ export default defineSchema({
         verdict,
         suggestedFix: v.optional(v.string()),
         effort: v.optional(v.union(v.literal("S"), v.literal("M"), v.literal("L"))),
+        section: v.optional(v.string()),
+        claimId: v.optional(v.string()),
+        dimension: v.optional(v.string()),
+      })
+    ),
+    evalProtocol: v.optional(
+      v.object({
+        splits: v.optional(v.string()),
+        seeds: v.optional(v.string()),
+        metrics: v.array(v.string()),
+        baselines: v.array(v.string()),
+        datasets: v.array(v.string()),
+        hardware: v.optional(v.string()),
+        checkpointPolicy: v.optional(v.string()),
+        summary: v.string(),
       })
     ),
     neighbors: v.array(

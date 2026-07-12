@@ -1,4 +1,11 @@
-import { runForkRules, type LiteraturePayload, type RepoPayload, type WebPayload } from "../../convex/lib/fork-rules";
+import {
+  runForkRules,
+  type AuditContext,
+  type LiteraturePayload,
+  type MethodsPayload,
+  type RepoPayload,
+  type WebPayload,
+} from "../../convex/lib/fork-rules";
 
 const FIXTURE_LIT: LiteraturePayload = {
   paper: { title: "Demo Paper", arxivId: "2401.00001" },
@@ -23,9 +30,70 @@ const FIXTURE_REPO: RepoPayload = {
 
 const FIXTURE_WEB: WebPayload = { linkup_sources: [], external_metrics: [] };
 
-export function scoreFixture(): { passed: boolean; forkedCount: number } {
-  const findings = runForkRules(FIXTURE_LIT, FIXTURE_REPO, FIXTURE_WEB);
+export const FIXTURE_METHODS: MethodsPayload = {
+  evalProtocol: {
+    splits: "5-fold cross-validation on training set",
+    seeds: "Three random seeds (42, 123, 456)",
+    metrics: ["macro F1", "accuracy"],
+    baselines: ["BERT-base", "RoBERTa-large"],
+    datasets: ["SST-2"],
+    hardware: "NVIDIA V100",
+    checkpointPolicy: "Best validation F1",
+    summary:
+      "Models are evaluated with 5-fold CV, macro F1, three seeds, against BERT and RoBERTa baselines.",
+  },
+  sectionClaims: [
+    {
+      id: "methods:cv",
+      section: "methods",
+      text: "We use 5-fold cross-validation",
+      dimension: "splits",
+      quote: "5-fold cross-validation",
+      confidence: "high",
+    },
+    {
+      id: "methods:metric",
+      section: "methods",
+      text: "We report macro F1",
+      dimension: "metrics",
+      quote: "macro F1",
+      confidence: "high",
+    },
+  ],
+};
+
+const FIXTURE_CTX: AuditContext = {
+  literature: FIXTURE_LIT,
+  repo: FIXTURE_REPO,
+  web: FIXTURE_WEB,
+};
+
+const FIXTURE_CTX_WITH_METHODS: AuditContext = {
+  ...FIXTURE_CTX,
+  methods: FIXTURE_METHODS,
+};
+
+export function scoreFixture(): {
+  passed: boolean;
+  forkedCount: number;
+  hasBaselineFork: boolean;
+  hasCvFork: boolean;
+} {
+  const findings = runForkRules(FIXTURE_CTX);
   const forked = findings.filter((f) => f.verdict === "FORKED");
-  const passed = forked.length >= 2;
-  return { passed, forkedCount: forked.length };
+  const hasCvFork = forked.some((f) => f.dimension === "splits" || /cross.?val|k-?fold/i.test(f.claim));
+  const passed = forked.length >= 2 && hasCvFork;
+  return { passed, forkedCount: forked.length, hasBaselineFork: false, hasCvFork };
+}
+
+export function scoreMethodsFixture(): {
+  passed: boolean;
+  forkedCount: number;
+  hasBaselineFork: boolean;
+} {
+  const findings = runForkRules(FIXTURE_CTX_WITH_METHODS);
+  const forked = findings.filter((f) => f.verdict === "FORKED");
+  const hasBaselineFork = forked.some((f) => f.dimension === "baselines");
+  const passed = forked.length >= 3 && hasBaselineFork;
+  return { passed, forkedCount: forked.length, hasBaselineFork };
 }
