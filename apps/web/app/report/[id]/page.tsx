@@ -3,6 +3,7 @@
 import { useQuery } from "convex/react";
 import { useParams } from "next/navigation";
 import { Checklist } from "@/components/Checklist";
+import { AppShell } from "@/components/AppShell";
 import { CronScheduleCard } from "@/components/CronScheduleCard";
 import { EvalProtocol } from "@/components/EvalProtocol";
 import { ForkLedger } from "@/components/ForkLedger";
@@ -23,24 +24,32 @@ export default function ReportPage() {
   const githubOutput = useQuery(api.reports.getGithubOutput, { auditId });
 
   if (!audit || !report) {
-    return <main><p>Loading report...</p></main>;
+    return <main className="loading-state">Loading report…</main>;
   }
 
   return (
-    <main>
-      <h1>Fork Report</h1>
-      <p className="subtitle">{report.paper.title}</p>
-      <p style={{ marginBottom: "1rem", color: "#999" }}>{report.repo.url}</p>
+    <AppShell
+      eyebrow="Evidence ledger"
+      title="Fork report"
+      description={report.paper.title}
+    >
+      <div className="report-meta">
+        <span>Paper / {report.paper.id}</span>
+        <span>Repository / {report.repo.url}</span>
+        <span>Commit / {report.repo.sha || "unresolved"}</span>
+      </div>
 
-      <EvalProtocol protocol={report.evalProtocol} />
-      <ForkLedger items={report.forkLedger} />
-      <NeighborTable neighbors={report.neighbors} />
-      <Checklist items={report.checklist} />
-      <GapFills items={report.gapFills} />
-      <ReproAppendix repro={report.reproAppendix} />
-      <VoicePlayer voiceUrl={report.voiceUrl} />
-      <UserRequestCard auditId={auditId} />
-      <CronScheduleCard auditId={auditId} githubUrl={audit.githubUrl} />
+      <div className="report-grid">
+        <EvalProtocol protocol={report.evalProtocol} />
+        <ForkLedger items={report.forkLedger} />
+        <NeighborTable neighbors={report.neighbors} />
+        <Checklist items={report.checklist} />
+        <GapFills items={report.gapFills} />
+        <ReproAppendix repro={report.reproAppendix} />
+        <VoicePlayer voiceUrl={report.voiceUrl} />
+        <UserRequestCard auditId={auditId} />
+        <CronScheduleCard auditId={auditId} githubUrl={audit.githubUrl} />
+      </div>
 
       {githubOutput && (
         <div className="card">
@@ -68,6 +77,6 @@ export default function ReportPage() {
       )}
 
       <ReportFooter />
-    </main>
+    </AppShell>
   );
 }

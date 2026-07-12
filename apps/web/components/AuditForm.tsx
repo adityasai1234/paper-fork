@@ -1,74 +1,74 @@
 "use client";
 
+import { useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { api } from "../../../convex/_generated/api";
 
 export function AuditForm() {
   const router = useRouter();
+  const createAudit = useMutation(api.audits.createAudit);
   const [paperId, setPaperId] = useState("");
   const [paperIdType, setPaperIdType] = useState<"arxiv" | "doi">("arxiv");
   const [githubUrl, setGithubUrl] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    setError(null);
     try {
-      const res = await fetch("/api/audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paperId, paperIdType, githubUrl }),
-      });
-      const data = (await res.json()) as { auditId?: string; error?: string };
-      if (!res.ok || !data.auditId) {
-        throw new Error(data.error ?? "Failed to start audit");
-      }
-      router.push(`/audit/${data.auditId}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to start audit");
+      const auditId = await createAudit({ paperId, paperIdType, githubUrl });
+      router.push(`/audit/${auditId}`);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <form className="marketing-card hero-form" onSubmit={onSubmit}>
-      <label htmlFor="paperId">Paper ID (arXiv or DOI)</label>
-      <input
-        id="paperId"
-        value={paperId}
-        onChange={(e) => setPaperId(e.target.value)}
-        placeholder="2401.12345"
-        required
-        autoFocus
-      />
-      <label htmlFor="paperIdType">ID type</label>
-      <select
-        id="paperIdType"
-        value={paperIdType}
-        onChange={(e) => setPaperIdType(e.target.value as "arxiv" | "doi")}
-      >
-        <option value="arxiv">arXiv</option>
-        <option value="doi">DOI</option>
-      </select>
-      <label htmlFor="githubUrl">GitHub repository URL</label>
-      <input
-        id="githubUrl"
-        value={githubUrl}
-        onChange={(e) => setGithubUrl(e.target.value)}
-        placeholder="https://github.com/owner/repo"
-        required
-      />
-      <button type="submit" disabled={loading}>
-        {loading ? "Starting audit..." : "Find the fork"}
-      </button>
-      {error && (
-        <p style={{ color: "#f66", marginTop: "0.75rem", fontSize: "0.9rem" }}>
-          {error}
-        </p>
-      )}
+    <form className="card audit-form" onSubmit={onSubmit}>
+      <div className="form-row">
+        <div className="field">
+          <label htmlFor="paperId">Research paper</label>
+          <input
+            id="paperId"
+            value={paperId}
+            onChange={(e) => setPaperId(e.target.value)}
+            placeholder="1706.03762"
+            autoComplete="off"
+            required
+          />
+          <span className="field-hint">Canonical arXiv identifier or DOI</span>
+        </div>
+        <div className="field">
+          <label htmlFor="paperIdType">Registry</label>
+          <select
+            id="paperIdType"
+            value={paperIdType}
+            onChange={(e) => setPaperIdType(e.target.value as "arxiv" | "doi")}
+          >
+            <option value="arxiv">arXiv</option>
+            <option value="doi">DOI</option>
+          </select>
+        </div>
+      </div>
+      <div className="field">
+        <label htmlFor="githubUrl">Implementation repository</label>
+        <input
+          id="githubUrl"
+          value={githubUrl}
+          onChange={(e) => setGithubUrl(e.target.value)}
+          placeholder="https://github.com/owner/repository"
+          inputMode="url"
+          required
+        />
+        <span className="field-hint">Public GitHub repository associated with the paper</span>
+      </div>
+      <div className="form-action">
+        <p className="form-action-copy">Literature, repository, and web workers run in parallel.</p>
+        <button type="submit" disabled={loading}>
+          {loading ? "Opening audit…" : "Run evidence audit →"}
+        </button>
+      </div>
     </form>
   );
 }
