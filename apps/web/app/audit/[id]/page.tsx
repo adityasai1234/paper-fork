@@ -3,11 +3,11 @@
 import { useQuery } from "convex/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AgentChips } from "@/components/AgentChips";
+import { AgentChips, type ChipStatus } from "@/components/AgentChips";
 import { SessionForensics } from "@/components/SessionForensics";
 import { ReportFooter } from "@/components/ReportFooter";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 export default function AuditPage() {
   const params = useParams();
@@ -29,7 +29,7 @@ export default function AuditPage() {
     <main>
       <h1>Audit in progress</h1>
       <p className="subtitle">Status: {audit.status}</p>
-      <AgentChips chips={audit.chips} />
+      <AgentChips chips={audit.chips as { literature: ChipStatus; repo: ChipStatus; web: ChipStatus }} />
       <SessionForensics auditId={auditId} />
       {(isComplete || report) && (
         <p style={{ marginTop: "1rem" }}>

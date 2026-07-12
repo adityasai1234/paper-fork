@@ -1,5 +1,5 @@
 {
-  "name": "convex",
+  "name": "@paperfork/backend",
   "private": true,
   "dependencies": {
     "ai": "^6.0.224",

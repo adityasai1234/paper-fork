@@ -4,6 +4,13 @@ import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
+type SessionEvent = {
+  _id: string;
+  agent: string;
+  event: string;
+  ts: number;
+};
+
 function isRuler(agent: string) {
   return agent === "ruler";
 }
@@ -31,9 +38,9 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
 
   if (!sessions) return <div className="card">Loading forensics...</div>;
 
-  const rulerEvents = sessions.filter((s) => isRuler(s.agent));
-  const workerEvents = sessions.filter((s) => isWorker(s.agent));
-  const llmEvents = sessions.filter((s) => s.event === "llm_turn");
+  const rulerEvents = sessions.filter((s: SessionEvent) => isRuler(s.agent));
+  const workerEvents = sessions.filter((s: SessionEvent) => isWorker(s.agent));
+  const llmEvents = sessions.filter((s: SessionEvent) => s.event === "llm_turn");
 
   return (
     <div className="card">
@@ -52,7 +59,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
           </tr>
         </thead>
         <tbody>
-          {rulerEvents.map((s) => (
+          {rulerEvents.map((s: SessionEvent) => (
             <tr key={s._id}>
               <td>{s.event}</td>
               <td style={{ color: "#aaa", fontSize: "0.85rem" }}>
@@ -80,7 +87,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
           </tr>
         </thead>
         <tbody>
-          {workerEvents.map((s) => (
+          {workerEvents.map((s: SessionEvent) => (
             <tr key={s._id}>
               <td>{s.agent}</td>
               <td>{s.event}</td>
@@ -107,7 +114,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
               </tr>
             </thead>
             <tbody>
-              {llmEvents.map((s) => {
+              {llmEvents.map((s: SessionEvent & { payload?: unknown }) => {
                 const p = (s.payload ?? {}) as Record<string, unknown>;
                 return (
                   <tr key={s._id}>

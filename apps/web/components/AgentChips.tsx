@@ -1,4 +1,4 @@
-type ChipStatus = "pending" | "running" | "done" | "error";
+export type ChipStatus = "pending" | "running" | "done" | "error";
 
 export function AgentChips({
   chips,
