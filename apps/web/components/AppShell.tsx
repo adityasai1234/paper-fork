@@ -17,16 +17,11 @@ export function AppShell({
     <div className="app-shell">
       <aside className="sidebar">
         <Link className="brand" href="/app/research" aria-label="Paperfork home">
-          <span className="brand-mark" aria-hidden="true">
-            PF
-          </span>
+          <span className="brand-mark" aria-hidden="true">PF</span>
           <span>Paperfork</span>
         </Link>
         <nav className="side-nav" aria-label="Primary navigation">
-          <Link
-            className={`nav-item${activeNav === "research" ? " active" : ""}`}
-            href="/app/research"
-          >
+          <Link className={`nav-item${activeNav === "research" ? " active" : ""}`} href="/app/research">
             <span className="nav-index">01</span>
             Research
           </Link>
@@ -38,8 +33,8 @@ export function AppShell({
       </aside>
       <div className="workspace">
         <header className="topbar">
-          <span>Paper-to-repository intelligence</span>
-          <span className="mono">RULER / WORKERS</span>
+          <span>Context-enriched autoresearch</span>
+          <span className="mono">LINKUP / CONVEX</span>
         </header>
         <main className="main-surface">
           <header className="page-header">

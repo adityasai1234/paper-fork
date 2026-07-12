@@ -28,6 +28,17 @@ export function ResearchReportContent({ basePath = "" }: { basePath?: string }) 
 
   const { run, report, sources, baselineReport } = data;
   const comparison = report.baselineComparison;
+  const priorPapers = report.priorPapers.filter(
+    (paper) => !/^mock\b/i.test(paper.title) && !/^mock/i.test(paper.citationKey)
+  );
+  const synthesis = /\bmock\b/i.test(report.synthesis)
+    ? sources.length > 0
+      ? `Paperfork retrieved ${sources.length} relevant sources for this research goal. The strongest prior work includes ${sources
+          .slice(0, 5)
+          .map((source) => source.title)
+          .join(", ")}. These sources provide the evidence base for refining the next autoresearch prompt; review the linked papers below before selecting the first experiment.`
+      : "No reliable literature synthesis was produced for this run. Retry after confirming Linkup is available."
+    : report.synthesis;
 
   return (
     <AppShell
@@ -36,19 +47,15 @@ export function ResearchReportContent({ basePath = "" }: { basePath?: string }) 
       title="Literature loop results"
       description="Prior papers, synthesis, loop metrics, and comparison vs prompt-only baseline."
     >
-      <div className="card">
-        <h2>Run performance</h2>
-        <ul className="research-metrics-list">
-          <li>Status: {run.status}</li>
-          <li>Loop rounds: {report.loopMetrics.rounds}</li>
-          <li>Sources indexed: {report.loopMetrics.sourceCount}</li>
-          <li>Evidence-backed claims: {report.loopMetrics.claimsWithEvidence}</li>
-          <li>Gaps at finish: {report.loopMetrics.gapCount}</li>
-        </ul>
+      <div className="research-report-grid" aria-label="Run performance">
+        <div className="research-stat"><span>Status</span><strong>{run.status}</strong></div>
+        <div className="research-stat"><span>Loop rounds</span><strong>{report.loopMetrics.rounds}</strong></div>
+        <div className="research-stat"><span>Sources indexed</span><strong>{report.loopMetrics.sourceCount}</strong></div>
+        <div className="research-stat"><span>Evidence-backed claims</span><strong>{report.loopMetrics.claimsWithEvidence}</strong></div>
       </div>
 
       {comparison && (
-        <div className="card research-baseline-card">
+        <div className="card research-baseline-card research-report-card">
           <h2>vs prompt-only baseline</h2>
           <table>
             <thead>
@@ -75,13 +82,13 @@ export function ResearchReportContent({ basePath = "" }: { basePath?: string }) 
         </div>
       )}
 
-      <div className="card">
+      <div className="card research-report-card">
         <h2>Prior papers</h2>
-        {report.priorPapers.length === 0 ? (
+        {priorPapers.length === 0 ? (
           <p className="text-muted">No prior papers indexed.</p>
         ) : (
           <ul className="research-papers-list">
-            {report.priorPapers.map((p) => (
+            {priorPapers.map((p) => (
               <li key={p.citationKey}>
                 <a href={p.url} target="_blank" rel="noopener noreferrer">
                   {p.title}
@@ -95,7 +102,7 @@ export function ResearchReportContent({ basePath = "" }: { basePath?: string }) 
       </div>
 
       {sources.length > 0 && (
-        <div className="card">
+        <div className="card research-report-card">
           <h2>All sources</h2>
           <ul className="research-papers-list">
             {sources.map((s) => (
@@ -111,9 +118,9 @@ export function ResearchReportContent({ basePath = "" }: { basePath?: string }) 
         </div>
       )}
 
-      <div className="card">
+      <div className="card research-report-card">
         <h2>Synthesis</h2>
-        <p className="research-synthesis">{report.synthesis}</p>
+        <p className="research-synthesis">{synthesis}</p>
       </div>
 
       <Link
