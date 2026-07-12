@@ -1,7 +1,7 @@
 ---
 name: paperfork-audit
 description: Run a full paper-vs-repo fork audit. Use when user provides arXiv/DOI + GitHub URL.
-compatibility: Requires Linkup API, GitHub access, Semantic Scholar, Convex, Hermes. Runs at paperfork.getkarpathy.com.
+compatibility: Requires Convex, GitHub, Semantic Scholar, Linkup. Web UI at paperfork.getkarpathy.com. Hermes/Telegram optional.
 ---
 
 # Paperfork Audit Procedure
@@ -10,33 +10,34 @@ compatibility: Requires Linkup API, GitHub access, Semantic Scholar, Convex, Her
 
 User provides paper ID (arXiv or DOI) and GitHub repository URL.
 
+**Primary:** web UI or direct `POST /audit` to Convex.  
+**Optional:** Hermes skill / Telegram DM via `scripts/hermes-audit.sh` (side channel).
+
 ## Hierarchy
 
-1. Ruler delegates workers in parallel via Convex webhook.
+1. Ruler delegates workers in parallel via Convex.
 2. Workers report up with `worker_report` (never speak to user).
 3. Ruler commands Judge worker after fork-rules gate.
-4. Ruler speaks final verdict via ElevenLabs (`ruler_brief`) and relays to Telegram when `telegramChatId` is set.
+4. Ruler speaks final verdict via ElevenLabs on the web report (`ruler_brief`).
+5. Optional: relay URL/voice to Telegram when `telegramChatId` was set at ingress.
 
 ## Steps
 
-1. **Deterministic parse** (no Hermes model): message must match `audit <paperId> <githubUrl>`.
-2. Run `scripts/hermes-audit.sh "$USER_MESSAGE"` OR POST Convex webhook `/audit` directly.
-3. Include `telegramChatId` in webhook body when triggered from Telegram.
-4. All audit LLM runs in Convex via Vercel AI Gateway with Groq fallback (`GROQ_API_KEY`); Hermes does not run audit models.
-5. Run deterministic fork rules before LLM judgment.
-6. Never mark FORKED items as ALIGNED.
-7. Every gap_fill must cite file:line, S2 ID, or Linkup URL.
-8. If execution blocked, create user_request; Ruler logs `delegate` with `action: blocked`.
-9. Deliver Fork Report URL: https://paperfork.getkarpathy.com/report/{auditId}
-10. Emit GitHub issue body + README patch (zero emojis).
-11. Generate ElevenLabs voice brief; relay voice + URL to Telegram when configured.
+1. Parse `audit <paperId> <githubUrl>` deterministically (no Hermes model), or use web form.
+2. POST Convex `/audit` webhook — Convex fans out workers (literature, repo, web, methods).
+3. All audit LLM runs in Convex (AI Gateway + optional Groq fallback). Hermes does not run audit models.
+4. Run deterministic fork rules before LLM judgment.
+5. Never mark FORKED items as ALIGNED.
+6. Deliver Fork Report URL: https://paperfork.getkarpathy.com/report/{auditId}
+7. Emit GitHub issue body + README patch (zero emojis).
+8. Generate ElevenLabs voice brief on report page.
 
-## Hermes harness env
+## Optional Hermes harness env
 
 ```
 CONVEX_AUDIT_URL=https://<deployment>.convex.site/audit
 PAPERFORK_WEBHOOK_SECRET=...
-TELEGRAM_CHAT_ID=...   # optional, from incoming DM
+TELEGRAM_CHAT_ID=...   # side feature only — omit for web-only audits
 ```
 
 ## Memory

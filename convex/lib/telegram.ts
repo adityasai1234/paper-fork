@@ -1,5 +1,6 @@
 "use node";
 
+/** Optional side feature: Telegram relay when audit.telegramChatId is set. Web report is primary. */
 const TELEGRAM_API = "https://api.telegram.org";
 
 export async function sendTelegramMessage(

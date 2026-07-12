@@ -2,7 +2,10 @@
 
 Find where the paper forked from the repo — and draft the merge commit.
 
-Paperfork is a Hermes-powered research audit agency with a **Ruler + Workers** hierarchy. The Ruler delegates Literature, Repo, and Web workers; collects their reports; and speaks the final verdict via ElevenLabs. Give it an arXiv ID or DOI plus a GitHub repository URL.
+Paperfork is a research audit agency with a **Ruler + Workers** hierarchy. The Ruler delegates Literature, Repo, and Web workers; collects their reports; and speaks the final verdict via ElevenLabs on the web report. Give it an arXiv ID or DOI plus a GitHub repository URL.
+
+**Primary surface:** https://paperfork.getkarpathy.com (web UI + Convex backend).  
+**Optional:** Hermes harness and Telegram DM trigger — see [docs/hermes-telegram.md](docs/hermes-telegram.md).
 
 ## Agent hierarchy
 
@@ -32,7 +35,7 @@ Workers report up with `worker_report` events. The Ruler alone voices the Fork R
 2. **Repo agent** — GitHub tree, README, seeds/splits/metrics extractors, code structure pass
 3. **Web agent** — Linkup deep search for Papers With Code, HuggingFace, author pages
 4. **Fork rules** — deterministic checks (cross-validation, seeds, metrics, repro gaps)
-5. **Judge + gap-filler** — Hermes merges findings into Fork Report JSON
+5. **Judge + gap-filler** — Convex merges findings into Fork Report JSON (AI Gateway for LLM)
 6. **Outputs** — GitHub issue body, README patch, ElevenLabs voice brief, cron re-audit delta
 
 ---
@@ -41,7 +44,7 @@ Workers report up with `worker_report` events. The Ruler alone voices the Fork R
 
 | Partner | Role |
 |---------|------|
-| Hermes | Orchestrator, governance, Telegram, memory, cron, judge LLM |
+| Hermes | Optional harness: skill + webhook trigger (not audit LLM) |
 | Convex | All state, scheduler, agent actions, real-time UI |
 | Linkup | Web agent deep search (`LINKUP_PROMO=HERMES`) |
 | Cloudflare | Next.js 15 on Pages; DNS CNAME `paperfork` |
@@ -54,14 +57,16 @@ Power-ups: +25 each when mentors see real use in the build.
 ## Architecture
 
 ```
-User (web or Telegram)
+User (web — primary)
+  → POST /audit or AuditForm → Convex createAudit
   → Ruler Agent (main)
   → delegate: worker:literature | worker:repo | worker:web (parallel)
   → workers emit worker_report to Ruler
   → fork-rules.ts (deterministic)
   → worker:judge synthesizes → worker:gap-filler drafts fixes
-  → Ruler speaks verdict via ElevenLabs (ruler_brief)
-  → report + GitHub issue + README patch
+  → Ruler speaks verdict via ElevenLabs on report page (ruler_brief)
+
+Optional side path: Telegram DM → Hermes harness → same /audit webhook
 ```
 
 All tables (`audits`, `agentOutputs`, `reports`, `userRequests`, `sessions`, `memories`, `cronJobs`, `githubOutputs`) exist from schema day one. Session forensics logs every agent step. Memories recall recurring gaps per repo owner.
@@ -98,7 +103,7 @@ pnpm dev                       # frontend
 pnpm eval                      # fixture rubric
 ```
 
-Hermes + Telegram setup: [docs/hermes-telegram.md](docs/hermes-telegram.md)
+Hermes harness (optional): [docs/hermes-telegram.md](docs/hermes-telegram.md)
 
 ---
 
@@ -152,11 +157,11 @@ Hermes + Telegram setup: [docs/hermes-telegram.md](docs/hermes-telegram.md)
 - 3+ real Semantic Scholar neighbor IDs
 - Seeded broken repo is not all-green
 - Linkup source in report
-- Hermes live: Telegram audit or memory recall on repeat owner
-- ElevenLabs voice plays on report
+- ElevenLabs voice plays on report page
 - Session forensics shows full agent trace
 - HTTPS at paperfork.getkarpathy.com
 - Zero emojis in generated issue/README text
+- Optional: Telegram side channel (not required for demo)
 
 ---
 

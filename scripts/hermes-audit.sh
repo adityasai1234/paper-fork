@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Hermes harness: deterministic audit trigger (no LLM). POST to Convex /audit webhook.
+# Optional Hermes harness: deterministic audit trigger (no LLM). POST to Convex /audit webhook.
+# Telegram chat id is optional (side feature).
 set -euo pipefail
 
 MESSAGE="${1:-}"

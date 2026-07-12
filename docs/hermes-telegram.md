@@ -1,49 +1,16 @@
-# Hermes + Telegram setup
+# Hermes harness (optional)
 
-Paperfork audits can be triggered from Hermes Telegram gateway via the Convex HTTP webhook.
+Paperfork runs on **Convex + the web UI** by default. Hermes is an optional harness for scripted audit triggers — it does not run audit intelligence.
 
-## 1. Install Hermes (harness only)
+Telegram is a **side feature**: same `/audit` webhook, optional voice/text relay when `telegramChatId` is provided.
 
-```bash
-curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
-```
+## Primary path (no Hermes required)
 
-Paperfork audits do **not** use `hermes model` for intelligence. Hermes is the Telegram gateway + skill harness; all audit LLM runs in Convex via Vercel AI Gateway.
+1. Open https://paperfork.getkarpathy.com
+2. Submit arXiv/DOI + GitHub URL
+3. View report + ElevenLabs voice on the report page
 
-Optional harness-side chat (not audit workers) in `~/.hermes/.env`:
-
-```
-ANTHROPIC_BASE_URL=https://ai-gateway.vercel.sh
-AI_GATEWAY_API_KEY=your-key
-```
-
-## 2. Configure gateway
-
-```bash
-hermes gateway setup
-```
-
-Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ALLOWED_USERS` in `~/.hermes/.env`.
-
-## 3. Install Paperfork skill
-
-Copy `skills/paperfork-audit/SKILL.md` to your Hermes skills directory, or symlink:
-
-```bash
-ln -s "$(pwd)/skills/paperfork-audit" ~/.hermes/skills/paperfork-audit
-hermes skills browse
-```
-
-## 4. Webhook URL
-
-After `npx convex dev`, Convex exposes HTTP routes. Set in Convex dashboard env:
-
-```
-PAPERFORK_WEBHOOK_SECRET=your-secret
-NEXT_PUBLIC_APP_URL=https://paperfork.getkarpathy.com
-```
-
-Webhook endpoint:
+Or POST directly:
 
 ```
 POST https://<deployment>.convex.site/audit
@@ -57,32 +24,50 @@ Content-Type: application/json
 }
 ```
 
-## 5. Telegram message format
+Set in Convex dashboard: `PAPERFORK_WEBHOOK_SECRET`, `NEXT_PUBLIC_APP_URL`.
 
-DM your bot:
+## LLM providers (Convex only)
+
+Audit LLM never runs in Hermes. All inference is in Convex actions:
+
+- Primary: Vercel AI Gateway (`AI_GATEWAY_API_KEY`)
+- Gateway fallback: Claude Sonnet, Groq via gateway (`PAPERFORK_LLM_GROQ_MODEL`)
+- Last resort: direct Groq (`GROQ_API_KEY`)
+
+## Optional: Hermes skill harness
+
+Install Hermes only if you want a CLI/skill wrapper around the webhook:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh | bash
+ln -s "$(pwd)/skills/paperfork-audit" ~/.hermes/skills/paperfork-audit
+```
+
+```bash
+export CONVEX_AUDIT_URL=https://<deployment>.convex.site/audit
+export PAPERFORK_WEBHOOK_SECRET=your-secret
+./scripts/hermes-audit.sh 'audit arXiv:2401.12345 https://github.com/owner/demo-fork'
+```
+
+Parsing is deterministic (no Hermes model). See `skills/paperfork-audit/SKILL.md`.
+
+## Optional: Telegram side channel
+
+Telegram is not required for audits or demos. To enable:
+
+1. `hermes gateway setup` with `TELEGRAM_BOT_TOKEN` in `~/.hermes/.env` (Hermes-side only)
+2. Set `TELEGRAM_BOT_TOKEN` in Convex dashboard if you want Ruler voice relay back to Telegram
+3. Pass `telegramChatId` in the `/audit` webhook body (or `TELEGRAM_CHAT_ID` env when using `hermes-audit.sh`)
+
+DM format:
 
 ```
 audit arXiv:2401.12345 https://github.com/owner/demo-fork
 ```
 
-**Deterministic harness** (no Hermes model for parsing):
+When configured, completion sends report URL + optional voice to that chat. Web report remains the source of truth.
 
-```bash
-export CONVEX_AUDIT_URL=https://<deployment>.convex.site/audit
-export PAPERFORK_WEBHOOK_SECRET=your-secret
-export TELEGRAM_CHAT_ID=<chat id from DM>
-./scripts/hermes-audit.sh 'audit arXiv:2401.12345 https://github.com/owner/demo-fork'
-```
+## Memory + cron
 
-Hermes skill should call `scripts/hermes-audit.sh` for messages starting with `audit `. Reply includes audit and report URLs; Ruler voice relays via Telegram when `telegramChatId` is set.
-
-## LLM providers (Convex only)
-
-- Primary: Vercel AI Gateway (`AI_GATEWAY_API_KEY`)
-- Gateway fallback chain: Claude Sonnet, Groq via gateway (`PAPERFORK_LLM_GROQ_MODEL`)
-- Last resort: direct Groq (`GROQ_API_KEY`) when Gateway is unavailable
-
-## 6. Memory + cron
-
-- Hermes memory: recurring fork patterns stored in Convex `memories` table
-- Cron re-audit: schedule from report page or Hermes cron at user-chosen time
+- Recurring fork patterns: Convex `memories` table
+- Re-audit: report page cron card or Hermes cron (optional)

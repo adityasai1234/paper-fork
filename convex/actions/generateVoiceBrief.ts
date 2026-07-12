@@ -36,7 +36,7 @@ export const run = internalAction({
         event: "ruler_brief",
         payload: { script, voiceSkipped: true, reason: "ELEVENLABS_API_KEY not set" },
       });
-      if (audit?.telegramChatId) {
+      if (audit?.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
         await sendTelegramMessage(
           audit.telegramChatId,
           `Ruler verdict ready (text only): ${reportUrl}\n\n${script}`
@@ -71,7 +71,8 @@ export const run = internalAction({
       });
 
       let telegramRelay: Record<string, unknown> = {};
-      if (audit?.telegramChatId) {
+      // ponytail: side feature — skip when no chat id or token
+      if (audit?.telegramChatId && process.env.TELEGRAM_BOT_TOKEN) {
         const textResult = await sendTelegramMessage(
           audit.telegramChatId,
           `Ruler verdict: ${reportUrl}`
