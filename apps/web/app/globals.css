@@ -1,0 +1,128 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+  background: #0a0a0a;
+  color: #ededed;
+  line-height: 1.6;
+}
+
+a {
+  color: #7eb8ff;
+}
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #999;
+  margin-bottom: 2rem;
+}
+
+.card {
+  background: #141414;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  font-size: 0.875rem;
+  color: #aaa;
+  margin-bottom: 0.25rem;
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 1rem;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+}
+
+button {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.secondary {
+  background: #2a2a2a;
+  color: #fff;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.chip {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  margin-right: 0.5rem;
+}
+
+.chip.pending { background: #333; }
+.chip.running { background: #3d3d00; color: #ffe566; }
+.chip.done { background: #0d3d1f; color: #6ee7a0; }
+.chip.error { background: #3d0d0d; color: #f87171; }
+
+.verdict-FORKED { color: #f87171; }
+.verdict-ALIGNED { color: #6ee7a0; }
+.verdict-UNVERIFIABLE { color: #fbbf24; }
+
+.check-red { color: #f87171; }
+.check-amber { color: #fbbf24; }
+.check-green { color: #6ee7a0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.5rem;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+pre {
+  background: #0a0a0a;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+
+footer {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid #2a2a2a;
+  color: #666;
+  font-size: 0.875rem;
+}

@@ -1,0 +1,130 @@
+"use node";
+
+import { v } from "convex/values";
+import { internal } from "../_generated/api";
+import { internalAction } from "../_generated/server";
+
+const ARXIV_BASE = process.env.ARXIV_API_BASE ?? "https://export.arxiv.org/api/query";
+
+export const run = internalAction({
+  args: { auditId: v.id("audits") },
+  handler: async (ctx, args) => {
+    const audit = await ctx.runQuery(internal.actions.helpers.getAuditInternal, {
+      auditId: args.auditId,
+    });
+    if (!audit) return;
+
+    await ctx.runMutation(internal.audits.logSessionEvent, {
+      auditId: args.auditId,
+      agent: "literature",
+      event: "start",
+      payload: { paperId: audit.paperId },
+    });
+    await ctx.runMutation(internal.audits.patchChip, {
+      auditId: args.auditId,
+      agent: "literature",
+      status: "running",
+    });
+
+    try {
+      const arxivId = audit.paperId.replace(/^arxiv:/i, "");
+      const arxivRes = await fetch(`${ARXIV_BASE}?id_list=${arxivId}`);
+      const arxivXml = await arxivRes.text();
+      const titleMatch = arxivXml.match(/<title>([^<]+)<\/title>/);
+      const abstractMatch = arxivXml.match(/<summary>([^<]+)<\/summary>/);
+      const title = titleMatch?.[1]?.trim() ?? audit.paperId;
+      const abstract = abstractMatch?.[1]?.trim();
+
+      const s2Headers: Record<string, string> = { Accept: "application/json" };
+      if (process.env.SEMANTIC_SCHOLAR_API_KEY) {
+        s2Headers["x-api-key"] = process.env.SEMANTIC_SCHOLAR_API_KEY;
+      }
+
+      let s2Id: string | undefined;
+      let year: number | undefined;
+      const s2PaperRes = await fetch(
+        `https://api.semanticscholar.org/graph/v1/paper/arXiv:${arxivId}?fields=title,abstract,year,citationCount,paperId`,
+        { headers: s2Headers }
+      );
+      if (s2PaperRes.ok) {
+        const s2Paper = await s2PaperRes.json();
+        s2Id = s2Paper.paperId;
+        year = s2Paper.year;
+      }
+
+      const neighbors: Array<Record<string, unknown>> = [];
+      if (s2Id) {
+        const recRes = await fetch(
+          `https://api.semanticscholar.org/recommendations/v1/papers/forpaper/${s2Id}?fields=title,year,citationCount,paperId,abstract&limit=10`,
+          { headers: s2Headers }
+        );
+        if (recRes.ok) {
+          const recData = await recRes.json();
+          for (const n of recData.recommendedPapers ?? []) {
+            neighbors.push({
+              s2Id: n.paperId,
+              title: n.title,
+              year: n.year,
+              abstract: n.abstract,
+              citationCount: n.citationCount,
+            });
+          }
+        }
+      }
+
+      const abstract_claims: string[] = [];
+      if (abstract) {
+        const sentences = abstract.split(/\.\s+/).filter(Boolean);
+        for (const s of sentences) {
+          if (/fold|seed|f1|accuracy|baseline|dataset|split|macro|hardware|checkpoint/i.test(s)) {
+            abstract_claims.push(s.trim());
+          }
+        }
+        if (abstract_claims.length === 0 && abstract.length > 0) {
+          abstract_claims.push(abstract.slice(0, 200));
+        }
+      }
+
+      const method_keywords = [...abstract_claims.join(" ").matchAll(/\b(\d+-fold|BERT|F1|ImageNet|macro|seed)\b/gi)].map(
+        (m) => m[1]
+      );
+
+      const payload = {
+        paper: { s2Id, arxivId, title, abstract, year },
+        abstract_claims,
+        neighbors,
+        method_keywords: [...new Set(method_keywords)],
+      };
+
+      await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
+        auditId: args.auditId,
+        agent: "literature",
+        payload,
+      });
+      await ctx.runMutation(internal.audits.patchChip, {
+        auditId: args.auditId,
+        agent: "literature",
+        status: "done",
+      });
+      await ctx.runMutation(internal.audits.logSessionEvent, {
+        auditId: args.auditId,
+        agent: "literature",
+        event: "done",
+        payload: { neighborCount: neighbors.length },
+      });
+      await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
+    } catch (e) {
+      await ctx.runMutation(internal.audits.patchChip, {
+        auditId: args.auditId,
+        agent: "literature",
+        status: "error",
+      });
+      await ctx.runMutation(internal.audits.logSessionEvent, {
+        auditId: args.auditId,
+        agent: "literature",
+        event: "error",
+        payload: { message: String(e) },
+      });
+    }
+  },
+});

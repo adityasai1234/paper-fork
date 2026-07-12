@@ -1,0 +1,14 @@
+{
+  "name": "paper-fork",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "eval": "pnpm --filter @paperfork/eval run run",
+    "convex:dev": "npx convex dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
