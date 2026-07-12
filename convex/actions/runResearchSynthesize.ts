@@ -10,6 +10,7 @@ import {
   llmTurnPayload,
 } from "../lib/ai_gateway";
 import { sourcesBasedSynthesis } from "../lib/research_helpers";
+import { MAX_ROUNDS } from "./runResearchDiscover";
 
 const synthesisSchema = z.object({
   synthesis: z.string(),
@@ -40,6 +41,7 @@ export const run = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    try {
     const run = await ctx.runQuery(internal.lib.research_query.getRunInternal, {
       runId: args.runId,
     });
@@ -123,7 +125,7 @@ export const run = internalAction({
     let gaps = args.linkupGaps;
     let evalReason = "Max rounds or sufficient coverage";
 
-    if (isStructuredLlmAvailable() && args.round < 3) {
+    if (isStructuredLlmAvailable() && args.round < MAX_ROUNDS) {
       try {
         const evalResult = await extractStructured({
           name: "ResearchEvaluation",
@@ -135,14 +137,20 @@ export const run = internalAction({
           worker: "research:evaluate",
           tags: ["feature:research"],
         });
-        shouldContinue = evalResult.output.shouldContinue && args.round < 2;
+        shouldContinue = evalResult.output.shouldContinue && args.round < MAX_ROUNDS - 1;
         gaps = evalResult.output.gaps;
         evalReason = evalResult.output.reasoning;
       } catch {
         shouldContinue = gaps.length > 0 && args.round < 2;
       }
-    } else if (gaps.length > 0 && args.round < 2) {
+    } else if (gaps.length > 0 && args.round < MAX_ROUNDS - 1) {
       shouldContinue = true;
+      evalReason = `Gaps remain: ${gaps.slice(0, 3).join("; ")}`;
+    }
+
+    if (args.round >= MAX_ROUNDS - 1) {
+      shouldContinue = false;
+      evalReason = "Max rounds reached";
     }
 
     await ctx.runMutation(internal.research.logResearchSession, {
@@ -172,5 +180,20 @@ export const run = internalAction({
     });
 
     return null;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      await ctx.runMutation(internal.research.logResearchSession, {
+        runId: args.runId,
+        agent: "research:synthesize",
+        event: "error",
+        payload: { message, round: args.round },
+      });
+      await ctx.runMutation(internal.research.patchResearchRun, {
+        runId: args.runId,
+        status: "failed",
+        error: message,
+      });
+      return null;
+    }
   },
 });

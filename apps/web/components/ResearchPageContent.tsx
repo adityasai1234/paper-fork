@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { AppShell } from "@/components/AppShell";
-import { ResearchProgress, ResearchTerminal } from "@/components/ResearchTerminal";
+import {
+  ResearchProgress,
+  ResearchTerminal,
+  type ResearchStepFilter,
+} from "@/components/ResearchTerminal";
 import { ReportFooter } from "@/components/ReportFooter";
 import { SessionBar } from "@/components/SessionBar";
 import { api } from "@convex/_generated/api";
@@ -19,8 +23,10 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
   const urlSessionId = searchParams.get("session");
   const prefix = basePath.replace(/\/$/, "");
   const sessionArgs = urlSessionId ? { sessionId: urlSessionId } : {};
+  const [stepFilter, setStepFilter] = useState<ResearchStepFilter>("all");
 
   const run = useQuery(api.research.getResearchRun, { runId, ...sessionArgs });
+  const live = useQuery(api.research.getResearchLiveProgress, { runId, ...sessionArgs });
   const reportUrl = `${prefix}/research/${runId}/report${urlSessionId ? `?session=${urlSessionId}` : ""}`;
 
   useEffect(() => {
@@ -36,6 +42,9 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
   if (!run) {
     return <main className="loading-state">Research run not found.</main>;
   }
+
+  const showReportLink =
+    run.status === "done" || live?.reportReady === true;
 
   return (
     <AppShell
@@ -53,14 +62,37 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
         basePath={prefix}
         label="Research session"
       />
+      {run.status === "failed" && (
+        <div className="card form-error" role="alert">
+          <p>Research run failed{run.error ? `: ${run.error}` : "."}</p>
+          <Link className="button-link" href={`${prefix}/research`}>
+            Start a new run →
+          </Link>
+        </div>
+      )}
       <div className="audit-demo-grid">
-        <ResearchTerminal runId={runId} sessionId={urlSessionId ?? undefined} />
-        <ResearchProgress runId={runId} sessionId={urlSessionId ?? undefined} />
+        <ResearchTerminal
+          runId={runId}
+          sessionId={urlSessionId ?? undefined}
+          stepFilter={stepFilter}
+        />
+        <ResearchProgress
+          runId={runId}
+          sessionId={urlSessionId ?? undefined}
+          activeStep={stepFilter}
+          onStepClick={setStepFilter}
+        />
       </div>
-      {(run.status === "done") && (
+      {showReportLink && (
         <div className="card" aria-live="polite">
-          <p>Research complete. Opening the results page…</p>
-          <Link className="button-link" href={reportUrl}>Open results now →</Link>
+          <p>
+            {run.status === "done"
+              ? "Research complete. Opening the results page…"
+              : "Results are ready."}
+          </p>
+          <Link className="button-link" href={reportUrl}>
+            Open results now →
+          </Link>
         </div>
       )}
       <ReportFooter />

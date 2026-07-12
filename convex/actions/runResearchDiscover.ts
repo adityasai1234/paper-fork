@@ -131,6 +131,7 @@ export const runDiscover = internalAction({
   },
   returns: v.null(),
   handler: async (ctx, args) => {
+    try {
     const run = await ctx.runQuery(internal.lib.research_query.getRunInternal, {
       runId: args.runId,
     });
@@ -188,6 +189,11 @@ export const runDiscover = internalAction({
       });
     }
 
+    await ctx.runMutation(internal.research.patchResearchRun, {
+      runId: args.runId,
+      step: "cite",
+    });
+
     await ctx.runMutation(internal.research.logResearchSession, {
       runId: args.runId,
       agent: "research:discover",
@@ -208,6 +214,21 @@ export const runDiscover = internalAction({
     });
 
     return null;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      await ctx.runMutation(internal.research.logResearchSession, {
+        runId: args.runId,
+        agent: "research:discover",
+        event: "error",
+        payload: { message, round: args.round },
+      });
+      await ctx.runMutation(internal.research.patchResearchRun, {
+        runId: args.runId,
+        status: "failed",
+        error: message,
+      });
+      return null;
+    }
   },
 });
 

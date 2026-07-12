@@ -20,7 +20,7 @@ export function ResearchForm() {
     try {
       const result = await createResearchRun({ prompt: prompt.trim() });
       persistActiveResearchSession(result.runId);
-      router.push(`/app/research/${result.runId}`);
+      router.push(`/app/research/${result.runId}?session=${result.sessionId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start research run");
     } finally {

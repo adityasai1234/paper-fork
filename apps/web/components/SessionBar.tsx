@@ -24,8 +24,10 @@ export function SessionBar({
   const prefix = basePath.replace(/\/$/, "");
   const segment = resourceType === "research" ? "research" : "audit";
   const shareUrl =
-    typeof window !== "undefined" && effectiveSession
-      ? `${window.location.origin}${prefix}/${segment}/${auditId}?session=${effectiveSession}`
+    typeof window !== "undefined"
+      ? effectiveSession
+        ? `${window.location.origin}${prefix}/${segment}/${auditId}?session=${effectiveSession}`
+        : `${window.location.origin}${prefix}/${segment}/${auditId}`
       : "";
 
   const mismatch =
@@ -33,9 +35,21 @@ export function SessionBar({
 
   async function copyLink() {
     if (!shareUrl) return;
-    await navigator.clipboard.writeText(shareUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ponytail: fallback for non-secure contexts
+      const input = document.createElement("textarea");
+      input.value = shareUrl;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      document.body.removeChild(input);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   }
 
   return (
@@ -50,7 +64,7 @@ export function SessionBar({
           <span className="session-status">{status}</span>
         </div>
         <button type="button" className="secondary" onClick={copyLink} disabled={!shareUrl}>
-          {copied ? "Copied" : "Copy demo link"}
+          {copied ? "Copied" : "Copy session link"}
         </button>
       </div>
       {mismatch && (
