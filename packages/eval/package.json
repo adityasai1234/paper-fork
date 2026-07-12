@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "run": "node run.mjs"
+    "run": "tsx run.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.0"
   }
 }

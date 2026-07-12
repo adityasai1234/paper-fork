@@ -20,7 +20,8 @@ function formatPayload(event: string, payload: unknown): string {
     const model = p.model ?? "?";
     const tokens = p.totalTokens ?? p.outputTokens ?? "?";
     const worker = p.worker ?? "";
-    return `${worker} ${model} (${tokens} tokens)`;
+    const fallback = p.usedFallback ? " [fallback]" : "";
+    return `${worker} ${model}${fallback} (${tokens} tokens)`;
   }
   return "";
 }
@@ -100,6 +101,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
               <tr>
                 <th>Worker</th>
                 <th>Model</th>
+                <th>Fallback</th>
                 <th>Tokens</th>
                 <th>Time</th>
               </tr>
@@ -111,6 +113,7 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
                   <tr key={s._id}>
                     <td>{String(p.worker ?? s.agent)}</td>
                     <td>{String(p.model ?? "-")}</td>
+                    <td>{p.usedFallback ? `yes (${String(p.primaryModel ?? "?")})` : "-"}</td>
                     <td>{String(p.totalTokens ?? "-")}</td>
                     <td>{new Date(s.ts).toLocaleTimeString()}</td>
                   </tr>

@@ -5,9 +5,11 @@
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build",
     "eval": "pnpm --filter @paperfork/eval run run",
+    "probe:text": "tsx scripts/text-track-probe.ts",
     "convex:dev": "npx convex dev"
   },
   "devDependencies": {
+    "tsx": "^4.23.0",
     "typescript": "^5.7.2"
   },
   "packageManager": "pnpm@9.15.0"

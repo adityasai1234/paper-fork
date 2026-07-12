@@ -167,7 +167,7 @@ export const run = internalAction({
             event: "llm_turn",
             payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.judge, [
               "feature:adjudication",
-            ]),
+            ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback }),
           });
 
           if (result.output.verdict === "ALIGNED") {
@@ -246,7 +246,7 @@ export const run = internalAction({
           event: "llm_turn",
           payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.gapFiller, [
             "feature:gap-filler",
-          ]),
+          ], { primaryModel: result.primaryModel, usedFallback: result.usedFallback }),
         });
 
         if (result.output.gapFills.length > 0) gapFills = result.output.gapFills;

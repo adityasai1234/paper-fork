@@ -10,43 +10,14 @@ import {
   llmTurnPayload,
 } from "../lib/ai-gateway";
 import {
-  AUDIT_DIMENSIONS,
+  chunkText,
   emptyEvalProtocol,
   methodsOutputSchema,
   type MethodsOutput,
-  type SectionClaim,
+  regexMethodsFromSections,
 } from "../lib/audit-registry";
 import { fetchPaperSections, sectionsForExtraction } from "../lib/paper-fetch";
 import type { LiteraturePayload } from "../lib/fork-rules";
-
-function extractClaimsFromText(section: string, text: string): SectionClaim[] {
-  const claims: SectionClaim[] = [];
-  const sentences = text.split(/\.\s+/).filter((s) => s.length > 20);
-  let idx = 0;
-  for (const s of sentences) {
-    if (!/fold|seed|f1|metric|baseline|split|checkpoint|hardware|eval|test set|validation/i.test(s)) {
-      continue;
-    }
-    let dimension: (typeof AUDIT_DIMENSIONS)[number] = "eval_protocol";
-    if (/fold|split|holdout|cross.?val/i.test(s)) dimension = "splits";
-    else if (/seed|random/i.test(s)) dimension = "seeds";
-    else if (/f1|auroc|accuracy|metric/i.test(s)) dimension = "metrics";
-    else if (/baseline|sota|compare/i.test(s)) dimension = "baselines";
-    else if (/gpu|cuda|batch|hardware/i.test(s)) dimension = "hardware";
-    else if (/checkpoint|epoch|best model/i.test(s)) dimension = "checkpoints";
-    else if (/leak|test set tuning/i.test(s)) dimension = "data_leakage";
-
-    claims.push({
-      id: `${section}:${idx++}`,
-      section,
-      text: s.trim(),
-      dimension,
-      quote: s.trim().slice(0, 200),
-      confidence: "medium",
-    });
-  }
-  return claims;
-}
 
 function mergeMethodsOutputs(partials: MethodsOutput[]): MethodsOutput {
   const sectionClaims = partials.flatMap((p) => p.sectionClaims);
@@ -61,7 +32,7 @@ function mergeMethodsOutputs(partials: MethodsOutput[]): MethodsOutput {
     partials.map((p) => p.evalProtocol.checkpointPolicy).find((s) => s) ?? null;
   const summary =
     partials.map((p) => p.evalProtocol.summary).find((s) => s.length > 20) ??
-    "Evaluation protocol extracted from paper sections (regex fallback).";
+    "Evaluation protocol extracted from paper sections.";
 
   return {
     evalProtocol: {
@@ -78,37 +49,6 @@ function mergeMethodsOutputs(partials: MethodsOutput[]): MethodsOutput {
   };
 }
 
-function regexMethodsOutput(sections: Array<{ name: string; text: string }>): MethodsOutput {
-  const sectionClaims = sections.flatMap((s) => extractClaimsFromText(s.name, s.text));
-  const splitsClaim = sectionClaims.find((c) => c.dimension === "splits");
-  const seedsClaim = sectionClaims.find((c) => c.dimension === "seeds");
-  const metrics = sectionClaims.filter((c) => c.dimension === "metrics").map((c) => c.text);
-  const baselines = sectionClaims.filter((c) => c.dimension === "baselines").map((c) => c.text);
-
-  return {
-    evalProtocol: {
-      splits: splitsClaim?.text ?? null,
-      seeds: seedsClaim?.text ?? null,
-      metrics,
-      baselines,
-      datasets: [],
-      hardware: sectionClaims.find((c) => c.dimension === "hardware")?.text ?? null,
-      checkpointPolicy:
-        sectionClaims.find((c) => c.dimension === "checkpoints")?.text ?? null,
-      summary: buildEvalSummary(sectionClaims),
-    },
-    sectionClaims,
-  };
-}
-
-function buildEvalSummary(claims: SectionClaim[]): string {
-  if (claims.length === 0) {
-    return "No detailed evaluation protocol found in paper sections.";
-  }
-  const parts = claims.slice(0, 4).map((c) => `${c.section}: ${c.text}`);
-  return `How this paper evaluates: ${parts.join("; ")}`;
-}
-
 export const run = internalAction({
   args: { auditId: v.id("audits"), arxivId: v.string() },
   handler: async (ctx, args) => {
@@ -116,7 +56,7 @@ export const run = internalAction({
       auditId: args.auditId,
       agent: AGENTS.workers.methods,
       event: "start",
-      payload: { arxivId: args.arxivId, reportsTo: AGENTS.ruler },
+      payload: { arxivId: args.arxivId || null, reportsTo: AGENTS.ruler },
     });
     await ctx.runMutation(internal.audits.patchChip, {
       auditId: args.auditId,
@@ -131,8 +71,9 @@ export const run = internalAction({
       });
       const lit = litRow?.payload as LiteraturePayload | undefined;
       const abstract = lit?.paper.abstract;
+      const resolvedArxivId = args.arxivId || lit?.paper.arxivId;
 
-      const sections = await fetchPaperSections(args.arxivId, abstract);
+      const { sections, meta } = await fetchPaperSections(resolvedArxivId, abstract);
       const toExtract = sectionsForExtraction(sections);
 
       let output: MethodsOutput;
@@ -140,38 +81,52 @@ export const run = internalAction({
       if (isLlmAvailable() && toExtract.length > 0) {
         const partials: MethodsOutput[] = [];
         for (const { name, text } of toExtract) {
-          const result = await extractStructured({
-            schema: methodsOutputSchema,
-            name: "MethodsExtraction",
-            description: "Extract evaluation protocol and section claims from a paper section",
-            system:
-              "Extract structured evaluation protocol and falsifiable claims from academic paper text. " +
-              "Use null for missing fields. Do not invent data.",
-            prompt: `Paper section: ${name}\n\n---\n${text.slice(0, 48_000)}\n---`,
-            auditId: args.auditId,
-            worker: AGENTS.workers.methods,
-            tags: [`section:${name}`],
-          });
+          const chunks = chunkText(text, 48_000);
+          for (let ci = 0; ci < chunks.length; ci++) {
+            const chunkLabel = chunks.length > 1 ? `${name} (part ${ci + 1}/${chunks.length})` : name;
+            const result = await extractStructured({
+              schema: methodsOutputSchema,
+              name: "MethodsExtraction",
+              description: "Extract evaluation protocol and section claims from a paper section",
+              system:
+                "Extract structured evaluation protocol and falsifiable claims from academic paper text. " +
+                "Use null for missing fields. Do not invent data.",
+              prompt: `Paper section: ${chunkLabel}\n\n---\n${chunks[ci]}\n---`,
+              auditId: args.auditId,
+              worker: AGENTS.workers.methods,
+              tags: [`section:${name}`, ...(chunks.length > 1 ? [`chunk:${ci + 1}`] : [])],
+            });
 
-          await ctx.runMutation(internal.audits.logSessionEvent, {
-            auditId: args.auditId,
-            agent: AGENTS.workers.methods,
-            event: "llm_turn",
-            payload: llmTurnPayload(result.model, result.usage, AGENTS.workers.methods, [
-              `section:${name}`,
-            ]),
-          });
+            await ctx.runMutation(internal.audits.logSessionEvent, {
+              auditId: args.auditId,
+              agent: AGENTS.workers.methods,
+              event: "llm_turn",
+              payload: llmTurnPayload(
+                result.model,
+                result.usage,
+                AGENTS.workers.methods,
+                [`section:${name}`],
+                { primaryModel: result.primaryModel, usedFallback: result.usedFallback }
+              ),
+            });
 
-          partials.push(result.output);
+            partials.push(result.output);
+          }
         }
         output = mergeMethodsOutputs(partials);
       } else if (toExtract.length > 0) {
-        output = regexMethodsOutput(toExtract);
+        output = regexMethodsFromSections(toExtract);
       } else {
+        const reason =
+          meta.htmlStatus === "skipped"
+            ? "No arXiv id for HTML fetch"
+            : typeof meta.htmlStatus === "number" && meta.htmlStatus !== 200
+              ? `arXiv HTML returned ${meta.htmlStatus}`
+              : meta.parseMode === "none"
+                ? "HTML fetched but no sections parsed"
+                : "Section text unavailable";
         output = {
-          evalProtocol: emptyEvalProtocol(
-            "Section text unavailable; evaluation protocol not extracted from full paper."
-          ),
+          evalProtocol: emptyEvalProtocol(`${reason}; evaluation protocol not extracted from full paper.`),
           sectionClaims: [],
         };
       }
@@ -179,21 +134,27 @@ export const run = internalAction({
       await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
         auditId: args.auditId,
         agent: "methods",
-        payload: output,
+        payload: { ...output, textTrackMeta: meta },
       });
       await ctx.runMutation(internal.audits.patchChip, {
         auditId: args.auditId,
         agent: "methods",
         status: "done",
       });
+
+      const htmlNote =
+        meta.source === "html"
+          ? `; HTML ${meta.parseMode} (${meta.sectionsFound.join(", ")})`
+          : `; HTML ${meta.htmlStatus} (abstract only)`;
+
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
         agent: AGENTS.workers.methods,
         event: "worker_report",
         payload: workerReportPayload(
           AGENTS.workers.methods,
-          `Eval protocol: ${output.sectionClaims.length} section claims; ${output.evalProtocol.metrics.length} metrics`,
-          { claimCount: output.sectionClaims.length }
+          `Eval protocol: ${output.sectionClaims.length} section claims; ${output.evalProtocol.metrics.length} metrics${htmlNote}`,
+          { claimCount: output.sectionClaims.length, textTrackMeta: meta }
         ),
       });
       await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });

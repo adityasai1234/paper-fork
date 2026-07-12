@@ -74,6 +74,71 @@ export type PaperSections = Partial<Record<PaperSection, string>>;
 const DEPTH_KEYWORDS =
   /fold|seed|f1|accuracy|baseline|dataset|split|macro|hardware|checkpoint|cross.?val|auroc|precision|recall/i;
 
+/** Shared eval-sentence gate for abstract + section regex extraction. */
+export const EVAL_SENTENCE_PATTERN =
+  /fold|seed|f1|metric|baseline|split|checkpoint|hardware|eval|test set|validation|auroc|accuracy|cross.?val|dataset/i;
+
+export function classifyClaimDimension(text: string): AuditDimension {
+  if (/fold|split|holdout|cross.?val/i.test(text)) return "splits";
+  if (/seed|random/i.test(text)) return "seeds";
+  if (/f1|auroc|accuracy|metric|precision|recall/i.test(text)) return "metrics";
+  if (/baseline|sota|compare/i.test(text)) return "baselines";
+  if (/gpu|cuda|batch|hardware|v100|a100/i.test(text)) return "hardware";
+  if (/checkpoint|epoch|best model/i.test(text)) return "checkpoints";
+  if (/leak|test set tuning|contamination/i.test(text)) return "data_leakage";
+  return "eval_protocol";
+}
+
+export function extractEvalClaimsFromText(section: string, text: string): SectionClaim[] {
+  const claims: SectionClaim[] = [];
+  const sentences = text.split(/\.\s+/).filter((s) => s.length > 20);
+  let idx = 0;
+  for (const s of sentences) {
+    if (!EVAL_SENTENCE_PATTERN.test(s)) continue;
+    claims.push({
+      id: `${section}:${idx++}`,
+      section,
+      text: s.trim(),
+      dimension: classifyClaimDimension(s),
+      quote: s.trim().slice(0, 200),
+      confidence: "medium",
+    });
+  }
+  return claims;
+}
+
+export function regexMethodsFromSections(
+  sections: Array<{ name: string; text: string }>
+): MethodsOutput {
+  const sectionClaims = sections.flatMap((s) => extractEvalClaimsFromText(s.name, s.text));
+  const splitsClaim = sectionClaims.find((c) => c.dimension === "splits");
+  const seedsClaim = sectionClaims.find((c) => c.dimension === "seeds");
+  const metrics = sectionClaims.filter((c) => c.dimension === "metrics").map((c) => c.text);
+  const baselines = sectionClaims.filter((c) => c.dimension === "baselines").map((c) => c.text);
+
+  const summary =
+    sectionClaims.length === 0
+      ? "No detailed evaluation protocol found in paper sections."
+      : `How this paper evaluates: ${sectionClaims
+          .slice(0, 4)
+          .map((c) => `${c.section}: ${c.text}`)
+          .join("; ")}`;
+
+  return {
+    evalProtocol: {
+      splits: splitsClaim?.text ?? null,
+      seeds: seedsClaim?.text ?? null,
+      metrics,
+      baselines,
+      datasets: [],
+      hardware: sectionClaims.find((c) => c.dimension === "hardware")?.text ?? null,
+      checkpointPolicy: sectionClaims.find((c) => c.dimension === "checkpoints")?.text ?? null,
+      summary,
+    },
+    sectionClaims,
+  };
+}
+
 export function shouldFetchFullText(
   abstractClaims: string[],
   abstract?: string

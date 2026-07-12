@@ -16,6 +16,11 @@ export function isLlmAvailable(): boolean {
   return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
 }
 
+/** Deterministic mock for local eval / dry-run (no Gateway calls). */
+export function isMockLlmMode(): boolean {
+  return process.env.PAPERFORK_LLM_MOCK === "1";
+}
+
 export type ExtractStructuredArgs<T extends z.ZodTypeAny> = {
   schema: T;
   name: string;
@@ -33,21 +38,42 @@ export type ExtractStructuredResult<T> = {
   output: T;
   usage: LanguageModelUsage;
   model: string;
+  primaryModel: string;
+  usedFallback: boolean;
+};
+
+const ZERO_USAGE: LanguageModelUsage = {
+  inputTokens: 0,
+  outputTokens: 0,
+  totalTokens: 0,
 };
 
 export async function extractStructured<T extends z.ZodTypeAny>(
   args: ExtractStructuredArgs<T>
 ): Promise<ExtractStructuredResult<z.infer<T>>> {
   const primaryModel = args.model ?? DEFAULT_MODEL;
+
+  if (isMockLlmMode()) {
+    const output = mockStructuredOutput(args.name) as z.infer<T>;
+    return {
+      output,
+      usage: ZERO_USAGE,
+      model: "mock",
+      primaryModel: "mock",
+      usedFallback: false,
+    };
+  }
+
   try {
-    return await callExtract(args, primaryModel);
+    const result = await callExtract(args, primaryModel, primaryModel, false);
+    return result;
   } catch (error) {
     if (
       primaryModel !== FALLBACK_MODEL &&
       (NoObjectGeneratedError.isInstance(error) ||
         (APICallError.isInstance(error) && error.isRetryable))
     ) {
-      return await callExtract(args, FALLBACK_MODEL);
+      return await callExtract(args, FALLBACK_MODEL, primaryModel, true);
     }
     throw mapGatewayError(error);
   }
@@ -55,7 +81,9 @@ export async function extractStructured<T extends z.ZodTypeAny>(
 
 async function callExtract<T extends z.ZodTypeAny>(
   args: ExtractStructuredArgs<T>,
-  model: string
+  model: string,
+  primaryModel: string,
+  usedFallback: boolean
 ): Promise<ExtractStructuredResult<z.infer<T>>> {
   const gatewayTags = [
     "feature:micro-audit",
@@ -85,7 +113,33 @@ async function callExtract<T extends z.ZodTypeAny>(
     },
   });
 
-  return { output, usage, model };
+  return { output, usage, model, primaryModel, usedFallback };
+}
+
+function mockStructuredOutput(name: string): unknown {
+  if (name === "RepoEvalSignals") {
+    return {
+      splits: null,
+      seeds: null,
+      metrics: [],
+      baselines: [],
+      hardware: null,
+      checkpointPolicy: null,
+    };
+  }
+  return {
+    evalProtocol: {
+      splits: null,
+      seeds: null,
+      metrics: [],
+      baselines: [],
+      datasets: [],
+      hardware: null,
+      checkpointPolicy: null,
+      summary: "Mock LLM mode (PAPERFORK_LLM_MOCK=1)",
+    },
+    sectionClaims: [],
+  };
 }
 
 function mapGatewayError(error: unknown): Error {
@@ -110,7 +164,8 @@ export function llmTurnPayload(
   model: string,
   usage: LanguageModelUsage,
   worker: string,
-  tags: string[]
+  tags: string[],
+  extras?: { primaryModel?: string; usedFallback?: boolean }
 ) {
   return {
     model,
@@ -119,5 +174,7 @@ export function llmTurnPayload(
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
     totalTokens: usage.totalTokens,
+    ...(extras?.primaryModel ? { primaryModel: extras.primaryModel } : {}),
+    ...(extras?.usedFallback ? { usedFallback: true } : {}),
   };
 }
