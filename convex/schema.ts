@@ -147,8 +147,11 @@ export default defineSchema({
     agent: v.string(),
     event: v.union(
       v.literal("start"),
+      v.literal("delegate"),
+      v.literal("worker_report"),
       v.literal("tool_call"),
       v.literal("llm_turn"),
+      v.literal("ruler_brief"),
       v.literal("error"),
       v.literal("done")
     ),

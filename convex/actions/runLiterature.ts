@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
 
 const ARXIV_BASE = process.env.ARXIV_API_BASE ?? "https://export.arxiv.org/api/query";
 
@@ -16,9 +17,9 @@ export const run = internalAction({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId: args.auditId,
-      agent: "literature",
+      agent: AGENTS.workers.literature,
       event: "start",
-      payload: { paperId: audit.paperId },
+      payload: { paperId: audit.paperId, reportsTo: AGENTS.ruler },
     });
     await ctx.runMutation(internal.audits.patchChip, {
       auditId: args.auditId,
@@ -108,9 +109,13 @@ export const run = internalAction({
       });
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
-        agent: "literature",
-        event: "done",
-        payload: { neighborCount: neighbors.length },
+        agent: AGENTS.workers.literature,
+        event: "worker_report",
+        payload: workerReportPayload(
+          AGENTS.workers.literature,
+          `Paper resolved; ${neighbors.length} neighbors; ${abstract_claims.length} claims`,
+          { neighborCount: neighbors.length }
+        ),
       });
       await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
     } catch (e) {

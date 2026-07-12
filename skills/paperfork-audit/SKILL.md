@@ -10,6 +10,13 @@ compatibility: Requires Linkup API, GitHub access, Semantic Scholar, Convex, Her
 
 User provides paper ID (arXiv or DOI) and GitHub repository URL.
 
+## Hierarchy
+
+1. Ruler delegates workers in parallel via Convex webhook.
+2. Workers report up with `worker_report` (never speak to user).
+3. Ruler commands Judge worker after fork-rules gate.
+4. Ruler speaks final verdict via ElevenLabs (`ruler_brief`).
+
 ## Steps
 
 1. Fan out Literature, Repo, Web agents in parallel via Hermes orchestrator.

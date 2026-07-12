@@ -3,6 +3,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { AGENTS, rulerBriefScript } from "../lib/agent-hierarchy";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
@@ -12,15 +13,24 @@ export const run = internalAction({
     });
     if (!report) return;
 
-    const forked = report.forkLedger.filter((f: { verdict: string }) => f.verdict === "FORKED");
-    const script = `Paperfork audit complete. Found ${forked.length} forked items. ${
-      forked[0] ? `Top issue: ${forked[0].claim}.` : ""
-    } View the full report at paperfork.getkarpathy.com.`;
+    const script = rulerBriefScript({
+      paper: report.paper,
+      forkLedger: report.forkLedger,
+      repo: report.repo,
+    });
 
     const apiKey = process.env.ELEVENLABS_API_KEY;
     const voiceId = process.env.ELEVENLABS_VOICE_ID ?? "21m00Tcm4TlvDq8ikWAM";
 
-    if (!apiKey) return;
+    if (!apiKey) {
+      await ctx.runMutation(internal.audits.logSessionEvent, {
+        auditId: args.auditId,
+        agent: AGENTS.ruler,
+        event: "ruler_brief",
+        payload: { script, voiceSkipped: true, reason: "ELEVENLABS_API_KEY not set" },
+      });
+      return;
+    }
 
     const res = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
@@ -45,6 +55,12 @@ export const run = internalAction({
       await ctx.runMutation(internal.actions.helpers.patchReportVoice, {
         auditId: args.auditId,
         voiceUrl,
+      });
+      await ctx.runMutation(internal.audits.logSessionEvent, {
+        auditId: args.auditId,
+        agent: AGENTS.ruler,
+        event: "ruler_brief",
+        payload: { script, voiceGenerated: true, speaker: "ruler" },
       });
     }
   },

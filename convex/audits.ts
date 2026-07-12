@@ -8,8 +8,11 @@ export const logSessionEvent = internalMutation({
     agent: v.string(),
     event: v.union(
       v.literal("start"),
+      v.literal("delegate"),
+      v.literal("worker_report"),
       v.literal("tool_call"),
       v.literal("llm_turn"),
+      v.literal("ruler_brief"),
       v.literal("error"),
       v.literal("done")
     ),
@@ -47,9 +50,13 @@ export const createAudit = mutation({
 
     await ctx.runMutation(internal.audits.logSessionEvent, {
       auditId,
-      agent: "orchestrator",
-      event: "start",
-      payload: { action: "createAudit", ...args },
+      agent: "ruler",
+      event: "delegate",
+      payload: {
+        workers: ["worker:literature", "worker:repo", "worker:web"],
+        action: "createAudit",
+        ...args,
+      },
     });
 
     return auditId;

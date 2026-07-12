@@ -2,7 +2,22 @@
 
 Find where the paper forked from the repo — and draft the merge commit.
 
-Paperfork is a Hermes-powered research audit agency. Give it an arXiv ID or DOI plus a GitHub repository URL. It fans out Literature, Repo, and Web agents in parallel, runs deterministic fork rules, judges gaps with Hermes, and delivers a Fork Report with GitHub issue drafts and README patches.
+Paperfork is a Hermes-powered research audit agency with a **Ruler + Workers** hierarchy. The Ruler delegates Literature, Repo, and Web workers; collects their reports; and speaks the final verdict via ElevenLabs. Give it an arXiv ID or DOI plus a GitHub repository URL.
+
+## Agent hierarchy
+
+```
+Ruler (main agent — speaks via ElevenLabs)
+├── worker:literature
+├── worker:repo
+├── worker:web
+├── worker:judge
+├── worker:gap-filler
+├── worker:runtime
+└── worker:eval-scaler
+```
+
+Workers report up with `worker_report` events. The Ruler alone voices the Fork Report.
 
 **Live:** https://paperfork.getkarpathy.com  
 **Contact:** paperfork@getkarpathy.com  
@@ -40,13 +55,13 @@ Power-ups: +25 each when mentors see real use in the build.
 
 ```
 User (web or Telegram)
-  → Hermes orchestrator
-  → parallel: Literature | Repo+structure | Web(Linkup)
-  → fork-rules.ts (deterministic, non-negotiable)
-  → load memories for repo owner
-  → Judge (Hermes) → scaleEval on failure (max 2 rounds)
-  → gap-filler → report + GitHub issue + README patch + voice
-  → retrofit memories → optional cron re-audit
+  → Ruler Agent (main)
+  → delegate: worker:literature | worker:repo | worker:web (parallel)
+  → workers emit worker_report to Ruler
+  → fork-rules.ts (deterministic)
+  → worker:judge synthesizes → worker:gap-filler drafts fixes
+  → Ruler speaks verdict via ElevenLabs (ruler_brief)
+  → report + GitHub issue + README patch
 ```
 
 All tables (`audits`, `agentOutputs`, `reports`, `userRequests`, `sessions`, `memories`, `cronJobs`, `githubOutputs`) exist from schema day one. Session forensics logs every agent step. Memories recall recurring gaps per repo owner.
@@ -112,6 +127,9 @@ Hermes + Telegram setup: [docs/hermes-telegram.md](docs/hermes-telegram.md)
 | 19 | ElevenLabs voice briefings | ui | [#19](https://github.com/adityasai1234/paper-fork/issues/19) |
 | 20 | GitHub issue + README emit | ship | [#20](https://github.com/adityasai1234/paper-fork/issues/20) |
 | 21 | Eval harness | ship | [#21](https://github.com/adityasai1234/paper-fork/issues/21) |
+| 22 | Ruler Agent — main hierarchy top | hierarchy | [#22](https://github.com/adityasai1234/paper-fork/issues/22) |
+| 23 | Worker agents report to Ruler | hierarchy | [#23](https://github.com/adityasai1234/paper-fork/issues/23) |
+| 24 | ElevenLabs — Ruler speaks final verdict | hierarchy | [#24](https://github.com/adityasai1234/paper-fork/issues/24) |
 
 ---
 
