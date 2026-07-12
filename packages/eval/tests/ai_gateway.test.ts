@@ -5,7 +5,7 @@ import {
   isGroqDirectAvailable,
   isLlmAvailable,
   isMockLlmMode,
-} from "../../../convex/lib/ai-gateway";
+} from "../../../convex/lib/ai_gateway";
 
 const ENV_KEYS = [
   "AI_GATEWAY_API_KEY",

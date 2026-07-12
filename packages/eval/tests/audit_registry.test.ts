@@ -9,7 +9,7 @@ import {
   extractEvalClaimsFromText,
   extractRegexClaims,
   shouldFetchFullText,
-} from "../../../convex/lib/audit-registry";
+} from "../../../convex/lib/audit_registry";
 
 describe("classifyClaimDimension", () => {
   it("classifies each audit dimension from keywords", () => {

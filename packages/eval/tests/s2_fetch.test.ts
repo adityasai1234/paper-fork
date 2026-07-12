@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { arxivIdFromS2, s2PaperPath } from "../../../convex/lib/s2-fetch";
+import { arxivIdFromS2, s2PaperPath } from "../../../convex/lib/s2_fetch";
 
 describe("s2PaperPath", () => {
   it("encodes DOI path segment", () => {
