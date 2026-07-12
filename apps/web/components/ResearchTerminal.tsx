@@ -19,7 +19,7 @@ function formatLine(
   const p = payload as Record<string, unknown>;
 
   if (event === "discover" && typeof p.query === "string") {
-    return `${prefix}\n  → query: ${p.query.slice(0, 120)}…`;
+    return `${prefix}\n  → query: ${p.query}`;
   }
   if (event === "tool_call") {
     return `${prefix}\n  → prior papers: ${p.priorPaperCount ?? 0}, sources: ${p.sourceCount ?? 0}`;
@@ -44,7 +44,7 @@ function formatLine(
     return `${prefix}\n  ✓ run complete`;
   }
   if (event === "start" && typeof p.prompt === "string") {
-    return `${prefix}\n  → ${p.prompt.slice(0, 100)}…`;
+    return `${prefix}\n  → ${p.prompt}`;
   }
 
   return prefix;
