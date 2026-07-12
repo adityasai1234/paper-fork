@@ -274,7 +274,7 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 
 /* Audit live UI (AppShell) */
 .app-shell .hierarchy-live .hierarchy-subtitle {
-  color: #999;
+  color: var(--muted-foreground);
   font-size: 0.875rem;
   margin-top: 0.5rem;
   margin-bottom: 1rem;
@@ -301,7 +301,7 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 }
 
 .app-shell .hierarchy-node {
-  border: 1px solid #333;
+  border: 1px solid var(--border-strong);
   border-radius: 8px;
   padding: 0.5rem 0.65rem;
   text-align: center;
@@ -328,6 +328,11 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 .app-shell .ruler-node {
   min-width: 8rem;
   background: #1a1a2e;
+  color: #ededed;
+}
+
+.app-shell .ruler-node .hierarchy-status {
+  color: #8b9099;
 }
 
 .app-shell .hierarchy-label {
@@ -339,7 +344,7 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 .app-shell .hierarchy-status {
   display: block;
   font-size: 0.7rem;
-  color: #999;
+  color: var(--muted-foreground);
   margin-top: 0.15rem;
   text-transform: uppercase;
 }
@@ -360,7 +365,7 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 .app-shell .session-label {
   display: block;
   font-size: 0.75rem;
-  color: #888;
+  color: var(--muted-foreground);
 }
 
 .app-shell .session-id {
@@ -408,7 +413,7 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 
 .app-shell .pattern-list li {
   padding: 0.35rem 0;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border);
 }
 
 .app-shell .pattern-occurrences {
@@ -429,25 +434,25 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
   grid-template-columns: 6rem 1fr auto;
   gap: 0.5rem;
   padding: 0.4rem 0;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border);
 }
 
 .app-shell .pattern-agent {
-  color: #8b9099;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 
 .app-shell .pattern-detail {
-  color: #ccc;
+  color: var(--foreground);
 }
 
 .app-shell .pattern-time {
-  color: #666;
+  color: var(--muted-foreground);
   font-size: 0.75rem;
 }
 
 .app-shell .pattern-empty {
-  color: #666;
+  color: var(--muted-foreground);
   font-size: 0.85rem;
 }
 
@@ -473,20 +478,92 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 .app-shell .check-amber { color: #fbbf24; }
 .app-shell .check-green { color: #6ee7a0; }
 
-table {
+.app-shell .text-detail {
+  color: var(--muted-foreground);
+  font-size: 0.875rem;
+}
+
+.app-shell .text-detail-sm {
+  color: var(--muted-foreground);
+  font-size: 0.85rem;
+}
+
+.app-shell .field-label {
+  color: var(--muted-foreground);
+}
+
+.report-footer {
+  margin-top: 38px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+  font-size: 11px;
+}
+
+.report-footer-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.report-footer .report-footer-inner {
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+  .report-footer-inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.report-footer-inner--dark {
+  color: var(--text-muted);
+}
+
+.report-footer-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-foreground);
+}
+
+.report-footer-inner--dark .report-footer-eyebrow {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.report-footer-contact {
+  margin-top: 0.5rem;
+}
+
+.report-footer-link {
+  color: var(--accent-primary);
+  text-decoration: none;
+}
+
+.report-footer-link:hover {
+  text-decoration: underline;
+}
+
+.marketing table {
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
 }
 
-th,
-td {
+.marketing th,
+.marketing td {
   text-align: left;
   padding: 0.5rem;
   border-bottom: 1px solid #2a2a2a;
 }
 
-pre {
+.marketing pre {
   background: #0a0a0a;
   padding: 1rem;
   border-radius: 6px;
@@ -494,7 +571,7 @@ pre {
   font-size: 0.8rem;
 }
 
-footer {
+.marketing footer {
   margin-top: 3rem;
   padding-top: 1rem;
   border-top: 1px solid #2a2a2a;
@@ -907,7 +984,7 @@ footer {
 
 .research-papers-list li {
   padding: 0.5rem 0;
-  border-bottom: 1px solid #222;
+  border-bottom: 1px solid var(--border);
 }
 
 .research-citation-key {

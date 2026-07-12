@@ -10,6 +10,7 @@
     "test:ci": "pnpm test",
     "probe:text": "tsx scripts/text-track-probe.ts",
     "convex:dev": "npx convex dev",
+    "convex:dev:once": "npx convex dev --once && bash scripts/sync-convex-web-env.sh",
     "convex:deploy": "npx convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'pnpm --filter web build'",
     "convex:env": "bash scripts/sync-convex-env.sh",
     "convex:push": "npx convex codegen"

@@ -63,7 +63,7 @@ export function SessionForensics({
   return (
     <div className={wrapperClass}>
       <h2>Agent hierarchy forensics</h2>
-      <p style={{ color: "#999", fontSize: "0.875rem", marginTop: "0.5rem" }}>
+      <p className="text-detail" style={{ marginTop: "0.5rem" }}>
         Ruler delegates workers; workers report up; Ruler speaks via ElevenLabs.
       </p>
 
@@ -80,7 +80,7 @@ export function SessionForensics({
           {rulerEvents.map((s: SessionEvent) => (
             <tr key={s._id}>
               <td>{s.event}</td>
-              <td style={{ color: "#aaa", fontSize: "0.85rem" }}>
+              <td className="text-detail-sm">
                 {formatPayload(s.event, s.payload)}
               </td>
               <td>{new Date(s.ts).toLocaleTimeString()}</td>
@@ -88,7 +88,7 @@ export function SessionForensics({
           ))}
           {rulerEvents.length === 0 && (
             <tr>
-              <td colSpan={3} style={{ color: "#666" }}>No ruler events yet</td>
+              <td colSpan={3} className="text-detail-sm">No ruler events yet</td>
             </tr>
           )}
         </tbody>
@@ -109,7 +109,7 @@ export function SessionForensics({
             <tr key={s._id}>
               <td>{s.agent}</td>
               <td>{s.event}</td>
-              <td style={{ color: "#aaa", fontSize: "0.85rem" }}>
+              <td className="text-detail-sm">
                 {formatPayload(s.event, s.payload)}
               </td>
               <td>{new Date(s.ts).toLocaleTimeString()}</td>

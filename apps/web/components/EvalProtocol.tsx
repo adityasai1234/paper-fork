@@ -19,43 +19,43 @@ export function EvalProtocol({ protocol }: { protocol?: EvalProtocolData }) {
       <dl style={{ marginTop: "1rem", display: "grid", gap: "0.5rem" }}>
         {protocol.splits && (
           <>
-            <dt style={{ color: "#999" }}>Splits</dt>
+            <dt className="field-label">Splits</dt>
             <dd>{protocol.splits}</dd>
           </>
         )}
         {protocol.seeds && (
           <>
-            <dt style={{ color: "#999" }}>Seeds</dt>
+            <dt className="field-label">Seeds</dt>
             <dd>{protocol.seeds}</dd>
           </>
         )}
         {protocol.metrics.length > 0 && (
           <>
-            <dt style={{ color: "#999" }}>Metrics</dt>
+            <dt className="field-label">Metrics</dt>
             <dd>{protocol.metrics.join(", ")}</dd>
           </>
         )}
         {protocol.baselines.length > 0 && (
           <>
-            <dt style={{ color: "#999" }}>Baselines</dt>
+            <dt className="field-label">Baselines</dt>
             <dd>{protocol.baselines.join(", ")}</dd>
           </>
         )}
         {protocol.datasets.length > 0 && (
           <>
-            <dt style={{ color: "#999" }}>Datasets</dt>
+            <dt className="field-label">Datasets</dt>
             <dd>{protocol.datasets.join(", ")}</dd>
           </>
         )}
         {protocol.hardware && (
           <>
-            <dt style={{ color: "#999" }}>Hardware</dt>
+            <dt className="field-label">Hardware</dt>
             <dd>{protocol.hardware}</dd>
           </>
         )}
         {protocol.checkpointPolicy && (
           <>
-            <dt style={{ color: "#999" }}>Checkpoints</dt>
+            <dt className="field-label">Checkpoints</dt>
             <dd>{protocol.checkpointPolicy}</dd>
           </>
         )}

@@ -11,7 +11,7 @@ export function GapFills({ items }: { items: GapFill[] }) {
       {items.map((g, i) => (
         <div key={i} style={{ marginTop: "1rem" }}>
           <strong>{g.type}</strong>
-          <p style={{ color: "#999", fontSize: "0.875rem" }}>{g.evidence}</p>
+          <p className="text-detail">{g.evidence}</p>
           <pre>{g.content}</pre>
         </div>
       ))}
