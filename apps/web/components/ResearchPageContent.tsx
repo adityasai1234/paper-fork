@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 import { useQuery } from "convex/react";
 import { AppShell } from "@/components/AppShell";
 import { ResearchProgress, ResearchTerminal } from "@/components/ResearchTerminal";
@@ -11,6 +12,7 @@ import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 
 export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
+  const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const runId = params.id as Id<"researchRuns">;
@@ -19,6 +21,13 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
   const sessionArgs = urlSessionId ? { sessionId: urlSessionId } : {};
 
   const run = useQuery(api.research.getResearchRun, { runId, ...sessionArgs });
+  const reportUrl = `${prefix}/research/${runId}/report${urlSessionId ? `?session=${urlSessionId}` : ""}`;
+
+  useEffect(() => {
+    if (run?.status !== "done") return;
+    const redirect = window.setTimeout(() => router.replace(reportUrl), 700);
+    return () => window.clearTimeout(redirect);
+  }, [reportUrl, router, run?.status]);
 
   if (run === undefined) {
     return <main className="loading-state">Loading research run…</main>;
@@ -49,12 +58,10 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
         <ResearchProgress runId={runId} sessionId={urlSessionId ?? undefined} />
       </div>
       {(run.status === "done") && (
-        <Link
-          className="button-link"
-          href={`${prefix}/research/${runId}/report${urlSessionId ? `?session=${urlSessionId}` : ""}`}
-        >
-          Open research report →
-        </Link>
+        <div className="card" aria-live="polite">
+          <p>Research complete. Opening the results page…</p>
+          <Link className="button-link" href={reportUrl}>Open results now →</Link>
+        </div>
       )}
       <ReportFooter />
     </AppShell>
