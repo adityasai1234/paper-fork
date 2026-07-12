@@ -5,5 +5,5 @@
   "type": "module",
   "scripts": {
     "run": "node run.mjs"
-  },
+  }
 }
