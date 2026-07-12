@@ -89,30 +89,29 @@ Hermes + Telegram setup: [docs/hermes-telegram.md](docs/hermes-telegram.md)
 
 ## Issue index
 
-| # | Title | Layer |
-|---|-------|-------|
-| 1 | README + repo bootstrap | foundation |
-| 2 | Convex full schema + audit mutation | foundation |
-| 3 | Monorepo + Next.js + Cloudflare Pages | foundation |
-| 4 | Hermes install + gateway + Telegram | hermes |
-| 5 | Orchestrator + distributed governance | hermes |
-| 6 | paperfork-audit SKILL.md | hermes |
-| 7 | Retrofit memories | hermes |
-| 8 | Cron scheduled re-audits | hermes |
-| 9 | Literature agent | agents |
-| 10 | Repo agent + code structure | agents |
-| 11 | Web agent (Linkup) | agents |
-| 12 | Runtime verification agent | agents |
-| 13 | Deterministic fork-rules | judge |
-| 14 | Judge + gap-filler (Hermes) | judge |
-| 15 | Eval scaler (scale on failure) | judge |
-| 16 | Audit page: chips + session forensics | ui |
-| 17 | Fork Report UI | ui |
-| 18 | User requests + cron schedule card | ui |
-| 19 | ElevenLabs voice briefings | ui |
-| 20 | GitHub issue + README emit | ship |
-| 21 | Eval harness | ship |
-| 22 | Demo seed + production deploy | ship |
+| # | Title | Layer | GitHub |
+|---|-------|-------|--------|
+| 1 | README + repo bootstrap | foundation | [#1](https://github.com/adityasai1234/paper-fork/issues/1) |
+| 2 | Convex full schema + audit mutation | foundation | [#2](https://github.com/adityasai1234/paper-fork/issues/2) |
+| 3 | Monorepo + Next.js + Cloudflare Pages | foundation | [#3](https://github.com/adityasai1234/paper-fork/issues/3) |
+| 4 | Hermes install + gateway + Telegram | hermes | [#4](https://github.com/adityasai1234/paper-fork/issues/4) |
+| 5 | Orchestrator + distributed governance | hermes | [#5](https://github.com/adityasai1234/paper-fork/issues/5) |
+| 6 | paperfork-audit SKILL.md | hermes | [#6](https://github.com/adityasai1234/paper-fork/issues/6) |
+| 7 | Retrofit memories | hermes | [#7](https://github.com/adityasai1234/paper-fork/issues/7) |
+| 8 | Cron scheduled re-audits | hermes | [#8](https://github.com/adityasai1234/paper-fork/issues/8) |
+| 9 | Literature agent | agents | [#9](https://github.com/adityasai1234/paper-fork/issues/9) |
+| 10 | Repo agent + code structure | agents | [#10](https://github.com/adityasai1234/paper-fork/issues/10) |
+| 11 | Web agent (Linkup) | agents | [#11](https://github.com/adityasai1234/paper-fork/issues/11) |
+| 12 | Runtime verification agent | agents | [#12](https://github.com/adityasai1234/paper-fork/issues/12) |
+| 13 | Deterministic fork-rules | judge | [#13](https://github.com/adityasai1234/paper-fork/issues/13) |
+| 14 | Judge + gap-filler (Hermes) | judge | [#14](https://github.com/adityasai1234/paper-fork/issues/14) |
+| 15 | Eval scaler (scale on failure) | judge | [#15](https://github.com/adityasai1234/paper-fork/issues/15) |
+| 16 | Audit page: chips + session forensics | ui | [#16](https://github.com/adityasai1234/paper-fork/issues/16) |
+| 17 | Fork Report UI | ui | [#17](https://github.com/adityasai1234/paper-fork/issues/17) |
+| 18 | User requests + cron schedule card | ui | [#18](https://github.com/adityasai1234/paper-fork/issues/18) |
+| 19 | ElevenLabs voice briefings | ui | [#19](https://github.com/adityasai1234/paper-fork/issues/19) |
+| 20 | GitHub issue + README emit | ship | [#20](https://github.com/adityasai1234/paper-fork/issues/20) |
+| 21 | Eval harness | ship | [#21](https://github.com/adityasai1234/paper-fork/issues/21) |
 
 ---
 
