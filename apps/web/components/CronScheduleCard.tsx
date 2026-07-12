@@ -2,12 +2,11 @@
 
 import { useMutation } from "convex/react";
 import { useState } from "react";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 export function CronScheduleCard({
   auditId,
-  githubUrl,
 }: {
   auditId: Id<"audits">;
   githubUrl: string;
@@ -20,7 +19,6 @@ export function CronScheduleCard({
     if (!datetime) return;
     await schedule({
       auditId,
-      githubUrl,
       scheduledAt: new Date(datetime).getTime(),
     });
     setDone(true);

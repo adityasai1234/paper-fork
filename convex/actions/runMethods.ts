@@ -3,21 +3,21 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
+import { AGENTS, workerReportPayload } from "../lib/agent_hierarchy";
 import {
   extractStructured,
   isLlmAvailable,
   llmTurnPayload,
-} from "../lib/ai-gateway";
+} from "../lib/ai_gateway";
 import {
   chunkText,
   emptyEvalProtocol,
   methodsOutputSchema,
   type MethodsOutput,
   regexMethodsFromSections,
-} from "../lib/audit-registry";
-import { fetchPaperSections, sectionsForExtraction } from "../lib/paper-fetch";
-import type { LiteraturePayload } from "../lib/fork-rules";
+} from "../lib/audit_registry";
+import { fetchPaperSections, sectionsForExtraction } from "../lib/paper_fetch";
+import type { LiteraturePayload } from "../lib/fork_rules";
 
 function mergeMethodsOutputs(partials: MethodsOutput[]): MethodsOutput {
   const sectionClaims = partials.flatMap((p) => p.sectionClaims);
@@ -65,7 +65,7 @@ export const run = internalAction({
     });
 
     try {
-      const litRow = await ctx.runQuery(internal.actions.helpers.getAgentOutput, {
+      const litRow = await ctx.runQuery(internal.lib.audit_helpers.getAgentOutput, {
         auditId: args.auditId,
         agent: "literature",
       });
@@ -152,7 +152,7 @@ export const run = internalAction({
         };
       }
 
-      await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
+      await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
         auditId: args.auditId,
         agent: "methods",
         payload: { ...output, textTrackMeta: meta },

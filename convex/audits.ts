@@ -1,6 +1,62 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import type { Id } from "./_generated/dataModel";
+import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { getOwnedAuditOrNull, requireAuthUserId } from "./lib/auth";
+import { parseGithubUrl } from "./lib/fork_rules";
+import { auditDoc, auditLiveProgressDoc, sessionDoc } from "./lib/validators";
+
+type CreateAuditArgs = {
+  paperId: string;
+  paperIdType: "arxiv" | "doi";
+  githubUrl: string;
+  telegramChatId?: string;
+  ingressSource?: "webhook" | "web" | "cron";
+  ownerUserId?: Id<"users">;
+  sessionId?: string;
+};
+
+function newSessionId(): string {
+  return crypto.randomUUID();
+}
+
+async function insertAuditAndScheduleWorkers(
+  ctx: MutationCtx,
+  args: CreateAuditArgs
+): Promise<{ auditId: Id<"audits">; sessionId: string }> {
+  const sessionId = args.sessionId ?? newSessionId();
+  const auditId = await ctx.db.insert("audits", {
+    paperId: args.paperId,
+    paperIdType: args.paperIdType,
+    githubUrl: args.githubUrl,
+    telegramChatId: args.telegramChatId,
+    ingressSource: args.ingressSource ?? "web",
+    ownerUserId: args.ownerUserId,
+    sessionId,
+    status: "queued",
+    chips: { literature: "pending", repo: "pending", web: "pending", methods: "pending" },
+    scaleRound: 0,
+    createdAt: Date.now(),
+  });
+
+  await ctx.scheduler.runAfter(0, internal.actions.runLiterature.run, { auditId });
+  await ctx.scheduler.runAfter(0, internal.actions.runRepo.run, { auditId });
+  await ctx.scheduler.runAfter(0, internal.actions.runWeb.run, { auditId });
+
+  await ctx.runMutation(internal.audits.logSessionEvent, {
+    auditId,
+    agent: "ruler",
+    event: "delegate",
+    payload: {
+      workers: ["worker:literature", "worker:repo", "worker:web"],
+      action: "createAudit",
+      ...args,
+    },
+  });
+
+  return { auditId, sessionId };
+}
 
 export const logSessionEvent = internalMutation({
   args: {
@@ -29,6 +85,25 @@ export const logSessionEvent = internalMutation({
   },
 });
 
+export const createAuditWebhook = internalMutation({
+  args: {
+    paperId: v.string(),
+    paperIdType: v.union(v.literal("arxiv"), v.literal("doi")),
+    githubUrl: v.string(),
+    telegramChatId: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
+  },
+  returns: v.object({
+    auditId: v.id("audits"),
+    sessionId: v.string(),
+  }),
+  handler: async (ctx, args) =>
+    insertAuditAndScheduleWorkers(ctx, {
+      ...args,
+      ingressSource: "webhook",
+    }),
+});
+
 export const createAudit = mutation({
   args: {
     paperId: v.string(),
@@ -38,51 +113,103 @@ export const createAudit = mutation({
     ingressSource: v.optional(
       v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
     ),
+    sessionId: v.optional(v.string()),
   },
+  returns: v.object({
+    auditId: v.id("audits"),
+    sessionId: v.string(),
+  }),
   handler: async (ctx, args) => {
-    const auditId = await ctx.db.insert("audits", {
+    const ownerUserId = await requireAuthUserId(ctx);
+    return await insertAuditAndScheduleWorkers(ctx, {
       paperId: args.paperId,
       paperIdType: args.paperIdType,
       githubUrl: args.githubUrl,
       telegramChatId: args.telegramChatId,
       ingressSource: args.ingressSource ?? "web",
-      status: "queued",
-      chips: { literature: "pending", repo: "pending", web: "pending", methods: "pending" },
-      scaleRound: 0,
-      createdAt: Date.now(),
+      ownerUserId,
+      sessionId: args.sessionId,
     });
-
-    await ctx.scheduler.runAfter(0, internal.actions.runLiterature.run, { auditId });
-    await ctx.scheduler.runAfter(0, internal.actions.runRepo.run, { auditId });
-    await ctx.scheduler.runAfter(0, internal.actions.runWeb.run, { auditId });
-
-    await ctx.runMutation(internal.audits.logSessionEvent, {
-      auditId,
-      agent: "ruler",
-      event: "delegate",
-      payload: {
-        workers: ["worker:literature", "worker:repo", "worker:web"],
-        action: "createAudit",
-        ...args,
-      },
-    });
-
-    return auditId;
   },
 });
 
 export const getAudit = query({
   args: { auditId: v.id("audits") },
-  handler: async (ctx, args) => ctx.db.get(args.auditId),
+  returns: v.union(auditDoc, v.null()),
+  handler: async (ctx, args) => getOwnedAuditOrNull(ctx, args.auditId),
+});
+
+export const getAuditBySession = query({
+  args: { sessionId: v.string() },
+  returns: v.union(
+    v.object({
+      auditId: v.id("audits"),
+      sessionId: v.string(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const audit = await ctx.db
+      .query("audits")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .first();
+
+    if (!audit) return null;
+
+    const owned = await getOwnedAuditOrNull(ctx, audit._id);
+    if (!owned) return null;
+
+    return {
+      auditId: audit._id,
+      sessionId: audit.sessionId ?? args.sessionId,
+    };
+  },
+});
+
+export const getAuditLiveProgress = query({
+  args: { auditId: v.id("audits") },
+  returns: v.union(auditLiveProgressDoc, v.null()),
+  handler: async (ctx, args) => {
+    const audit = await getOwnedAuditOrNull(ctx, args.auditId);
+    if (!audit) return null;
+
+    const sessions = await ctx.db
+      .query("sessions")
+      .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
+      .collect();
+
+    const parsed = parseGithubUrl(audit.githubUrl);
+    const repoOwner = parsed?.owner ?? "unknown";
+
+    const memories = await ctx.db
+      .query("memories")
+      .withIndex("by_owner", (q) => q.eq("repoOwner", repoOwner))
+      .collect();
+
+    const recalledPatterns = memories
+      .filter((m) => m.occurrences >= 2)
+      .sort((a, b) => b.occurrences - a.occurrences || b.lastSeenAt - a.lastSeenAt);
+
+    return {
+      audit,
+      repoOwner,
+      sessions: sessions.sort((a, b) => a.ts - b.ts),
+      recalledPatterns,
+    };
+  },
 });
 
 export const listSessions = query({
   args: { auditId: v.id("audits") },
-  handler: async (ctx, args) =>
-    ctx.db
+  returns: v.array(sessionDoc),
+  handler: async (ctx, args) => {
+    const audit = await getOwnedAuditOrNull(ctx, args.auditId);
+    if (!audit) return [];
+    return await ctx.db
       .query("sessions")
       .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
-      .collect(),
+      .collect();
+  },
 });
 
 export const patchChip = internalMutation({

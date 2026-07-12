@@ -3,14 +3,14 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
-import { repoEvalSignalsSchema } from "../lib/audit-registry";
+import { AGENTS, workerReportPayload } from "../lib/agent_hierarchy";
+import { repoEvalSignalsSchema } from "../lib/audit_registry";
 import {
   extractStructured,
   isLlmAvailable,
   llmTurnPayload,
-} from "../lib/ai-gateway";
-import { parseGithubUrl } from "../lib/fork-rules";
+} from "../lib/ai_gateway";
+import { parseGithubUrl } from "../lib/fork_rules";
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const GITHUB_HEADERS: Record<string, string> = {
@@ -41,7 +41,7 @@ function extractFromContent(path: string, content: string) {
 export const run = internalAction({
   args: { auditId: v.id("audits") },
   handler: async (ctx, args) => {
-    const audit = await ctx.runQuery(internal.actions.helpers.getAuditInternal, {
+    const audit = await ctx.runQuery(internal.lib.audit_helpers.getAuditInternal, {
       auditId: args.auditId,
     });
     if (!audit) return;
@@ -170,12 +170,12 @@ export const run = internalAction({
         },
       };
 
-      await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
+      await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
         auditId: args.auditId,
         agent: "repo",
         payload,
       });
-      await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
+      await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
         auditId: args.auditId,
         agent: "structure",
         payload: payload.structure,

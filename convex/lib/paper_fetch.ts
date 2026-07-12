@@ -1,6 +1,6 @@
-import type { PaperSection, PaperSections } from "./audit-registry";
-import { fetchArxivMetadata, normalizeArxivId } from "./arxiv-fetch";
-import { fetchS2Paper } from "./s2-fetch";
+import type { PaperSection, PaperSections } from "./audit_registry";
+import { fetchArxivMetadata, normalizeArxivId } from "./arxiv_fetch";
+import { fetchS2Paper } from "./s2_fetch";
 
 const SECTION_HEADING =
   /^(abstract|introduction|background|related work|methods?|methodology|experimental setup|experiments?|results?|discussion|conclusion|appendix)\b/i;

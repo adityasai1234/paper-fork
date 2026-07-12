@@ -1,17 +1,23 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
+import { requireOwnedAudit } from "./lib/auth";
+import { cronJobDoc } from "./lib/validators";
 
 export const schedule = mutation({
   args: {
     auditId: v.id("audits"),
-    githubUrl: v.string(),
     scheduledAt: v.number(),
     notifyEmail: v.optional(v.string()),
   },
+  returns: v.id("cronJobs"),
   handler: async (ctx, args) => {
+    const audit = await requireOwnedAudit(ctx, args.auditId);
     return await ctx.db.insert("cronJobs", {
-      ...args,
+      auditId: args.auditId,
+      githubUrl: audit.githubUrl,
+      scheduledAt: args.scheduledAt,
+      notifyEmail: args.notifyEmail,
       status: "pending",
     });
   },
@@ -23,11 +29,11 @@ export const listPending = internalMutation({
     const now = Date.now();
     const jobs = await ctx.db
       .query("cronJobs")
-      .withIndex("by_scheduled")
+      .withIndex("by_status_scheduled", (q) => q.eq("status", "pending"))
       .collect();
 
     for (const job of jobs) {
-      if (job.status === "pending" && job.scheduledAt <= now) {
+      if (job.scheduledAt <= now) {
         await ctx.db.patch(job._id, { status: "fired" });
         const audit = await ctx.db.get(job.auditId);
         if (!audit) continue;
@@ -42,9 +48,12 @@ export const listPending = internalMutation({
 
 export const listByAudit = query({
   args: { auditId: v.id("audits") },
-  handler: async (ctx, args) =>
-    ctx.db
+  returns: v.array(cronJobDoc),
+  handler: async (ctx, args) => {
+    await requireOwnedAudit(ctx, args.auditId);
+    return await ctx.db
       .query("cronJobs")
-      .filter((q) => q.eq(q.field("auditId"), args.auditId))
-      .collect(),
+      .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
+      .collect();
+  },
 });

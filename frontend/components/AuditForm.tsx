@@ -21,11 +21,23 @@ export function AuditForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paperId, paperIdType, githubUrl }),
       });
-      const data = (await res.json()) as { auditId?: string; error?: string };
-      if (!res.ok || !data.auditId) {
+      const data = (await res.json()) as {
+        auditId?: string;
+        sessionId?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.auditId || !data.sessionId) {
         throw new Error(data.error ?? "Failed to start audit");
       }
-      window.location.href = `${APP_URL}/audit/${data.auditId}`;
+      try {
+        localStorage.setItem(
+          "paperfork:activeSession",
+          JSON.stringify({ auditId: data.auditId, sessionId: data.sessionId })
+        );
+      } catch {
+        // ignore storage errors
+      }
+      window.location.href = `${APP_URL}/audit/${data.auditId}?session=${data.sessionId}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start audit");
     } finally {

@@ -1,3 +1,4 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -23,6 +24,7 @@ const verdict = v.union(
 );
 
 export default defineSchema({
+  ...authTables,
   audits: defineTable({
     paperId: v.string(),
     paperIdType: v.union(v.literal("arxiv"), v.literal("doi")),
@@ -40,8 +42,13 @@ export default defineSchema({
     ingressSource: v.optional(
       v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
     ),
+    ownerUserId: v.optional(v.id("users")),
+    sessionId: v.optional(v.string()),
     createdAt: v.number(),
-  }).index("by_created", ["createdAt"]),
+  })
+    .index("by_created", ["createdAt"])
+    .index("by_owner_created", ["ownerUserId", "createdAt"])
+    .index("by_session", ["sessionId"]),
 
   agentOutputs: defineTable({
     auditId: v.id("audits"),
@@ -55,7 +62,9 @@ export default defineSchema({
     ),
     payload: v.any(),
     completedAt: v.number(),
-  }).index("by_audit", ["auditId"]),
+  })
+    .index("by_audit", ["auditId"])
+    .index("by_audit_agent", ["auditId", "agent"]),
 
   reports: defineTable({
     auditId: v.id("audits"),
@@ -186,7 +195,9 @@ export default defineSchema({
     occurrences: v.number(),
     lastSeenAt: v.number(),
     checklistBoost: v.array(v.string()),
-  }).index("by_owner", ["repoOwner"]),
+  })
+    .index("by_owner", ["repoOwner"])
+    .index("by_owner_pattern", ["repoOwner", "pattern"]),
 
   cronJobs: defineTable({
     auditId: v.id("audits"),
@@ -198,7 +209,10 @@ export default defineSchema({
       v.literal("fired"),
       v.literal("cancelled")
     ),
-  }).index("by_scheduled", ["scheduledAt"]),
+  })
+    .index("by_scheduled", ["scheduledAt"])
+    .index("by_audit", ["auditId"])
+    .index("by_status_scheduled", ["status", "scheduledAt"]),
 
   githubOutputs: defineTable({
     auditId: v.id("audits"),

@@ -1,10 +1,17 @@
 "use client";
 
+import { useConvexAuth } from "@convex-dev/auth/react";
+import { useMutation } from "convex/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { api } from "@convex/_generated/api";
+import { persistActiveSession } from "@/components/ResumeAuditBanner";
 
 export function AuditForm() {
   const router = useRouter();
+  const { isAuthenticated, isLoading } = useConvexAuth();
+  const createAudit = useMutation(api.audits.createAudit);
   const [paperId, setPaperId] = useState("");
   const [paperIdType, setPaperIdType] = useState<"arxiv" | "doi">("arxiv");
   const [githubUrl, setGithubUrl] = useState("");
@@ -13,24 +20,31 @@ export function AuditForm() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!isAuthenticated) return;
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paperId, paperIdType, githubUrl }),
-      });
-      const data = (await res.json()) as { auditId?: string; error?: string };
-      if (!res.ok || !data.auditId) {
-        throw new Error(data.error ?? "Failed to start audit");
-      }
-      router.push(`/audit/${data.auditId}`);
+      const result = await createAudit({ paperId, paperIdType, githubUrl });
+      persistActiveSession(result.auditId, result.sessionId);
+      router.push(`/app/audit/${result.auditId}?session=${result.sessionId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start audit");
     } finally {
       setLoading(false);
     }
+  }
+
+  if (isLoading) {
+    return <p>Checking sign-in...</p>;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="marketing-card hero-form">
+        <p>Sign in to start an audit. Your reports stay private to your account.</p>
+        <Link href="/login">Sign in or create account</Link>
+      </div>
+    );
   }
 
   return (

@@ -3,16 +3,21 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter web dev",
-    "dev:frontend": "pnpm --filter frontend dev",
     "build": "pnpm --filter web build",
-    "build:frontend": "pnpm --filter frontend build",
     "eval": "pnpm --filter @paperfork/eval run run",
+    "test": "pnpm --filter @paperfork/eval test",
+    "test:ci": "pnpm test",
     "probe:text": "tsx scripts/text-track-probe.ts",
-    "convex:dev": "npx convex dev"
+    "convex:dev": "npx convex dev",
+    "convex:deploy": "npx convex deploy",
+    "auth:keys": "node generateKeys.mjs",
+    "auth:setup": "bash scripts/setup-convex-auth-env.sh"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.148",
     "@ai-sdk/groq": "^2.0.32",
+    "@auth/core": "0.41.1",
+    "@convex-dev/auth": "^0.0.94",
     "ai": "^6.0.224",
     "convex": "^1.17.4",
     "zod": "^3.25.76"

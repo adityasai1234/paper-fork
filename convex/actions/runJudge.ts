@@ -4,16 +4,16 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
+import { AGENTS, workerReportPayload } from "../lib/agent_hierarchy";
 import {
   buildChecklistFromRegistry,
   emptyEvalProtocol,
-} from "../lib/audit-registry";
+} from "../lib/audit_registry";
 import {
   extractStructured,
   isLlmAvailable,
   llmTurnPayload,
-} from "../lib/ai-gateway";
+} from "../lib/ai_gateway";
 import {
   buildIssueBody,
   buildReadmePatch,
@@ -24,7 +24,7 @@ import {
   type MethodsPayload,
   type RepoPayload,
   type WebPayload,
-} from "../lib/fork-rules";
+} from "../lib/fork_rules";
 
 const gapFillSchema = z.object({
   gapFills: z.array(
@@ -99,7 +99,7 @@ export const run = internalAction({
     isReaudit: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const audit = await ctx.runQuery(internal.actions.helpers.getAuditInternal, {
+    const audit = await ctx.runQuery(internal.lib.audit_helpers.getAuditInternal, {
       auditId: args.auditId,
     });
     if (!audit) return;
@@ -111,19 +111,19 @@ export const run = internalAction({
       payload: {},
     });
 
-    const lit = (await ctx.runQuery(internal.actions.helpers.getAgentOutput, {
+    const lit = (await ctx.runQuery(internal.lib.audit_helpers.getAgentOutput, {
       auditId: args.auditId,
       agent: "literature",
     }))?.payload as LiteraturePayload | undefined;
-    const repo = (await ctx.runQuery(internal.actions.helpers.getAgentOutput, {
+    const repo = (await ctx.runQuery(internal.lib.audit_helpers.getAgentOutput, {
       auditId: args.auditId,
       agent: "repo",
     }))?.payload as RepoPayload | undefined;
-    const web = (await ctx.runQuery(internal.actions.helpers.getAgentOutput, {
+    const web = (await ctx.runQuery(internal.lib.audit_helpers.getAgentOutput, {
       auditId: args.auditId,
       agent: "web",
     }))?.payload as WebPayload | undefined;
-    const methodsRow = await ctx.runQuery(internal.actions.helpers.getAgentOutput, {
+    const methodsRow = await ctx.runQuery(internal.lib.audit_helpers.getAgentOutput, {
       auditId: args.auditId,
       agent: "methods",
     });
@@ -185,10 +185,13 @@ export const run = internalAction({
 
     const parsed = parseGithubUrl(audit.githubUrl);
     const repoOwner = parsed?.owner ?? "unknown";
-    const memories = await ctx.runQuery(internal.actions.helpers.listMemoriesInternal, {
+    const memories = await ctx.runQuery(internal.lib.audit_helpers.listMemoriesInternal, {
       repoOwner,
     });
-    const memoryBoost = memories.flatMap((m: { checklistBoost: string[] }) => m.checklistBoost);
+    const memoryBoost = memories.flatMap((m) => {
+      const boost = (m as { checklistBoost?: string[] }).checklistBoost;
+      return boost ?? [];
+    });
 
     const unverifiableCount = findings.filter((f) => f.verdict === "UNVERIFIABLE").length;
     const scaleRound = audit.scaleRound ?? 0;
@@ -300,7 +303,7 @@ export const run = internalAction({
       })),
     };
 
-    await ctx.runMutation(internal.actions.helpers.insertReport, {
+    await ctx.runMutation(internal.lib.audit_helpers.insertReport, {
       auditId: args.auditId,
       report,
     });
@@ -308,7 +311,7 @@ export const run = internalAction({
     const issueBody = buildIssueBody(args.auditId, audit.paperId, audit.githubUrl, findings);
     const readmePatch = buildReadmePatch(report.reproAppendix, forked);
 
-    await ctx.runMutation(internal.actions.helpers.insertGithubOutput, {
+    await ctx.runMutation(internal.lib.audit_helpers.insertGithubOutput, {
       auditId: args.auditId,
       issueBody,
       readmePatch,
@@ -329,7 +332,7 @@ export const run = internalAction({
 
     const needsSsh = forked.some((f) => /full test|eval/i.test(f.claim));
     if (needsSsh && parsed) {
-      await ctx.runMutation(internal.actions.helpers.insertUserRequest, {
+      await ctx.runMutation(internal.lib.audit_helpers.insertUserRequest, {
         auditId: args.auditId,
         type: "SSH",
         reason: 'Paperfork needs SSH access to verify claim: "Results on full test set"',

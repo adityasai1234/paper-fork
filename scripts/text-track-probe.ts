@@ -4,7 +4,7 @@
  * Usage: npx tsx scripts/text-track-probe.ts [paperId] [arxiv|doi]
  * Example: npx tsx scripts/text-track-probe.ts 2401.00001 arxiv
  */
-import { probeTextTracks } from "../convex/lib/paper-fetch";
+import { probeTextTracks } from "../convex/lib/paper_fetch";
 
 const paperId = process.argv[2] ?? "2401.00001";
 const paperIdType = (process.argv[3] === "doi" ? "doi" : "arxiv") as "arxiv" | "doi";

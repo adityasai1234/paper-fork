@@ -4,9 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "run": "tsx run.ts"
+    "run": "tsx run.ts",
+    "test": "node --import tsx --test tests/**/*.test.ts && TSX_TSCONFIG_PATH=../../apps/web/tests/tsconfig.json node --import tsx --test ../../apps/web/tests/**/*.test.tsx"
   },
   "devDependencies": {
+    "@types/react": "^19.0.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "tsx": "^4.23.0"
   }
 }

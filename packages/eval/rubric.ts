@@ -5,9 +5,9 @@ import {
   type MethodsPayload,
   type RepoPayload,
   type WebPayload,
-} from "../../convex/lib/fork-rules";
+} from "../../convex/lib/fork_rules";
 
-const FIXTURE_LIT: LiteraturePayload = {
+export const FIXTURE_LIT: LiteraturePayload = {
   paper: { title: "Demo Paper", arxivId: "2401.00001" },
   abstract_claims: ["We use 5-fold cross-validation and report macro F1 with multiple seeds."],
   neighbors: [
@@ -18,7 +18,7 @@ const FIXTURE_LIT: LiteraturePayload = {
   method_keywords: ["5-fold", "macro F1"],
 };
 
-const FIXTURE_REPO: RepoPayload = {
+export const FIXTURE_REPO: RepoPayload = {
   readme: "# Demo repo",
   files: [{ path: "eval.py", snippet: "f1_score(y, pred, average='binary')" }],
   seeds_found: ["seed=42"],
@@ -28,7 +28,7 @@ const FIXTURE_REPO: RepoPayload = {
   deps: ["torch"],
 };
 
-const FIXTURE_WEB: WebPayload = { linkup_sources: [], external_metrics: [] };
+export const FIXTURE_WEB: WebPayload = { linkup_sources: [], external_metrics: [] };
 
 export const FIXTURE_METHODS: MethodsPayload = {
   evalProtocol: {
@@ -62,38 +62,67 @@ export const FIXTURE_METHODS: MethodsPayload = {
   ],
 };
 
-const FIXTURE_CTX: AuditContext = {
+export const FIXTURE_CTX: AuditContext = {
   literature: FIXTURE_LIT,
   repo: FIXTURE_REPO,
   web: FIXTURE_WEB,
 };
 
-const FIXTURE_CTX_WITH_METHODS: AuditContext = {
+export const FIXTURE_CTX_WITH_METHODS: AuditContext = {
   ...FIXTURE_CTX,
   methods: FIXTURE_METHODS,
 };
+
+export type PerRuleAssertionResult = {
+  passed: boolean;
+  failures: string[];
+};
+
+export function assertPerRuleFindings(
+  ctx: AuditContext,
+  options: { expectBaselines?: boolean } = {}
+): PerRuleAssertionResult {
+  const findings = runForkRules(ctx);
+  const forked = (dim: string) =>
+    findings.filter((f) => f.dimension === dim && f.verdict === "FORKED");
+  const failures: string[] = [];
+
+  if (forked("splits").length === 0) failures.push("expected FORKED splits (cross-validation)");
+  if (forked("seeds").length === 0) failures.push("expected FORKED seeds (multi-seed)");
+  if (forked("metrics").length === 0) failures.push("expected FORKED metrics (macro F1)");
+
+  if (options.expectBaselines && forked("baselines").length === 0) {
+    failures.push("expected FORKED baselines");
+  }
+
+  return { passed: failures.length === 0, failures };
+}
 
 export function scoreFixture(): {
   passed: boolean;
   forkedCount: number;
   hasBaselineFork: boolean;
   hasCvFork: boolean;
+  perRule: PerRuleAssertionResult;
 } {
   const findings = runForkRules(FIXTURE_CTX);
   const forked = findings.filter((f) => f.verdict === "FORKED");
   const hasCvFork = forked.some((f) => f.dimension === "splits" || /cross.?val|k-?fold/i.test(f.claim));
-  const passed = forked.length >= 2 && hasCvFork;
-  return { passed, forkedCount: forked.length, hasBaselineFork: false, hasCvFork };
+  const perRule = assertPerRuleFindings(FIXTURE_CTX);
+  const passed = forked.length >= 2 && hasCvFork && perRule.passed;
+  return { passed, forkedCount: forked.length, hasBaselineFork: false, hasCvFork, perRule };
 }
 
 export function scoreMethodsFixture(): {
   passed: boolean;
   forkedCount: number;
   hasBaselineFork: boolean;
+  perRule: PerRuleAssertionResult;
 } {
   const findings = runForkRules(FIXTURE_CTX_WITH_METHODS);
   const forked = findings.filter((f) => f.verdict === "FORKED");
   const hasBaselineFork = forked.some((f) => f.dimension === "baselines");
-  const passed = forked.length >= 3 && hasBaselineFork;
-  return { passed, forkedCount: forked.length, hasBaselineFork };
+  const perRule = assertPerRuleFindings(FIXTURE_CTX_WITH_METHODS, { expectBaselines: true });
+  const passed = forked.length >= 3 && hasBaselineFork && perRule.passed;
+  return { passed, forkedCount: forked.length, hasBaselineFork, perRule };
 }

@@ -21,8 +21,9 @@ export const getAgentOutput = internalQuery({
   handler: async (ctx, args) =>
     ctx.db
       .query("agentOutputs")
-      .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
-      .filter((q) => q.eq(q.field("agent"), args.agent))
+      .withIndex("by_audit_agent", (q) =>
+        q.eq("auditId", args.auditId).eq("agent", args.agent)
+      )
       .first(),
 });
 

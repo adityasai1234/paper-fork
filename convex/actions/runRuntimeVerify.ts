@@ -3,7 +3,7 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
+import { AGENTS, workerReportPayload } from "../lib/agent_hierarchy";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
@@ -22,7 +22,7 @@ export const run = internalAction({
       note: "Runtime verification simulated pending SSH approval",
     };
 
-    await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
+    await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
       auditId: args.auditId,
       agent: "runtime",
       payload,

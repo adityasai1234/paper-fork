@@ -10,8 +10,8 @@
  * - Gateway: structured evalProtocol + sectionClaims; required for full micro-audit depth.
  * - PAPERFORK_LLM_MOCK=1: dry-run Gateway calls in Convex actions (empty structured output).
  */
-import { parseAuditMessage } from "../../convex/lib/hermes-parse";
-import { parseArxivAtom } from "../../convex/lib/arxiv-fetch";
+import { parseAuditMessage } from "../../convex/lib/hermes_parse";
+import { parseArxivAtom } from "../../convex/lib/arxiv_fetch";
 import { scoreFixture, scoreMethodsFixture } from "./rubric";
 
 const noLlm = process.argv.includes("--no-llm");
@@ -34,6 +34,16 @@ if (!hermesSample || hermesSample.paperIdType !== "arxiv") {
 
 const abstract = scoreFixture();
 const methods = noLlm ? null : scoreMethodsFixture();
+
+if (!abstract.perRule.passed) {
+  console.log(`Paperfork eval: FAIL (abstract per-rule: ${abstract.perRule.failures.join("; ")})`);
+  process.exit(1);
+}
+
+if (methods && !methods.perRule.passed) {
+  console.log(`Paperfork eval: FAIL (methods per-rule: ${methods.perRule.failures.join("; ")})`);
+  process.exit(1);
+}
 
 const passed = abstract.passed && (noLlm || methods!.passed);
 

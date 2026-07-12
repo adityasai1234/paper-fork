@@ -1,13 +1,20 @@
 import { v } from "convex/values";
 import { internalMutation, query } from "./_generated/server";
+import { memoryDoc } from "./lib/validators";
 
-export const listByOwner = query({
+export const listRecallableByOwner = query({
   args: { repoOwner: v.string() },
-  handler: async (ctx, args) =>
-    ctx.db
+  returns: v.array(memoryDoc),
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
       .query("memories")
       .withIndex("by_owner", (q) => q.eq("repoOwner", args.repoOwner))
-      .collect(),
+      .collect();
+
+    return rows
+      .filter((m) => m.occurrences >= 2)
+      .sort((a, b) => b.occurrences - a.occurrences || b.lastSeenAt - a.lastSeenAt);
+  },
 });
 
 export const upsertFromLedger = internalMutation({
@@ -20,12 +27,14 @@ export const upsertFromLedger = internalMutation({
       })
     ),
   },
+  returns: v.null(),
   handler: async (ctx, args) => {
     for (const p of args.patterns) {
       const existing = await ctx.db
         .query("memories")
-        .withIndex("by_owner", (q) => q.eq("repoOwner", args.repoOwner))
-        .filter((q) => q.eq(q.field("pattern"), p.pattern))
+        .withIndex("by_owner_pattern", (q) =>
+          q.eq("repoOwner", args.repoOwner).eq("pattern", p.pattern)
+        )
         .first();
 
       if (existing) {
@@ -44,5 +53,6 @@ export const upsertFromLedger = internalMutation({
         });
       }
     }
+    return null;
   },
 });

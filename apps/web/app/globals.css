@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg-deep: #080a10;
   --bg-elevated: #11141c;
@@ -23,6 +27,7 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   position: relative;
+  @apply antialiased;
 }
 
 /* ponytail: CSS grain — upgrade path = Three.js noise overlay like Hermes */
@@ -153,6 +158,198 @@ button:disabled {
 .chip.running { background: #3d3d00; color: #ffe566; }
 .chip.done { background: #0d3d1f; color: #6ee7a0; }
 .chip.error { background: #3d0d0d; color: #f87171; }
+
+.hierarchy-live .hierarchy-subtitle {
+  color: #999;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.hierarchy-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.hierarchy-connector {
+  width: 2px;
+  height: 1.25rem;
+  background: linear-gradient(#4d6bff, #333);
+}
+
+.hierarchy-workers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.hierarchy-node {
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  text-align: center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.hierarchy-node.pulse {
+  animation: hierarchy-pulse 1.4s ease-in-out infinite;
+}
+
+.hierarchy-node.status-running {
+  border-color: #ffe566;
+  box-shadow: 0 0 12px rgba(255, 229, 102, 0.2);
+}
+
+.hierarchy-node.status-done {
+  border-color: #6ee7a0;
+}
+
+.hierarchy-node.status-error {
+  border-color: #f87171;
+}
+
+.ruler-node {
+  min-width: 8rem;
+  background: #1a1a2e;
+}
+
+.hierarchy-label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hierarchy-status {
+  display: block;
+  font-size: 0.7rem;
+  color: #999;
+  margin-top: 0.15rem;
+  text-transform: uppercase;
+}
+
+@keyframes hierarchy-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.65; }
+}
+
+.session-bar .session-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.session-label {
+  display: block;
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.session-id {
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.session-status {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+}
+
+.session-warn {
+  margin-top: 0.75rem;
+  color: #fbbf24;
+  font-size: 0.85rem;
+}
+
+.audit-demo-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .audit-demo-grid {
+    grid-template-columns: 1.4fr 1fr;
+  }
+}
+
+.pattern-section {
+  margin-top: 1rem;
+}
+
+.pattern-section h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.pattern-list {
+  list-style: none;
+  font-size: 0.85rem;
+}
+
+.pattern-list li {
+  padding: 0.35rem 0;
+  border-bottom: 1px solid #222;
+}
+
+.pattern-occurrences {
+  display: inline-block;
+  min-width: 2rem;
+  color: #fbbf24;
+  margin-right: 0.5rem;
+}
+
+.pattern-stream {
+  max-height: 14rem;
+  overflow-y: auto;
+  font-size: 0.85rem;
+}
+
+.pattern-signal {
+  display: grid;
+  grid-template-columns: 6rem 1fr auto;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #222;
+}
+
+.pattern-agent {
+  color: #8b9099;
+  font-size: 0.75rem;
+}
+
+.pattern-detail {
+  color: #ccc;
+}
+
+.pattern-time {
+  color: #666;
+  font-size: 0.75rem;
+}
+
+.pattern-empty {
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.forensics-details summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.resume-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-color: var(--border-glow);
+}
 
 .verdict-FORKED { color: #f87171; }
 .verdict-ALIGNED { color: #6ee7a0; }

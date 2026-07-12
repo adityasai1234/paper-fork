@@ -3,16 +3,16 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { AGENTS, rulerBriefScript } from "../lib/agent-hierarchy";
+import { AGENTS, rulerBriefScript } from "../lib/agent_hierarchy";
 import { sendTelegramMessage, sendTelegramVoice } from "../lib/telegram";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
   handler: async (ctx, args) => {
-    const audit = await ctx.runQuery(internal.actions.helpers.getAuditInternal, {
+    const audit = await ctx.runQuery(internal.lib.audit_helpers.getAuditInternal, {
       auditId: args.auditId,
     });
-    const report = await ctx.runQuery(internal.actions.helpers.getReportInternal, {
+    const report = await ctx.runQuery(internal.lib.audit_helpers.getReportInternal, {
       auditId: args.auditId,
     });
     if (!report) return;
@@ -65,7 +65,7 @@ export const run = internalAction({
       const buffer = await res.arrayBuffer();
       const base64 = Buffer.from(buffer).toString("base64");
       const voiceUrl = `data:audio/mpeg;base64,${base64}`;
-      await ctx.runMutation(internal.actions.helpers.patchReportVoice, {
+      await ctx.runMutation(internal.lib.audit_helpers.patchReportVoice, {
         auditId: args.auditId,
         voiceUrl,
       });

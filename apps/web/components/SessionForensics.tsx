@@ -1,8 +1,8 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 type SessionEvent = {
   _id: string;
@@ -24,6 +24,10 @@ function formatPayload(event: string, payload: unknown): string {
   if (!payload || typeof payload !== "object") return "";
   const p = payload as Record<string, unknown>;
   if (event === "worker_report" && typeof p.summary === "string") return p.summary;
+  if (event === "delegate") {
+    if (typeof p.action === "string") return `action: ${p.action}`;
+    if (Array.isArray(p.workers)) return `workers: ${p.workers.join(", ")}`;
+  }
   if (event === "llm_turn") {
     const model = p.model ?? "?";
     const tokens = p.totalTokens ?? p.outputTokens ?? "?";
@@ -34,7 +38,13 @@ function formatPayload(event: string, payload: unknown): string {
   return "";
 }
 
-export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
+export function SessionForensics({
+  auditId,
+  embedded = false,
+}: {
+  auditId: Id<"audits">;
+  embedded?: boolean;
+}) {
   const sessions = useQuery(api.audits.listSessions, { auditId });
 
   if (!sessions) return <div className="card">Loading forensics...</div>;
@@ -43,8 +53,10 @@ export function SessionForensics({ auditId }: { auditId: Id<"audits"> }) {
   const workerEvents = sessions.filter((s: SessionEvent) => isWorker(s.agent));
   const llmEvents = sessions.filter((s: SessionEvent) => s.event === "llm_turn");
 
+  const wrapperClass = embedded ? "forensics-embedded" : "card";
+
   return (
-    <div className="card">
+    <div className={wrapperClass}>
       <h2>Agent hierarchy forensics</h2>
       <p style={{ color: "#999", fontSize: "0.875rem", marginTop: "0.5rem" }}>
         Ruler delegates workers; workers report up; Ruler speaks via ElevenLabs.

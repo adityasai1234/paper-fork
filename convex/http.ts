@@ -1,8 +1,11 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
+import { auth } from "./auth";
 
 const http = httpRouter();
+
+auth.addHttpRoutes(http);
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;
@@ -38,19 +41,19 @@ http.route({
       });
     }
 
-    const auditId = await ctx.runMutation(api.audits.createAudit, {
+    const { auditId, sessionId } = await ctx.runMutation(internal.audits.createAuditWebhook, {
       paperId,
       paperIdType: paperIdType ?? "arxiv",
       githubUrl,
       telegramChatId,
-      ingressSource: "webhook",
     });
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://paperfork.getkarpathy.com";
     return new Response(
       JSON.stringify({
         auditId,
-        auditUrl: `${appUrl}/audit/${auditId}`,
+        sessionId,
+        auditUrl: `${appUrl}/app/audit/${auditId}?session=${sessionId}`,
         reportUrl: `${appUrl}/report/${auditId}`,
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }

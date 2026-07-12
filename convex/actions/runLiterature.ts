@@ -3,29 +3,29 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { fetchArxivMetadata, normalizeArxivId } from "../lib/arxiv-fetch";
-import { AGENTS, workerReportPayload } from "../lib/agent-hierarchy";
+import { fetchArxivMetadata, normalizeArxivId } from "../lib/arxiv_fetch";
+import { AGENTS, workerReportPayload } from "../lib/agent_hierarchy";
 import {
   extractStructured,
   isLlmAvailable,
   llmTurnPayload,
-} from "../lib/ai-gateway";
+} from "../lib/ai_gateway";
 import {
   extractRegexClaims,
   methodsOutputSchema,
   shouldFetchFullText,
-} from "../lib/audit-registry";
+} from "../lib/audit_registry";
 import {
   arxivIdFromS2,
   fetchS2Neighbors,
   fetchS2Paper,
   type S2Neighbor,
-} from "../lib/s2-fetch";
+} from "../lib/s2_fetch";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
   handler: async (ctx, args) => {
-    const audit = await ctx.runQuery(internal.actions.helpers.getAuditInternal, {
+    const audit = await ctx.runQuery(internal.lib.audit_helpers.getAuditInternal, {
       auditId: args.auditId,
     });
     if (!audit) return;
@@ -180,7 +180,7 @@ export const run = internalAction({
         textTrackMeta,
       };
 
-      await ctx.runMutation(internal.actions.helpers.insertAgentOutput, {
+      await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
         auditId: args.auditId,
         agent: "literature",
         payload,
