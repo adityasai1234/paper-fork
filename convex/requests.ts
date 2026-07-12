@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 
 export const listByAudit = query({
@@ -25,6 +26,12 @@ export const approveRequest = mutation({
       status: "done",
       simulatedOutput,
     });
+
+    if (request.type === "SSH" || request.type === "GPU") {
+      await ctx.scheduler.runAfter(0, internal.actions.runRuntimeVerify.run, {
+        auditId: request.auditId,
+      });
+    }
   },
 });
 

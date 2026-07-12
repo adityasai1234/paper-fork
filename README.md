@@ -77,9 +77,13 @@ See [`.env.example`](.env.example).
 
 ```bash
 pnpm install
-npx convex dev          # backend
-pnpm --filter web dev   # frontend
+cp .env.example .env.local   # fill keys
+npx convex dev                 # backend + HTTP /audit webhook
+pnpm dev                       # frontend
+pnpm eval                      # fixture rubric
 ```
+
+Hermes + Telegram setup: [docs/hermes-telegram.md](docs/hermes-telegram.md)
 
 ---
 

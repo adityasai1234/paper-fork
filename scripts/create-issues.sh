@@ -94,8 +94,4 @@ create_issue "[#21] Eval harness" \
   "packages/eval fixture rubric. pnpm eval CI gate." \
   --label buildathon --label layer-ship
 
-create_issue "[#22] Demo seed + production deploy" \
-  "Intentional fork demo repo. paperfork.getkarpathy.com HTTPS. Submit buildathon URL." \
-  --label buildathon --label layer-ship --label partner-cloudflare --label partner-hermes
-
-echo "Created 22 issues on $REPO"
+echo "Created 21 issues on $REPO"

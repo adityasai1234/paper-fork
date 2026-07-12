@@ -13,7 +13,8 @@ User provides paper ID (arXiv or DOI) and GitHub repository URL.
 ## Steps
 
 1. Fan out Literature, Repo, Web agents in parallel via Hermes orchestrator.
-2. Run deterministic fork rules before LLM judgment.
+2. Trigger audit via Convex webhook: POST /audit with paperId + githubUrl.
+3. Run deterministic fork rules before LLM judgment.
 3. Never mark FORKED items as ALIGNED.
 4. Every gap_fill must cite file:line, S2 ID, or Linkup URL.
 5. If execution blocked, create user_request — do not simulate without approval.
