@@ -18,22 +18,7 @@ const nextConfig = {
       },
       {
         source: "/app",
-        destination: "/app/research",
-        permanent: false,
-      },
-      {
-        source: "/login",
-        destination: "/app/research",
-        permanent: false,
-      },
-      {
-        source: "/signup",
-        destination: "/app/research",
-        permanent: false,
-      },
-      {
-        source: "/signin",
-        destination: "/app/research",
+        destination: "/app/audit",
         permanent: false,
       },
     ];

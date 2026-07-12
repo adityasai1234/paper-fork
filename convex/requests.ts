@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
 import { requireAudit } from "./lib/access";
+import { reportPageUrl } from "./lib/app_url";
 import { userRequestDoc } from "./lib/validators";
 
 export const listByAudit = query({
@@ -31,14 +32,15 @@ export const approveRequest = mutation({
 
     await requireAudit(ctx, request.auditId);
 
-    const simulatedOutput =
+    const reportUrl = reportPageUrl(request.auditId);
+    const approvalOutput =
       request.type === "SSH"
-        ? `$ bash scripts/full_eval.sh\nLoading checkpoint... OK\nEvaluating on test split (1000 samples)...\nF1 (macro): 0.874 -> 0.891 (with suggested StratifiedKFold)`
-        : `Simulated ${request.type} access granted.`;
+        ? `SSH/GPU access approved. Remote execution is not configured on this deployment — use the repro appendix in the fork report and run locally.\nReport: ${reportUrl}`
+        : `${request.type} request approved. See fork report for next steps: ${reportUrl}`;
 
     await ctx.db.patch(args.requestId, {
       status: "done",
-      simulatedOutput,
+      simulatedOutput: approvalOutput,
     });
 
     if (request.type === "SSH" || request.type === "GPU") {

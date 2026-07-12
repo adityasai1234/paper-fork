@@ -48,11 +48,25 @@ export const run = internalAction({
 
     const parsed = parseGithubUrl(audit.githubUrl);
     if (!parsed) {
+      await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
+        auditId: args.auditId,
+        agent: "repo",
+        payload: {
+          files: [],
+          seeds_found: [],
+          splits_found: [],
+          metrics_found: [],
+          baselines_in_code: [],
+          deps: [],
+          error: "Invalid GitHub URL",
+        },
+      });
       await ctx.runMutation(internal.audits.patchChip, {
         auditId: args.auditId,
         agent: "repo",
         status: "error",
       });
+      await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
       return;
     }
 
@@ -197,6 +211,21 @@ export const run = internalAction({
       });
       await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
     } catch (e) {
+      await ctx.runMutation(internal.lib.audit_helpers.insertAgentOutput, {
+        auditId: args.auditId,
+        agent: "repo",
+        payload: {
+          files: [],
+          seeds_found: [],
+          splits_found: [],
+          metrics_found: [],
+          baselines_in_code: [],
+          deps: [],
+          error: String(e),
+          owner: parsed.owner,
+          repo: parsed.repo,
+        },
+      });
       await ctx.runMutation(internal.audits.patchChip, {
         auditId: args.auditId,
         agent: "repo",
@@ -208,6 +237,7 @@ export const run = internalAction({
         event: "error",
         payload: { message: String(e) },
       });
+      await ctx.runMutation(internal.audits.tryScheduleJudge, { auditId: args.auditId });
     }
   },
 });

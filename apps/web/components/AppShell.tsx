@@ -4,13 +4,13 @@ export function AppShell({
   eyebrow,
   title,
   description,
-  activeNav = "research",
+  activeNav = "audit",
   children,
 }: {
   eyebrow: string;
   title: string;
   description?: string;
-  activeNav?: "research";
+  activeNav?: "audit" | "research";
   children: React.ReactNode;
 }) {
   return (
@@ -21,8 +21,18 @@ export function AppShell({
           <span>Paperfork</span>
         </Link>
         <nav className="side-nav" aria-label="Primary navigation">
-          <Link className={`nav-item${activeNav === "research" ? " active" : ""}`} href="/app/research">
+          <Link
+            className={`nav-item${activeNav === "audit" ? " active" : ""}`}
+            href="/app/audit"
+          >
             <span className="nav-index">01</span>
+            Audit
+          </Link>
+          <Link
+            className={`nav-item${activeNav === "research" ? " active" : ""}`}
+            href="/app/research"
+          >
+            <span className="nav-index">02</span>
             Research
           </Link>
         </nav>

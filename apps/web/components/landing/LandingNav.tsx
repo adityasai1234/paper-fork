@@ -33,8 +33,11 @@ export function LandingNav() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <Button asChild variant="secondary" size="sm">
+            <Link href="/signup">Waitlist</Link>
+          </Button>
           <Button asChild size="sm">
-            <Link href="/app/research">Start research →</Link>
+            <Link href="/app/audit">Start audit →</Link>
           </Button>
         </div>
       </div>

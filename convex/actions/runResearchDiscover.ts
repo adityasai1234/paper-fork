@@ -12,7 +12,6 @@ import {
   linkupOutputFromSearchHits,
   type LinkupResearchOutput,
 } from "../lib/research_helpers";
-import { searchS2Papers } from "../lib/s2_fetch";
 
 const MAX_ROUNDS = 3;
 
@@ -63,48 +62,19 @@ async function fetchFallbackResearch(
   gapFocus?: string[]
 ): Promise<{ output: LinkupResearchOutput; provider: string; meta: Record<string, unknown> }> {
   const query = [prompt, ...(gapFocus ?? [])].join(" ").trim();
-  const seen = new Set<string>();
-  const hits: Array<{
-    title: string;
-    url: string;
-    abstract?: string;
-    year?: number;
-    provider: string;
-  }> = [];
-
-  const s2 = await searchS2Papers(query, 8);
-  for (const paper of s2.papers) {
-    if (seen.has(paper.url)) continue;
-    seen.add(paper.url);
-    hits.push({
-      title: paper.title,
-      url: paper.url,
-      abstract: paper.abstract,
-      year: paper.year,
-      provider: "semantic-scholar",
-    });
-  }
-
   const arxiv = await searchArxivPapers(query, 8);
-  for (const paper of arxiv.papers) {
-    if (seen.has(paper.url)) continue;
-    seen.add(paper.url);
-    hits.push({
-      title: paper.title,
-      url: paper.url,
-      abstract: paper.abstract,
-      year: undefined,
-      provider: "arxiv",
-    });
-  }
+  const hits = arxiv.papers.map((paper) => ({
+    title: paper.title,
+    url: paper.url,
+    abstract: paper.abstract,
+    year: undefined,
+    provider: "arxiv",
+  }));
 
   return {
     output: linkupOutputFromSearchHits(prompt, hits),
-    provider: hits.length > 0 ? "arxiv+s2" : "none",
+    provider: hits.length > 0 ? "arxiv" : "none",
     meta: {
-      s2Ok: s2.ok,
-      s2Count: s2.papers.length,
-      s2Error: s2.error,
       arxivOk: arxiv.ok,
       arxivCount: arxiv.papers.length,
       arxivError: arxiv.error,

@@ -15,12 +15,7 @@ import {
   methodsOutputSchema,
   shouldFetchFullText,
 } from "../lib/audit_registry";
-import {
-  arxivIdFromS2,
-  fetchS2Neighbors,
-  fetchS2Paper,
-  type S2Neighbor,
-} from "../lib/s2_fetch";
+import { fetchLinkupLiterature, type LiteratureNeighbor } from "../lib/linkup_fetch";
 
 export const run = internalAction({
   args: { auditId: v.id("audits") },
@@ -50,23 +45,7 @@ export const run = internalAction({
       let title = audit.paperId;
       let abstract: string | undefined;
       let arxivId: string | undefined;
-      let s2Id: string | undefined;
       let year: number | undefined;
-
-      const s2Result = await fetchS2Paper(audit.paperId, audit.paperIdType);
-      textTrackMeta.s2 = {
-        ok: s2Result.ok,
-        httpStatus: s2Result.httpStatus,
-        error: s2Result.error,
-        rateLimited: s2Result.rateLimited,
-      };
-
-      if (s2Result.paper) {
-        s2Id = s2Result.paper.paperId;
-        year = s2Result.paper.year;
-        if (s2Result.paper.title) title = s2Result.paper.title;
-        if (s2Result.paper.abstract) abstract = s2Result.paper.abstract;
-      }
 
       if (audit.paperIdType === "arxiv") {
         arxivId = normalizeArxivId(audit.paperId);
@@ -87,35 +66,37 @@ export const run = internalAction({
             payload: { tool: "arxiv_fetch", error: arxivResult.error },
           });
         }
-      } else if (!arxivId) {
-        arxivId = arxivIdFromS2(s2Result.paper);
-        textTrackMeta.arxivIdFromS2 = arxivId ?? null;
       }
 
-      let neighbors: S2Neighbor[] = [];
-      if (s2Id) {
-        const neighborResult = await fetchS2Neighbors(s2Id);
-        neighbors = neighborResult.neighbors;
-        textTrackMeta.s2Neighbors = {
-          ok: neighborResult.ok,
-          count: neighbors.length,
-          error: neighborResult.error,
-          rateLimited: neighborResult.rateLimited,
-        };
-        if (!neighborResult.ok) {
-          await ctx.runMutation(internal.audits.logSessionEvent, {
-            auditId: args.auditId,
-            agent: AGENTS.workers.literature,
-            event: "tool_call",
-            payload: { tool: "s2_neighbors", error: neighborResult.error },
-          });
-        }
+      const linkupResult = await fetchLinkupLiterature(audit.paperId, audit.paperIdType, title);
+      textTrackMeta.linkup = {
+        ok: linkupResult.ok,
+        provider: linkupResult.provider,
+        neighborCount: linkupResult.neighbors.length,
+        error: linkupResult.error,
+      };
+
+      if (!linkupResult.ok) {
+        await ctx.runMutation(internal.audits.logSessionEvent, {
+          auditId: args.auditId,
+          agent: AGENTS.workers.literature,
+          event: "tool_call",
+          payload: { tool: "linkup_literature", error: linkupResult.error },
+        });
       }
 
-      if (!abstract && s2Result.paper?.abstract) {
-        abstract = s2Result.paper.abstract;
-        textTrackMeta.abstractSource = "s2_fallback";
+      if (linkupResult.paper?.title && title === audit.paperId) {
+        title = linkupResult.paper.title;
       }
+      if (!abstract && linkupResult.paper?.abstract) {
+        abstract = linkupResult.paper.abstract;
+        textTrackMeta.abstractSource = "linkup";
+      }
+      if (linkupResult.paper?.year) {
+        year = linkupResult.paper.year;
+      }
+
+      const neighbors: LiteratureNeighbor[] = linkupResult.neighbors;
 
       let abstract_claims = abstract ? extractRegexClaims(abstract) : [];
       let section_claims: Array<{
@@ -171,7 +152,7 @@ export const run = internalAction({
       ].map((m) => m[1]);
 
       const payload = {
-        paper: { s2Id, arxivId, title, abstract, year },
+        paper: { arxivId, title, abstract, year },
         abstract_claims,
         neighbors,
         method_keywords: [...new Set(method_keywords)],
@@ -194,9 +175,7 @@ export const run = internalAction({
       const arxivNote = textTrackMeta.arxiv && !(textTrackMeta.arxiv as { ok: boolean }).ok
         ? "; arXiv fetch failed"
         : "";
-      const s2Note = textTrackMeta.s2 && !(textTrackMeta.s2 as { ok: boolean }).ok
-        ? "; S2 lookup degraded"
-        : "";
+      const linkupNote = !linkupResult.ok ? "; Linkup degraded" : "";
 
       await ctx.runMutation(internal.audits.logSessionEvent, {
         auditId: args.auditId,
@@ -204,7 +183,7 @@ export const run = internalAction({
         event: "worker_report",
         payload: workerReportPayload(
           AGENTS.workers.literature,
-          `Paper resolved; ${neighbors.length} neighbors; ${abstract_claims.length} claims${needsMethods ? "; methods scheduled" : ""}${arxivNote}${s2Note}`,
+          `Paper resolved; ${neighbors.length} neighbors; ${abstract_claims.length} claims${needsMethods ? "; methods scheduled" : ""}${arxivNote}${linkupNote}`,
           { neighborCount: neighbors.length, methodsScheduled: needsMethods, textTrackMeta }
         ),
       });

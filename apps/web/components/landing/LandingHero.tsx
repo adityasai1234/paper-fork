@@ -34,7 +34,7 @@ export function LandingHero() {
                 Run an audit
               </p>
               <Button asChild size="lg" className="w-full sm:w-auto">
-                <Link href="/app/research">Start audit →</Link>
+                <Link href="/app/audit">Start audit →</Link>
               </Button>
             </div>
             <div>

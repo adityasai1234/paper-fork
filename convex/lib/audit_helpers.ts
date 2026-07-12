@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import type { Doc } from "../_generated/dataModel";
 import { internalMutation, internalQuery } from "../_generated/server";
 
 export const getAuditInternal = internalQuery({
@@ -77,9 +78,26 @@ export const insertReport = internalMutation({
     report: v.any(),
   },
   handler: async (ctx, args) => {
+    const report = args.report as Record<string, unknown>;
+    const evalProtocol = report.evalProtocol as Record<string, unknown> | undefined;
+    const sanitized = {
+      ...report,
+      paper: report.paper
+        ? {
+            ...(report.paper as Record<string, unknown>),
+            abstract:
+              (report.paper as { abstract?: string | null }).abstract ?? undefined,
+          }
+        : report.paper,
+      evalProtocol: evalProtocol
+        ? Object.fromEntries(
+            Object.entries(evalProtocol).filter(([, value]) => value !== null)
+          )
+        : evalProtocol,
+    };
     return await ctx.db.insert("reports", {
       auditId: args.auditId,
-      ...args.report,
+      ...(sanitized as Omit<Doc<"reports">, "_id" | "_creationTime" | "auditId" | "createdAt">),
       createdAt: Date.now(),
     });
   },

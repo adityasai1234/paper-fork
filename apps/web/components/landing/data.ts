@@ -10,7 +10,7 @@ export const FEATURES = [
     id: "01",
     title: "Literature",
     headline: "Read the paper like a reviewer",
-    body: "arXiv and Semantic Scholar metadata, neighbor papers, and abstract claims — the literature worker builds the claim baseline before any repo diff.",
+    body: "arXiv metadata plus Linkup prior-art search — the literature worker builds the claim baseline before any repo diff.",
     accent: "from-signal/30 via-signal/10 to-transparent",
   },
   {
@@ -87,7 +87,7 @@ export const HOW_IT_WORKS = [
 export const WORKING_NOW = [
   {
     label: "Live web audits",
-    detail: "Convex-backed audit form, real-time progress, and private reports per account.",
+    detail: "Convex-backed audit form, real-time progress, and fork reports.",
   },
   {
     label: "Agent hierarchy UI",

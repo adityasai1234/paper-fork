@@ -20,7 +20,7 @@ async function main() {
     `  HTML:   status=${result.html.status} sections=[${result.html.sections.join(", ")}] mode=${result.html.parseMode}`
   );
   console.log(
-    `  S2:     ${result.s2.ok ? "ok" : "fail"}${result.s2.rateLimited ? " (rate limited)" : ""}${result.s2.error ? ` (${result.s2.error})` : ""}`
+    `  Linkup: ${result.linkup.configured ? "configured" : "LINKUP_API_KEY not set"}`
   );
 }
 

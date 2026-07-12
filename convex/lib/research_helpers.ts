@@ -113,7 +113,7 @@ export function sourcesBasedSynthesis(
 ) {
   if (sources.length === 0) {
     return {
-      synthesis: `No literature sources were retrieved for this research goal:\n\n${prompt}\n\nRetry after confirming the production retrieval providers are available.`,
+      synthesis: `No literature sources were retrieved for this research goal:\n\n${prompt}\n\nConfigure LINKUP_API_KEY on Convex — arXiv fallback runs when Linkup returns empty.`,
       claimsWithEvidence: 0,
       priorPapers: [] as Array<{
         title: string;
@@ -157,7 +157,7 @@ export function buildLinkupResearchQuery(prompt: string, gapFocus?: string[]): s
 Research prompt: ${prompt}
 ${gapSection}
 
-Find prior art papers and authoritative sources this research can build on. Perform multiple targeted searches on arXiv, Semantic Scholar, Papers With Code, and Hugging Face. Return structured JSON with prior_papers (title, url, authors, year, relevance, evidence_quote), themes, sources, and research_gaps.`;
+Find prior art papers and authoritative sources this research can build on. Perform multiple targeted searches on arXiv, Papers With Code, and Hugging Face. Return structured JSON with prior_papers (title, url, authors, year, relevance, evidence_quote), themes, sources, and research_gaps.`;
 }
 
 export const LINKUP_RESEARCH_SCHEMA = {

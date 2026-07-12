@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { AGENTS, rulerBriefScript } from "../lib/agent_hierarchy";
+import { reportPageUrl } from "../lib/app_url";
 import { sendTelegramMessage, sendTelegramVoice } from "../lib/telegram";
 
 export const run = internalAction({
@@ -17,14 +18,15 @@ export const run = internalAction({
     });
     if (!report) return;
 
-    const script = rulerBriefScript({
-      paper: report.paper,
-      forkLedger: report.forkLedger,
-      repo: report.repo,
-    });
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://paperfork.getkarpathy.com";
-    const reportUrl = `${appUrl}/report/${args.auditId}`;
+    const reportUrl = reportPageUrl(args.auditId);
+    const script = rulerBriefScript(
+      {
+        paper: report.paper,
+        forkLedger: report.forkLedger,
+        repo: report.repo,
+      },
+      reportUrl
+    );
 
     const apiKey = process.env.ELEVENLABS_API_KEY;
     const voiceId = process.env.ELEVENLABS_VOICE_ID ?? "21m00Tcm4TlvDq8ikWAM";

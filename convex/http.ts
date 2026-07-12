@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { auditPageUrl, reportPageUrl } from "./lib/app_url";
 
 const http = httpRouter();
 
@@ -45,13 +46,12 @@ http.route({
       telegramChatId,
     });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://paperfork.getkarpathy.com";
     return new Response(
       JSON.stringify({
         auditId,
         sessionId,
-        auditUrl: `${appUrl}/app/audit/${auditId}?session=${sessionId}`,
-        reportUrl: `${appUrl}/report/${auditId}`,
+        auditUrl: auditPageUrl(auditId, sessionId),
+        reportUrl: reportPageUrl(auditId, sessionId),
       }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );

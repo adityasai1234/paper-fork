@@ -1,3 +1,5 @@
+import { appHostnameForSpeech } from "./app_url";
+
 /**
  * Paperfork agent hierarchy.
  * Ruler delegates to workers; workers report up; Ruler speaks via ElevenLabs.
@@ -31,11 +33,14 @@ export function workerReportPayload(
   };
 }
 
-export function rulerBriefScript(report: {
-  paper: { title: string };
-  forkLedger: Array<{ claim: string; verdict: string; repoEvidence?: string }>;
-  repo: { url: string };
-}): string {
+export function rulerBriefScript(
+  report: {
+    paper: { title: string };
+    forkLedger: Array<{ claim: string; verdict: string; repoEvidence?: string }>;
+    repo: { url: string };
+  },
+  reportUrl?: string
+): string {
   const forked = report.forkLedger.filter((f) => f.verdict === "FORKED");
   const unverifiable = report.forkLedger.filter((f) => f.verdict === "UNVERIFIABLE");
 
@@ -54,6 +59,10 @@ export function rulerBriefScript(report: {
     lines.push(`Second fork: ${forked[1].claim}.`);
   }
 
-  lines.push("Full Fork Report is ready at paperfork dot getkarpathy dot com.");
+  if (reportUrl) {
+    lines.push(`Full fork report: ${reportUrl}`);
+  } else {
+    lines.push(`Full fork report is ready at ${appHostnameForSpeech()}.`);
+  }
   return lines.join(" ");
 }

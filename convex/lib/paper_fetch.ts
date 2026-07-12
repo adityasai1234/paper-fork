@@ -1,6 +1,5 @@
 import type { PaperSection, PaperSections } from "./audit_registry";
 import { fetchArxivMetadata, normalizeArxivId } from "./arxiv_fetch";
-import { fetchS2Paper } from "./s2_fetch";
 
 const SECTION_HEADING =
   /^(abstract|introduction|background|related work|methods?|methodology|experimental setup|experiments?|results?|discussion|conclusion|appendix)\b/i;
@@ -214,16 +213,11 @@ export async function probeTextTracks(
 ): Promise<{
   arxiv: { ok: boolean; abstractLen: number; error?: string };
   html: { status: number | "skipped" | "error"; sections: string[]; parseMode: string };
-  s2: { ok: boolean; error?: string; rateLimited?: boolean };
+  linkup: { configured: boolean };
 }> {
   let arxivId: string | undefined;
   if (paperIdType === "arxiv") {
     arxivId = normalizeArxivId(paperId);
-  }
-
-  const s2 = await fetchS2Paper(paperId, paperIdType);
-  if (!arxivId && s2.paper?.externalIds?.ArXiv) {
-    arxivId = s2.paper.externalIds.ArXiv.replace(/^arxiv:/i, "").trim();
   }
 
   const arxiv =
@@ -244,6 +238,6 @@ export async function probeTextTracks(
       sections: paper.meta.sectionsFound,
       parseMode: paper.meta.parseMode,
     },
-    s2: { ok: s2.ok, error: s2.error, rateLimited: s2.rateLimited },
+    linkup: { configured: Boolean(process.env.LINKUP_API_KEY) },
   };
 }

@@ -1,25 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useMutation } from "convex/react";
 import Link from "next/link";
+import { useState } from "react";
+import { api } from "@convex/_generated/api";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function WaitlistForm() {
+  const joinWaitlist = useMutation(api.waitlist.join);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = email.trim();
     if (!trimmed || !EMAIL_RE.test(trimmed)) {
       setError("Enter a valid email address.");
       return;
     }
+
     setError(null);
-    // ponytail: UI-only v1 — upgrade path = Convex waitlist mutation or Resend/Formspree
-    setSubmittedEmail(trimmed);
+    setLoading(true);
+    try {
+      await joinWaitlist({ email: trimmed });
+      setSubmittedEmail(trimmed);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to join waitlist");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (submittedEmail) {
@@ -29,7 +41,7 @@ export function WaitlistForm() {
           You&apos;re on the list. We&apos;ll be in touch at{" "}
           <strong>{submittedEmail}</strong>.
         </p>
-        <Link href="/">Run an audit</Link>
+        <Link href="/app/audit">Run an audit</Link>
       </div>
     );
   }
@@ -48,13 +60,16 @@ export function WaitlistForm() {
         placeholder="you@lab.edu"
         autoComplete="email"
         autoFocus
+        disabled={loading}
       />
       {error ? (
         <p className="form-error" role="alert">
           {error}
         </p>
       ) : null}
-      <button type="submit">Join waitlist</button>
+      <button type="submit" disabled={loading}>
+        {loading ? "Joining…" : "Join waitlist"}
+      </button>
     </form>
   );
 }

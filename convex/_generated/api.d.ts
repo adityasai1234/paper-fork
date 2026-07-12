@@ -28,11 +28,13 @@ import type * as http from "../http.js";
 import type * as lib_access from "../lib/access.js";
 import type * as lib_agent_hierarchy from "../lib/agent_hierarchy.js";
 import type * as lib_ai_gateway from "../lib/ai_gateway.js";
+import type * as lib_app_url from "../lib/app_url.js";
 import type * as lib_arxiv_fetch from "../lib/arxiv_fetch.js";
 import type * as lib_audit_helpers from "../lib/audit_helpers.js";
 import type * as lib_audit_registry from "../lib/audit_registry.js";
 import type * as lib_fork_rules from "../lib/fork_rules.js";
 import type * as lib_hermes_parse from "../lib/hermes_parse.js";
+import type * as lib_linkup_fetch from "../lib/linkup_fetch.js";
 import type * as lib_paper_fetch from "../lib/paper_fetch.js";
 import type * as lib_research_helpers from "../lib/research_helpers.js";
 import type * as lib_research_query from "../lib/research_query.js";
@@ -43,6 +45,7 @@ import type * as memories from "../memories.js";
 import type * as reports from "../reports.js";
 import type * as requests from "../requests.js";
 import type * as research from "../research.js";
+import type * as waitlist from "../waitlist.js";
 
 import type {
   ApiFromModules,
@@ -71,11 +74,13 @@ declare const fullApi: ApiFromModules<{
   "lib/access": typeof lib_access;
   "lib/agent_hierarchy": typeof lib_agent_hierarchy;
   "lib/ai_gateway": typeof lib_ai_gateway;
+  "lib/app_url": typeof lib_app_url;
   "lib/arxiv_fetch": typeof lib_arxiv_fetch;
   "lib/audit_helpers": typeof lib_audit_helpers;
   "lib/audit_registry": typeof lib_audit_registry;
   "lib/fork_rules": typeof lib_fork_rules;
   "lib/hermes_parse": typeof lib_hermes_parse;
+  "lib/linkup_fetch": typeof lib_linkup_fetch;
   "lib/paper_fetch": typeof lib_paper_fetch;
   "lib/research_helpers": typeof lib_research_helpers;
   "lib/research_query": typeof lib_research_query;
@@ -86,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   reports: typeof reports;
   requests: typeof requests;
   research: typeof research;
+  waitlist: typeof waitlist;
 }>;
 
 /**

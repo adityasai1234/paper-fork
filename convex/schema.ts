@@ -307,4 +307,9 @@ export default defineSchema({
     payload: v.any(),
     ts: v.number(),
   }).index("by_run", ["runId"]),
+
+  waitlist: defineTable({
+    email: v.string(),
+    createdAt: v.number(),
+  }).index("by_email", ["email"]),
 });

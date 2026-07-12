@@ -27,7 +27,7 @@ export function OpenSourceCta() {
                 </a>
               </Button>
               <Button asChild variant="secondary" size="lg">
-                <Link href="/app/research">Start audit</Link>
+                <Link href="/app/audit">Start audit</Link>
               </Button>
             </div>
           </div>
@@ -38,7 +38,7 @@ export function OpenSourceCta() {
             <CopyCommand command={QUICKSTART_COMMANDS.clone} />
             <CopyCommand command={QUICKSTART_COMMANDS.dev} />
             <p className="pt-2 font-mono text-[10px] uppercase leading-relaxed tracking-[0.06em] text-muted">
-              Then open localhost:3000 · sign in · submit paper + repo · watch workers live
+              Then open localhost:3000 · submit paper + repo · watch workers live
             </p>
           </div>
         </div>

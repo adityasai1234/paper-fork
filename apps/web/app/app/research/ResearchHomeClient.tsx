@@ -1,32 +1,22 @@
 "use client";
 
 import { ResearchForm } from "@/components/ResearchForm";
+import { AppShell } from "@/components/AppShell";
 import { ResumeResearchBanner } from "@/components/ResumeResearchBanner";
 import { ReportFooter } from "@/components/ReportFooter";
 
 export function ResearchHomeClient() {
   return (
-    <main className="marketing">
-      <header className="marketing-topbar">
-        <span>Paperfork</span>
-      </header>
-
-      <section className="hero" aria-labelledby="research-title">
-        <p className="marketing-eyebrow">#02 · Research</p>
-        <h1 id="research-title" className="hero-title">
-          Auto-research loop
-        </h1>
-        <p className="hero-subtitle">
-          Submit a research prompt. Linkup discovers prior papers, builds citations, and runs a
-          literature loop — compared against a prompt-only baseline.
-        </p>
-      </section>
-
+    <AppShell
+      eyebrow="#02 · Research"
+      title="Auto-research loop"
+      description="Submit a research prompt. Linkup discovers prior papers, builds citations, and runs a literature loop — compared against a prompt-only baseline."
+      activeNav="research"
+    >
       <ResumeResearchBanner basePath="/app" />
       <ResearchForm />
       <p className="hero-spec">prompt · linkup · citations · synthesis · baseline</p>
-
       <ReportFooter className="marketing-footer" />
-    </main>
+    </AppShell>
   );
 }

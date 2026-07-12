@@ -9,9 +9,9 @@
 
 Required Convex environment variables:
 
-- `AI_GATEWAY_API_KEY` or `GROQ_API_KEY`
-- `LINKUP_API_KEY`
-- `GITHUB_TOKEN`
+- `LINKUP_API_KEY` — literature + web + research discovery
+- `GROQ_API_KEY` or `AI_GATEWAY_API_KEY` — judge, methods, synthesis
+- `GITHUB_TOKEN` — repo scanning (recommended)
 - `ELEVENLABS_API_KEY` (optional, for voice briefs)
 - `PAPERFORK_WEBHOOK_SECRET` (for Hermes webhook ingress)
 - `NEXT_PUBLIC_APP_URL` — your Vercel production URL (e.g. `https://paperfork.vercel.app`)

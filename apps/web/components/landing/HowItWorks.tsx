@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
+import { siteUrl } from "@/lib/site";
 import { HOW_IT_WORKS } from "./data";
 
 const container = {
@@ -24,9 +25,9 @@ export function HowItWorks() {
           From paper and repo to fork report
         </h2>
         <p className="mt-4 max-w-2xl text-muted">
-          The same pipeline runs on getkarpathy.com — web app, Convex backend, optional Hermes
-          webhook. Workers report up; memory compounds across audits; only the Ruler voices the final
-          brief.
+          The same pipeline runs on {siteUrl().replace(/^https?:\/\//, "")} — web app, Convex
+          backend, optional Hermes webhook. Workers report up; memory compounds across audits; only
+          the Ruler voices the final brief.
         </p>
 
         <motion.ol

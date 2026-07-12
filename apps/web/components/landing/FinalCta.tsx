@@ -20,7 +20,7 @@ export function FinalCta() {
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
             <Button asChild size="lg">
-              <Link href="/app/research">Start audit →</Link>
+              <Link href="/app/audit">Start audit →</Link>
             </Button>
             <Button asChild variant="secondary" size="lg">
               <a href={GITHUB_REPO} target="_blank" rel="noopener noreferrer">
