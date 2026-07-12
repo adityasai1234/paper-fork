@@ -11,7 +11,9 @@
     "convex:dev": "npx convex dev",
     "convex:deploy": "npx convex deploy",
     "auth:keys": "node generateKeys.mjs",
-    "auth:setup": "bash scripts/setup-convex-auth-env.sh"
+    "auth:setup": "bash scripts/setup-convex-auth-env.sh",
+    "convex:env": "bash scripts/sync-convex-env.sh",
+    "convex:push": "npx convex codegen"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.148",

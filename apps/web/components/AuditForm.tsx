@@ -35,54 +35,64 @@ export function AuditForm() {
   }
 
   if (isLoading) {
-    return <p>Checking sign-in...</p>;
+    return <p className="loading-state">Checking sign-in…</p>;
   }
 
   if (!isAuthenticated) {
     return (
-      <div className="marketing-card hero-form">
+      <div className="card audit-form">
         <p>Sign in to start an audit. Your reports stay private to your account.</p>
-        <Link href="/login">Sign in or create account</Link>
+        <Link className="button-link" href="/login">Sign in or create account</Link>
       </div>
     );
   }
 
   return (
-    <form className="marketing-card hero-form" onSubmit={onSubmit}>
-      <label htmlFor="paperId">Paper ID (arXiv or DOI)</label>
-      <input
-        id="paperId"
-        value={paperId}
-        onChange={(e) => setPaperId(e.target.value)}
-        placeholder="2401.12345"
-        required
-        autoFocus
-      />
-      <label htmlFor="paperIdType">ID type</label>
-      <select
-        id="paperIdType"
-        value={paperIdType}
-        onChange={(e) => setPaperIdType(e.target.value as "arxiv" | "doi")}
-      >
-        <option value="arxiv">arXiv</option>
-        <option value="doi">DOI</option>
-      </select>
-      <label htmlFor="githubUrl">GitHub repository URL</label>
-      <input
-        id="githubUrl"
-        value={githubUrl}
-        onChange={(e) => setGithubUrl(e.target.value)}
-        placeholder="https://github.com/owner/repo"
-        required
-      />
-      <button type="submit" disabled={loading}>
-        {loading ? "Starting audit..." : "Find the fork"}
-      </button>
-      {error && (
-        <p style={{ color: "#f66", marginTop: "0.75rem", fontSize: "0.9rem" }}>
-          {error}
-        </p>
-      )}
+    <form className="card audit-form" onSubmit={onSubmit}>
+      <div className="form-row">
+        <div className="field">
+          <label htmlFor="paperId">Research paper</label>
+          <input
+            id="paperId"
+            value={paperId}
+            onChange={(e) => setPaperId(e.target.value)}
+            placeholder="1706.03762"
+            autoComplete="off"
+            required
+          />
+          <span className="field-hint">Canonical arXiv identifier or DOI</span>
+        </div>
+        <div className="field">
+          <label htmlFor="paperIdType">Registry</label>
+          <select
+            id="paperIdType"
+            value={paperIdType}
+            onChange={(e) => setPaperIdType(e.target.value as "arxiv" | "doi")}
+          >
+            <option value="arxiv">arXiv</option>
+            <option value="doi">DOI</option>
+          </select>
+        </div>
+      </div>
+      <div className="field">
+        <label htmlFor="githubUrl">Implementation repository</label>
+        <input
+          id="githubUrl"
+          value={githubUrl}
+          onChange={(e) => setGithubUrl(e.target.value)}
+          placeholder="https://github.com/owner/repository"
+          inputMode="url"
+          required
+        />
+        <span className="field-hint">Public GitHub repository associated with the paper</span>
+      </div>
+      <div className="form-action">
+        <p className="form-action-copy">Literature, repository, and web workers run in parallel.</p>
+        <button type="submit" disabled={loading}>
+          {loading ? "Opening audit…" : "Run evidence audit →"}
+        </button>
+      </div>
+      {error && <p className="form-status-error">{error}</p>}
     </form>
   );
 }

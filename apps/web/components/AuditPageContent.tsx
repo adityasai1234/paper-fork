@@ -1,10 +1,11 @@
 "use client";
 
-import { useQuery } from "convex/react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { useQuery } from "convex/react";
 import { AgentChips, type ChipStatus } from "@/components/AgentChips";
 import { AgentHierarchyLive } from "@/components/AgentHierarchyLive";
+import { AppShell } from "@/components/AppShell";
 import { PatternProgress } from "@/components/PatternProgress";
 import { SessionBar } from "@/components/SessionBar";
 import { SessionForensics } from "@/components/SessionForensics";
@@ -23,19 +24,21 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
   const report = useQuery(api.reports.getReport, { auditId });
 
   if (audit === undefined) {
-    return <main><p>Loading audit...</p></main>;
+    return <main className="loading-state">Loading audit…</main>;
   }
 
   if (!audit) {
-    return <main><p>Audit not found.</p></main>;
+    return <main className="loading-state">Audit not found.</main>;
   }
 
   const isComplete = audit.status === "done" || audit.status === "blocked";
-  const showForensicsOpen = !isComplete;
 
   return (
-    <main>
-      <h1>Audit in progress</h1>
+    <AppShell
+      eyebrow="Live research operation"
+      title="Evidence audit in progress"
+      description="The Ruler coordinates independent workers. Session URL preserves live hierarchy and pattern progress."
+    >
       <SessionBar
         auditId={auditId}
         sessionId={audit.sessionId}
@@ -57,16 +60,16 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
           }
         />
       </div>
-      <details className="card forensics-details" open={showForensicsOpen}>
+      <details className="card forensics-details" open={!isComplete}>
         <summary>Detailed agent log</summary>
         <SessionForensics auditId={auditId} embedded />
       </details>
       {(isComplete || report) && (
-        <p style={{ marginTop: "1rem" }}>
-          <Link href={`${prefix}/report/${auditId}`}>View report</Link>
-        </p>
+        <Link className="button-link" href={`${prefix}/report/${auditId}`}>
+          Open fork report →
+        </Link>
       )}
       <ReportFooter />
-    </main>
+    </AppShell>
   );
 }
