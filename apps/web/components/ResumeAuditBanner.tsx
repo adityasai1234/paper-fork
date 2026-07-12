@@ -28,7 +28,7 @@ export function ResumeAuditBanner({ basePath = "/app" }: { basePath?: string }) 
 
   const audit = useQuery(
     api.audits.getAudit,
-    stored ? { auditId: stored.auditId } : "skip"
+    stored ? { auditId: stored.auditId, sessionId: stored.sessionId } : "skip"
   );
 
   if (!stored || audit === undefined) return null;

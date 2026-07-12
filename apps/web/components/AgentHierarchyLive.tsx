@@ -52,9 +52,16 @@ function lastDelegateSummary(
   return "Ruler orchestrating workers…";
 }
 
-export function AgentHierarchyLive({ auditId }: { auditId: Id<"audits"> }) {
-  const audit = useQuery(api.audits.getAudit, { auditId });
-  const sessions = useQuery(api.audits.listSessions, { auditId });
+export function AgentHierarchyLive({
+  auditId,
+  sessionId,
+}: {
+  auditId: Id<"audits">;
+  sessionId?: string;
+}) {
+  const sessionArgs = sessionId ? { sessionId } : {};
+  const audit = useQuery(api.audits.getAudit, { auditId, ...sessionArgs });
+  const sessions = useQuery(api.audits.listSessions, { auditId, ...sessionArgs });
 
   if (!audit || !sessions) {
     return <div className="card">Loading agent hierarchy…</div>;

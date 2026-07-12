@@ -19,9 +19,10 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
   const auditId = params.id as Id<"audits">;
   const urlSessionId = searchParams.get("session");
   const prefix = basePath.replace(/\/$/, "");
+  const sessionArgs = urlSessionId ? { sessionId: urlSessionId } : {};
 
-  const audit = useQuery(api.audits.getAudit, { auditId });
-  const report = useQuery(api.reports.getReport, { auditId });
+  const audit = useQuery(api.audits.getAudit, { auditId, ...sessionArgs });
+  const report = useQuery(api.reports.getReport, { auditId, ...sessionArgs });
 
   if (audit === undefined) {
     return <main className="loading-state">Loading audit…</main>;
@@ -35,6 +36,7 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
 
   return (
     <AppShell
+      activeNav="audit"
       eyebrow="Live research operation"
       title="Evidence audit in progress"
       description="The Ruler coordinates independent workers. Session URL preserves live hierarchy and pattern progress."
@@ -46,9 +48,9 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
         urlSessionId={urlSessionId}
         basePath={prefix}
       />
-      <AgentHierarchyLive auditId={auditId} />
+      <AgentHierarchyLive auditId={auditId} sessionId={urlSessionId ?? undefined} />
       <div className="audit-demo-grid">
-        <PatternProgress auditId={auditId} />
+        <PatternProgress auditId={auditId} sessionId={urlSessionId ?? undefined} />
         <AgentChips
           chips={
             audit.chips as {
@@ -62,10 +64,13 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
       </div>
       <details className="card forensics-details" open={!isComplete}>
         <summary>Detailed agent log</summary>
-        <SessionForensics auditId={auditId} embedded />
+        <SessionForensics auditId={auditId} sessionId={urlSessionId ?? undefined} embedded />
       </details>
       {(isComplete || report) && (
-        <Link className="button-link" href={`${prefix}/report/${auditId}`}>
+        <Link
+          className="button-link"
+          href={`${prefix}/report/${auditId}${urlSessionId ? `?session=${urlSessionId}` : ""}`}
+        >
           Open fork report →
         </Link>
       )}

@@ -17,8 +17,17 @@ function formatSignal(event: string, payload: unknown): string {
   return event;
 }
 
-export function PatternProgress({ auditId }: { auditId: Id<"audits"> }) {
-  const progress = useQuery(api.audits.getAuditLiveProgress, { auditId });
+export function PatternProgress({
+  auditId,
+  sessionId,
+}: {
+  auditId: Id<"audits">;
+  sessionId?: string;
+}) {
+  const progress = useQuery(api.audits.getAuditLiveProgress, {
+    auditId,
+    ...(sessionId ? { sessionId } : {}),
+  });
   const streamRef = useRef<HTMLDivElement>(null);
 
   const isRunning =

@@ -9,23 +9,20 @@
     "test:ci": "pnpm test",
     "probe:text": "tsx scripts/text-track-probe.ts",
     "convex:dev": "npx convex dev",
-    "convex:deploy": "npx convex deploy",
-    "auth:keys": "node generateKeys.mjs",
-    "auth:setup": "bash scripts/setup-convex-auth-env.sh",
+    "convex:deploy": "npx convex deploy --cmd-url-env-var-name NEXT_PUBLIC_CONVEX_URL --cmd 'pnpm --filter web build'",
     "convex:env": "bash scripts/sync-convex-env.sh",
     "convex:push": "npx convex codegen"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.148",
     "@ai-sdk/groq": "^2.0.32",
-    "@auth/core": "0.41.1",
-    "@convex-dev/auth": "^0.0.94",
     "ai": "^6.0.224",
     "convex": "^1.17.4",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
+    "next": "^15.1.0",
     "tsx": "^4.23.0",
     "typescript": "^5.7.2"
   },

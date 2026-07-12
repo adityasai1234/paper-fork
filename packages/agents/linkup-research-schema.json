@@ -1,0 +1,46 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "prior_papers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "title": { "type": "string" },
+          "url": { "type": "string" },
+          "authors": { "type": "array", "items": { "type": "string" } },
+          "year": { "type": "number" },
+          "relevance": { "type": "string", "enum": ["high", "medium", "low"] },
+          "evidence_quote": { "type": "string" }
+        },
+        "required": ["title", "url", "relevance", "evidence_quote"]
+      }
+    },
+    "themes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": { "type": "string" },
+          "title": { "type": "string" },
+          "source_type": { "type": "string" },
+          "used_for": { "type": "string" },
+          "quote": { "type": "string" }
+        },
+        "required": ["url", "title", "source_type", "used_for"]
+      }
+    },
+    "research_gaps": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["prior_papers", "themes", "sources", "research_gaps"]
+}

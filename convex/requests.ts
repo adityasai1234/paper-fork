@@ -1,14 +1,17 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
-import { requireOwnedAudit } from "./lib/auth";
+import { requireAuditSession } from "./lib/access";
 import { userRequestDoc } from "./lib/validators";
 
 export const listByAudit = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.array(userRequestDoc),
   handler: async (ctx, args) => {
-    await requireOwnedAudit(ctx, args.auditId);
+    await requireAuditSession(ctx, args.auditId, args.sessionId);
     return await ctx.db
       .query("userRequests")
       .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
@@ -17,13 +20,16 @@ export const listByAudit = query({
 });
 
 export const approveRequest = mutation({
-  args: { requestId: v.id("userRequests") },
+  args: {
+    requestId: v.id("userRequests"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const request = await ctx.db.get(args.requestId);
     if (!request || request.status !== "pending") return null;
 
-    await requireOwnedAudit(ctx, request.auditId);
+    await requireAuditSession(ctx, request.auditId, args.sessionId);
 
     const simulatedOutput =
       request.type === "SSH"
@@ -46,13 +52,16 @@ export const approveRequest = mutation({
 });
 
 export const denyRequest = mutation({
-  args: { requestId: v.id("userRequests") },
+  args: {
+    requestId: v.id("userRequests"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.null(),
   handler: async (ctx, args) => {
     const request = await ctx.db.get(args.requestId);
     if (!request || request.status !== "pending") return null;
 
-    await requireOwnedAudit(ctx, request.auditId);
+    await requireAuditSession(ctx, request.auditId, args.sessionId);
     await ctx.db.patch(args.requestId, { status: "denied" });
     return null;
   },

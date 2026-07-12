@@ -22,6 +22,9 @@ export default function AppHomePage() {
       <ResumeAuditBanner basePath="/app" />
       <AuditForm />
       <p className="hero-spec">arxiv · github · fork report · voice brief</p>
+      <p className="hero-spec">
+        <Link href="/app/research">Or start an auto-research loop →</Link>
+      </p>
 
       <ReportFooter className="marketing-footer" />
     </main>

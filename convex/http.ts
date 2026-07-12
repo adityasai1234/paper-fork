@@ -1,11 +1,8 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { auth } from "./auth";
 
 const http = httpRouter();
-
-auth.addHttpRoutes(http);
 
 function timingSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) return false;

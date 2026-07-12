@@ -1,25 +1,22 @@
 import type { Metadata } from "next";
-import { Alata, Lora } from "next/font/google";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
 import { ConvexClientProvider } from "@/components/ConvexClientProvider";
 import "./globals.css";
 
-const alata = Alata({ weight: "400", subsets: ["latin"], variable: "--font-alata" });
-const lora = Lora({ subsets: ["latin"], variable: "--font-lora" });
-
 export const metadata: Metadata = {
-  title: "Paperfork — Research audit intelligence",
-  description: "Trace where a research paper and its repository diverge.",
+  title: "PaperFork",
+  description: "Evidence-led research audit",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <ConvexAuthNextjsServerProvider>
-      <html lang="en">
-        <body className={`${alata.variable} ${lora.variable}`}>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-        </body>
-      </html>
-    </ConvexAuthNextjsServerProvider>
+    <html lang="en">
+      <body>
+        <ConvexClientProvider>{children}</ConvexClientProvider>
+      </body>
+    </html>
   );
 }

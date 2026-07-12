@@ -216,6 +216,30 @@ function mockStructuredOutput(name: string): unknown {
   if (name === "Adjudication") {
     return { verdict: "UNVERIFIABLE", reasoning: "mock" };
   }
+  if (name === "BaselineSynthesis") {
+    return {
+      synthesis: "Mock baseline synthesis (prompt-only, no sources).",
+      claimsWithEvidence: 0,
+      priorPapers: [],
+    };
+  }
+  if (name === "ResearchSynthesis") {
+    return {
+      synthesis: "Mock research synthesis with retrieved literature context.",
+      claimsWithEvidence: 3,
+      priorPapers: [
+        {
+          title: "Attention Is All You Need",
+          url: "https://arxiv.org/abs/1706.03762",
+          citationKey: "vaswani2017",
+          relevance: "high",
+        },
+      ],
+    };
+  }
+  if (name === "ResearchEvaluation") {
+    return { shouldContinue: false, gaps: [], reasoning: "mock: sufficient coverage" };
+  }
   return {
     evalProtocol: {
       splits: null,

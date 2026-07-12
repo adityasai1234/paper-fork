@@ -3,7 +3,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { getOwnedAuditOrNull, requireAuthUserId } from "./lib/auth";
+import { getAuditForSessionOrNull } from "./lib/access";
 import { parseGithubUrl } from "./lib/fork_rules";
 import { auditDoc, auditLiveProgressDoc, sessionDoc } from "./lib/validators";
 
@@ -13,7 +13,6 @@ type CreateAuditArgs = {
   githubUrl: string;
   telegramChatId?: string;
   ingressSource?: "webhook" | "web" | "cron";
-  ownerUserId?: Id<"users">;
   sessionId?: string;
 };
 
@@ -32,7 +31,6 @@ async function insertAuditAndScheduleWorkers(
     githubUrl: args.githubUrl,
     telegramChatId: args.telegramChatId,
     ingressSource: args.ingressSource ?? "web",
-    ownerUserId: args.ownerUserId,
     sessionId,
     status: "queued",
     chips: { literature: "pending", repo: "pending", web: "pending", methods: "pending" },
@@ -110,33 +108,27 @@ export const createAudit = mutation({
     paperIdType: v.union(v.literal("arxiv"), v.literal("doi")),
     githubUrl: v.string(),
     telegramChatId: v.optional(v.string()),
-    ingressSource: v.optional(
-      v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
-    ),
     sessionId: v.optional(v.string()),
   },
   returns: v.object({
     auditId: v.id("audits"),
     sessionId: v.string(),
   }),
-  handler: async (ctx, args) => {
-    const ownerUserId = await requireAuthUserId(ctx);
-    return await insertAuditAndScheduleWorkers(ctx, {
-      paperId: args.paperId,
-      paperIdType: args.paperIdType,
-      githubUrl: args.githubUrl,
-      telegramChatId: args.telegramChatId,
-      ingressSource: args.ingressSource ?? "web",
-      ownerUserId,
-      sessionId: args.sessionId,
-    });
-  },
+  handler: async (ctx, args) =>
+    insertAuditAndScheduleWorkers(ctx, {
+      ...args,
+      ingressSource: "web",
+    }),
 });
 
 export const getAudit = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.union(auditDoc, v.null()),
-  handler: async (ctx, args) => getOwnedAuditOrNull(ctx, args.auditId),
+  handler: async (ctx, args) =>
+    getAuditForSessionOrNull(ctx, args.auditId, args.sessionId),
 });
 
 export const getAuditBySession = query({
@@ -156,8 +148,8 @@ export const getAuditBySession = query({
 
     if (!audit) return null;
 
-    const owned = await getOwnedAuditOrNull(ctx, audit._id);
-    if (!owned) return null;
+    const visible = await getAuditForSessionOrNull(ctx, audit._id, args.sessionId);
+    if (!visible) return null;
 
     return {
       auditId: audit._id,
@@ -167,10 +159,13 @@ export const getAuditBySession = query({
 });
 
 export const getAuditLiveProgress = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.union(auditLiveProgressDoc, v.null()),
   handler: async (ctx, args) => {
-    const audit = await getOwnedAuditOrNull(ctx, args.auditId);
+    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
     if (!audit) return null;
 
     const sessions = await ctx.db
@@ -200,10 +195,13 @@ export const getAuditLiveProgress = query({
 });
 
 export const listSessions = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.array(sessionDoc),
   handler: async (ctx, args) => {
-    const audit = await getOwnedAuditOrNull(ctx, args.auditId);
+    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
     if (!audit) return [];
     return await ctx.db
       .query("sessions")

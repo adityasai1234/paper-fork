@@ -1,6 +1,6 @@
 # Paperfork
 
-Find where the paper forked from the repo — and draft the merge commit.
+Find where the paper forked from the repo.
 
 Paperfork is a research audit agency with a **Ruler + Workers** hierarchy. The Ruler delegates Literature, Repo, and Web workers; collects their reports; and speaks the final verdict via ElevenLabs on the web report. Give it an arXiv ID or DOI plus a GitHub repository URL.
 
@@ -35,8 +35,9 @@ Workers report up with `worker_report` events. The Ruler alone voices the Fork R
 2. **Repo agent** — GitHub tree, README, seeds/splits/metrics extractors, code structure pass
 3. **Web agent** — Linkup deep search for Papers With Code, HuggingFace, author pages
 4. **Fork rules** — deterministic checks (cross-validation, seeds, metrics, repro gaps)
-5. **Judge + gap-filler** — Convex merges findings into Fork Report JSON (AI Gateway for LLM)
-6. **Outputs** — GitHub issue body, README patch, ElevenLabs voice brief, cron re-audit delta
+5. **Judge + gap-filler** — synthesize findings into Fork Report JSON (AI Gateway for LLM)
+6. **Memory** — recall recurring gap patterns after 2+ audits per repo owner; boost judge checklist
+7. **Outputs** — GitHub issue body, README patch, ElevenLabs voice brief, cron re-audit delta
 
 ---
 

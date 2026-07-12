@@ -40,12 +40,17 @@ function formatPayload(event: string, payload: unknown): string {
 
 export function SessionForensics({
   auditId,
+  sessionId,
   embedded = false,
 }: {
   auditId: Id<"audits">;
+  sessionId?: string;
   embedded?: boolean;
 }) {
-  const sessions = useQuery(api.audits.listSessions, { auditId });
+  const sessions = useQuery(api.audits.listSessions, {
+    auditId,
+    ...(sessionId ? { sessionId } : {}),
+  });
 
   if (!sessions) return <div className="card">Loading forensics...</div>;
 

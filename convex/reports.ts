@@ -1,13 +1,16 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { getOwnedAuditOrNull, requireOwnedAudit } from "./lib/auth";
+import { getAuditForSessionOrNull } from "./lib/access";
 import { githubOutputDoc, reportDoc } from "./lib/validators";
 
 export const getReport = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.union(reportDoc, v.null()),
   handler: async (ctx, args) => {
-    const audit = await getOwnedAuditOrNull(ctx, args.auditId);
+    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
     if (!audit) return null;
     return await ctx.db
       .query("reports")
@@ -17,10 +20,13 @@ export const getReport = query({
 });
 
 export const getGithubOutput = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.union(githubOutputDoc, v.null()),
   handler: async (ctx, args) => {
-    const audit = await getOwnedAuditOrNull(ctx, args.auditId);
+    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
     if (!audit) return null;
     return await ctx.db
       .query("githubOutputs")

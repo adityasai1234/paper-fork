@@ -11,7 +11,7 @@ Full Hermes-style marketing landing at `/`, mock demo login at `/login`, product
 
 1. **Nav** — Features anchor, waitlist, Start audit CTA
 2. **Hero** — Instrument Serif thesis, dual CTAs
-3. **Features** — Six numbered capability cards (Literature → Outputs) with framer-motion half-reveal
+3. **Features** — Seven capability cards (Literature → Memory → Outputs) with framer-motion half-reveal. Memory recalls recurring gaps after 2+ audits per repo owner.
 4. **Partners** — Convex, Linkup, ElevenLabs, Hermes
 5. **Final CTA** — Start audit → `/login`
 6. **Footer**

@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { requireOwnedAudit } from "./lib/auth";
+import { requireAuditSession } from "./lib/access";
 import { cronJobDoc } from "./lib/validators";
 
 export const schedule = mutation({
@@ -9,10 +9,11 @@ export const schedule = mutation({
     auditId: v.id("audits"),
     scheduledAt: v.number(),
     notifyEmail: v.optional(v.string()),
+    sessionId: v.optional(v.string()),
   },
   returns: v.id("cronJobs"),
   handler: async (ctx, args) => {
-    const audit = await requireOwnedAudit(ctx, args.auditId);
+    const audit = await requireAuditSession(ctx, args.auditId, args.sessionId);
     return await ctx.db.insert("cronJobs", {
       auditId: args.auditId,
       githubUrl: audit.githubUrl,
@@ -47,10 +48,13 @@ export const listPending = internalMutation({
 });
 
 export const listByAudit = query({
-  args: { auditId: v.id("audits") },
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
   returns: v.array(cronJobDoc),
   handler: async (ctx, args) => {
-    await requireOwnedAudit(ctx, args.auditId);
+    await requireAuditSession(ctx, args.auditId, args.sessionId);
     return await ctx.db
       .query("cronJobs")
       .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))

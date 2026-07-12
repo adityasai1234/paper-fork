@@ -7,19 +7,23 @@ import type { Id } from "@convex/_generated/dataModel";
 
 export function CronScheduleCard({
   auditId,
+  sessionId,
 }: {
   auditId: Id<"audits">;
   githubUrl: string;
+  sessionId?: string;
 }) {
   const schedule = useMutation(api.cron.schedule);
   const [datetime, setDatetime] = useState("");
   const [done, setDone] = useState(false);
+  const sessionArgs = sessionId ? { sessionId } : {};
 
   async function onSchedule() {
     if (!datetime) return;
     await schedule({
       auditId,
       scheduledAt: new Date(datetime).getTime(),
+      ...sessionArgs,
     });
     setDone(true);
   }

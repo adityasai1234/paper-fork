@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Checklist } from "@/components/Checklist";
 import { AppShell } from "@/components/AppShell";
 import { CronScheduleCard } from "@/components/CronScheduleCard";
@@ -18,10 +18,14 @@ import type { Id } from "@convex/_generated/dataModel";
 
 export default function ReportPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const auditId = params.id as Id<"audits">;
-  const audit = useQuery(api.audits.getAudit, { auditId });
-  const report = useQuery(api.reports.getReport, { auditId });
-  const githubOutput = useQuery(api.reports.getGithubOutput, { auditId });
+  const sessionId = searchParams.get("session") ?? undefined;
+  const sessionArgs = sessionId ? { sessionId } : {};
+
+  const audit = useQuery(api.audits.getAudit, { auditId, ...sessionArgs });
+  const report = useQuery(api.reports.getReport, { auditId, ...sessionArgs });
+  const githubOutput = useQuery(api.reports.getGithubOutput, { auditId, ...sessionArgs });
 
   if (!audit || !report) {
     return <main className="loading-state">Loading report…</main>;
@@ -47,8 +51,8 @@ export default function ReportPage() {
         <GapFills items={report.gapFills} />
         <ReproAppendix repro={report.reproAppendix} />
         <VoicePlayer voiceUrl={report.voiceUrl} />
-        <UserRequestCard auditId={auditId} />
-        <CronScheduleCard auditId={auditId} githubUrl={audit.githubUrl} />
+        <UserRequestCard auditId={auditId} sessionId={sessionId} />
+        <CronScheduleCard auditId={auditId} githubUrl={audit.githubUrl} sessionId={sessionId} />
       </div>
 
       {githubOutput && (

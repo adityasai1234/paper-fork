@@ -1,4 +1,3 @@
-import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -17,6 +16,47 @@ const auditStatus = v.union(
   v.literal("failed")
 );
 
+const researchRunStatus = v.union(
+  v.literal("queued"),
+  v.literal("running"),
+  v.literal("done"),
+  v.literal("failed")
+);
+
+const researchStep = v.union(
+  v.literal("discover"),
+  v.literal("cite"),
+  v.literal("synthesize"),
+  v.literal("evaluate")
+);
+
+const researchSessionEvent = v.union(
+  v.literal("start"),
+  v.literal("discover"),
+  v.literal("cite"),
+  v.literal("synthesize"),
+  v.literal("evaluate"),
+  v.literal("tool_call"),
+  v.literal("llm_turn"),
+  v.literal("error"),
+  v.literal("done")
+);
+
+const priorPaper = v.object({
+  title: v.string(),
+  url: v.string(),
+  citationKey: v.string(),
+  relevance: v.string(),
+});
+
+const baselineComparison = v.object({
+  baselineRunId: v.id("researchRuns"),
+  sourcesAdded: v.number(),
+  claimsWithEvidence: v.number(),
+  baselineClaimsWithEvidence: v.number(),
+  summary: v.string(),
+});
+
 const verdict = v.union(
   v.literal("FORKED"),
   v.literal("ALIGNED"),
@@ -24,7 +64,6 @@ const verdict = v.union(
 );
 
 export default defineSchema({
-  ...authTables,
   audits: defineTable({
     paperId: v.string(),
     paperIdType: v.union(v.literal("arxiv"), v.literal("doi")),
@@ -42,12 +81,10 @@ export default defineSchema({
     ingressSource: v.optional(
       v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
     ),
-    ownerUserId: v.optional(v.id("users")),
     sessionId: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_created", ["createdAt"])
-    .index("by_owner_created", ["ownerUserId", "createdAt"])
     .index("by_session", ["sessionId"]),
 
   agentOutputs: defineTable({
@@ -220,4 +257,54 @@ export default defineSchema({
     issueBody: v.string(),
     readmePatch: v.string(),
   }).index("by_audit", ["auditId"]),
+
+  researchRuns: defineTable({
+    prompt: v.string(),
+    status: researchRunStatus,
+    isBaseline: v.boolean(),
+    baselineRunId: v.optional(v.id("researchRuns")),
+    mainRunId: v.optional(v.id("researchRuns")),
+    loopRound: v.number(),
+    step: v.optional(researchStep),
+    sessionId: v.string(),
+    error: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_session", ["sessionId"])
+    .index("by_created", ["createdAt"])
+    .index("by_main_run", ["mainRunId"]),
+
+  researchSources: defineTable({
+    runId: v.id("researchRuns"),
+    url: v.string(),
+    title: v.string(),
+    authors: v.optional(v.array(v.string())),
+    year: v.optional(v.number()),
+    quote: v.optional(v.string()),
+    citationKey: v.string(),
+    usedFor: v.string(),
+    round: v.number(),
+  }).index("by_run", ["runId"]),
+
+  researchReports: defineTable({
+    runId: v.id("researchRuns"),
+    priorPapers: v.array(priorPaper),
+    synthesis: v.string(),
+    loopMetrics: v.object({
+      rounds: v.number(),
+      sourceCount: v.number(),
+      gapCount: v.number(),
+      claimsWithEvidence: v.number(),
+    }),
+    baselineComparison: v.optional(baselineComparison),
+    createdAt: v.number(),
+  }).index("by_run", ["runId"]),
+
+  researchSessions: defineTable({
+    runId: v.id("researchRuns"),
+    agent: v.string(),
+    event: researchSessionEvent,
+    payload: v.any(),
+    ts: v.number(),
+  }).index("by_run", ["runId"]),
 });

@@ -1,17 +1,30 @@
-import {
-  convexAuthNextjsMiddleware,
-  createRouteMatcher,
-  nextjsMiddlewareRedirect,
-} from "@convex-dev/auth/nextjs/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { DEMO_ACCESS_COOKIE } from "@/lib/demo-access";
 
-const isPublicRoute = createRouteMatcher(["/", "/login", "/signup"]);
+const PUBLIC_PATHS = ["/", "/login", "/signup", "/signin"];
 
-export default convexAuthNextjsMiddleware(async (request, { convexAuth }) => {
-  if (!isPublicRoute(request) && !(await convexAuth.isAuthenticated())) {
-    return nextjsMiddlewareRedirect(request, "/login");
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (
+    PUBLIC_PATHS.includes(pathname) ||
+    pathname.startsWith("/api/demo-access") ||
+    pathname.startsWith("/_next") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
   }
-});
+
+  if (request.cookies.get(DEMO_ACCESS_COOKIE)?.value === "1") {
+    return NextResponse.next();
+  }
+
+  const login = new URL("/login", request.url);
+  login.searchParams.set("next", pathname);
+  return NextResponse.redirect(login);
+}
 
 export const config = {
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

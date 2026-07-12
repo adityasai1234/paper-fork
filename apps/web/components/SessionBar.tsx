@@ -8,19 +8,24 @@ export function SessionBar({
   status,
   urlSessionId,
   basePath = "",
+  resourceType = "audit",
+  label = "Session",
 }: {
   auditId: string;
   sessionId?: string;
   status: string;
   urlSessionId?: string | null;
   basePath?: string;
+  resourceType?: "audit" | "research";
+  label?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const effectiveSession = sessionId ?? urlSessionId ?? "";
   const prefix = basePath.replace(/\/$/, "");
+  const segment = resourceType === "research" ? "research" : "audit";
   const shareUrl =
     typeof window !== "undefined" && effectiveSession
-      ? `${window.location.origin}${prefix}/audit/${auditId}?session=${effectiveSession}`
+      ? `${window.location.origin}${prefix}/${segment}/${auditId}?session=${effectiveSession}`
       : "";
 
   const mismatch =
@@ -37,7 +42,7 @@ export function SessionBar({
     <div className="card session-bar">
       <div className="session-bar-row">
         <div>
-          <span className="session-label">Session</span>
+          <span className="session-label">{label}</span>
           <code className="session-id">{effectiveSession || "—"}</code>
         </div>
         <div>

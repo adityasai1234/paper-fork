@@ -40,7 +40,6 @@ export const auditDoc = v.object({
   ingressSource: v.optional(
     v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
   ),
-  ownerUserId: v.optional(v.id("users")),
   sessionId: v.optional(v.string()),
   createdAt: v.number(),
 });

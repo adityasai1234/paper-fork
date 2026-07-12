@@ -17,7 +17,7 @@ export default function HomePage() {
           <br />
           forked from the <em>repo</em>
         </h1>
-        <p className="hero-subtitle">Draft the merge commit.</p>
+        <p className="hero-subtitle">Trace where the paper forked from the repo.</p>
       </section>
 
       <AuditForm />

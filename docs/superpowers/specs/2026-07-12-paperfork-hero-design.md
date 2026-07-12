@@ -42,7 +42,7 @@ Verdict colors (`#f87171`, `#6ee7a0`, `#fbbf24`) unchanged for report consistenc
 - Top bar: brand + "Join waitlist" → `/signup`
 - Eyebrow: `#01 · Audit`
 - Headline: Instrument Serif, two lines, italic on "repo"
-- Subtitle: "Draft the merge commit."
+- Subtitle: "Deep Linkup search, fork rules, and memory across audits — then the Ruler voices the verdict."
 - Audit form in elevated `.marketing-card`
 - Spec row: `arxiv · github · fork report · voice brief`
 - CSS fork motif and radial vignette behind hero

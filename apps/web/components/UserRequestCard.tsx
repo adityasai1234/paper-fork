@@ -13,8 +13,15 @@ type UserRequest = {
   simulatedOutput?: string;
 };
 
-export function UserRequestCard({ auditId }: { auditId: Id<"audits"> }) {
-  const requests = useQuery(api.requests.listByAudit, { auditId });
+export function UserRequestCard({
+  auditId,
+  sessionId,
+}: {
+  auditId: Id<"audits">;
+  sessionId?: string;
+}) {
+  const sessionArgs = sessionId ? { sessionId } : {};
+  const requests = useQuery(api.requests.listByAudit, { auditId, ...sessionArgs });
   const approve = useMutation(api.requests.approveRequest);
   const deny = useMutation(api.requests.denyRequest);
 
@@ -31,8 +38,8 @@ export function UserRequestCard({ auditId }: { auditId: Id<"audits"> }) {
           {r.simulatedOutput && <pre>{r.simulatedOutput}</pre>}
           {r.status === "pending" && (
             <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => approve({ requestId: r._id })}>Approve</button>
-              <button className="secondary" onClick={() => deny({ requestId: r._id })}>
+              <button onClick={() => approve({ requestId: r._id, ...sessionArgs })}>Approve</button>
+              <button className="secondary" onClick={() => deny({ requestId: r._id, ...sessionArgs })}>
                 Deny
               </button>
             </div>
