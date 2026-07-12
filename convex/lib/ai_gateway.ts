@@ -28,6 +28,11 @@ export function isLlmAvailable(): boolean {
   return isGatewayAvailable() || isGroqDirectAvailable();
 }
 
+/** Structured JSON schema output (research/audit agents). Groq direct llama models lack json_schema support. */
+export function isStructuredLlmAvailable(): boolean {
+  return isGatewayAvailable();
+}
+
 /** Deterministic mock for local eval / dry-run (no Gateway calls). */
 export function isMockLlmMode(): boolean {
   return process.env.PAPERFORK_LLM_MOCK === "1";

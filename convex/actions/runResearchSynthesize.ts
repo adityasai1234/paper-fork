@@ -4,7 +4,11 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { extractStructured, isLlmAvailable, llmTurnPayload } from "../lib/ai_gateway";
+import {
+  extractStructured,
+  isStructuredLlmAvailable,
+  llmTurnPayload,
+} from "../lib/ai_gateway";
 import { sourcesBasedSynthesis } from "../lib/research_helpers";
 
 const synthesisSchema = z.object({
@@ -68,7 +72,7 @@ export const run = internalAction({
       }))
     );
 
-    if (isLlmAvailable()) {
+    if (isStructuredLlmAvailable()) {
       try {
         const result = await extractStructured({
           name: "ResearchSynthesis",
@@ -119,7 +123,7 @@ export const run = internalAction({
     let gaps = args.linkupGaps;
     let evalReason = "Max rounds or sufficient coverage";
 
-    if (isLlmAvailable() && args.round < 3) {
+    if (isStructuredLlmAvailable() && args.round < 3) {
       try {
         const evalResult = await extractStructured({
           name: "ResearchEvaluation",

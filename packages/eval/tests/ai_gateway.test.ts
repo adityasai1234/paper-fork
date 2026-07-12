@@ -5,6 +5,7 @@ import {
   isGroqDirectAvailable,
   isLlmAvailable,
   isMockLlmMode,
+  isStructuredLlmAvailable,
 } from "../../../convex/lib/ai_gateway";
 
 const ENV_KEYS = [
@@ -50,6 +51,13 @@ describe("ai_gateway env helpers", () => {
     assert.equal(isLlmAvailable(), false);
     process.env.GROQ_API_KEY = "groq";
     assert.equal(isLlmAvailable(), true);
+  });
+
+  it("isStructuredLlmAvailable only when gateway configured", () => {
+    process.env.GROQ_API_KEY = "groq";
+    assert.equal(isStructuredLlmAvailable(), false);
+    process.env.AI_GATEWAY_API_KEY = "gateway";
+    assert.equal(isStructuredLlmAvailable(), true);
   });
 
   it("isMockLlmMode when PAPERFORK_LLM_MOCK=1", () => {

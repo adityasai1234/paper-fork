@@ -4,7 +4,11 @@ import { v } from "convex/values";
 import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
-import { extractStructured, isLlmAvailable, llmTurnPayload } from "../lib/ai_gateway";
+import {
+  extractStructured,
+  isStructuredLlmAvailable,
+  llmTurnPayload,
+} from "../lib/ai_gateway";
 
 const synthesisSchema = z.object({
   synthesis: z.string(),
@@ -19,9 +23,9 @@ const synthesisSchema = z.object({
   ),
 });
 
-function mockBaselineSynthesis(prompt: string) {
+function promptOnlyBaselineSynthesis(prompt: string) {
   return {
-    synthesis: `Baseline (prompt-only, mock): A brief overview of "${prompt.slice(0, 80)}..." without external literature retrieval.`,
+    synthesis: `Prompt-only baseline for "${prompt.slice(0, 120)}". No external literature was retrieved for this run — compare against the main research run for cited sources.`,
     claimsWithEvidence: 0,
     priorPapers: [] as Array<{
       title: string;
@@ -53,9 +57,9 @@ export const run = internalAction({
       payload: { mode: "prompt-only" },
     });
 
-    let output = mockBaselineSynthesis(run.prompt);
+    let output = promptOnlyBaselineSynthesis(run.prompt);
 
-    if (isLlmAvailable()) {
+    if (isStructuredLlmAvailable()) {
       try {
         const result = await extractStructured({
           name: "BaselineSynthesis",

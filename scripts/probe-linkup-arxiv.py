@@ -15,13 +15,14 @@ SCHEMA_PATH = ROOT / "packages/agents/linkup-arxiv-research-schema.json"
 
 
 def load_local_env() -> None:
-    path = ROOT / ".env.local"
-    if not path.exists():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        if line and not line.lstrip().startswith("#") and "=" in line:
-            key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip())
+    for name in (".env", ".env.local"):
+        path = ROOT / name
+        if not path.exists():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line and not line.lstrip().startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ.setdefault(key.strip(), value.strip())
 
 
 def main() -> None:
