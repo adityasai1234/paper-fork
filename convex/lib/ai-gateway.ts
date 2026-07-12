@@ -55,11 +55,11 @@ export type ExtractStructuredResult<T> = {
   provider: "gateway" | "groq" | "mock";
 };
 
-const ZERO_USAGE: LanguageModelUsage = {
+const ZERO_USAGE = {
   inputTokens: 0,
   outputTokens: 0,
   totalTokens: 0,
-};
+} as LanguageModelUsage;
 
 export async function extractStructured<T extends z.ZodTypeAny>(
   args: ExtractStructuredArgs<T>

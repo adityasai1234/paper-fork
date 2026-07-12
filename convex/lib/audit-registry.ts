@@ -244,10 +244,7 @@ export function buildChecklistFromRegistry(
           return { item: label, status: "amber" as const, evidence: `Paper baselines: ${protocol.baselines.join(", ")}` };
         }
         break;
-      case "deps":
-        if (repo.deps.length > 0) {
-          return { item: label, status: "green" as const, evidence: `${repo.deps.length} deps listed` };
-        }
+      case "data_leakage":
         break;
       case "eval_protocol":
         if (protocol?.summary && protocol.summary.length > 40) {

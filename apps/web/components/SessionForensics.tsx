@@ -8,6 +8,7 @@ type SessionEvent = {
   _id: string;
   agent: string;
   event: string;
+  payload?: unknown;
   ts: number;
 };
 

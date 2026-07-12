@@ -13,6 +13,7 @@ import type * as actions_generateVoiceBrief from "../actions/generateVoiceBrief.
 import type * as actions_helpers from "../actions/helpers.js";
 import type * as actions_runJudge from "../actions/runJudge.js";
 import type * as actions_runLiterature from "../actions/runLiterature.js";
+import type * as actions_runMethods from "../actions/runMethods.js";
 import type * as actions_runRepo from "../actions/runRepo.js";
 import type * as actions_runRuntimeVerify from "../actions/runRuntimeVerify.js";
 import type * as actions_runWeb from "../actions/runWeb.js";
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   "actions/helpers": typeof actions_helpers;
   "actions/runJudge": typeof actions_runJudge;
   "actions/runLiterature": typeof actions_runLiterature;
+  "actions/runMethods": typeof actions_runMethods;
   "actions/runRepo": typeof actions_runRepo;
   "actions/runRuntimeVerify": typeof actions_runRuntimeVerify;
   "actions/runWeb": typeof actions_runWeb;
