@@ -922,7 +922,18 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
   font-family: var(--font-mono, monospace);
   font-size: 0.72rem;
   line-height: 1.45;
-  color: #a7f3d0;
+  color: #ffffff;
+}
+
+.research-terminal pre.research-terminal-line,
+.research-terminal .research-terminal-line {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #ffffff;
 }
 
 .research-terminal-line {
@@ -932,7 +943,7 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 }
 
 .research-terminal-line.muted {
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .research-terminal-cursor {
@@ -1157,10 +1168,11 @@ body {
 
 .app-shell .research-terminal {
   padding: 16px 18px;
-  color: #d7f9e5;
+  color: #ffffff;
   scrollbar-color: #46504c transparent;
 }
 
+.app-shell .research-terminal pre.research-terminal-line,
 .app-shell .research-terminal .research-terminal-line {
   width: 100%;
   max-width: 100%;
@@ -1170,14 +1182,14 @@ body {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: #d7f9e5;
+  color: #ffffff;
   font: 12px/1.65 var(--font-mono);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .app-shell .research-terminal .research-terminal-line.muted {
-  color: #8d9792;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .app-shell .research-terminal .research-terminal-cursor {
