@@ -1,0 +1,90 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "paper_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "arxiv_id": { "type": "string" },
+        "title": { "type": "string" },
+        "authors": { "type": "array", "items": { "type": "string" } },
+        "canonical_url": { "type": "string" }
+      },
+      "required": ["arxiv_id", "title", "authors", "canonical_url"]
+    },
+    "evaluation_protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "datasets_and_splits": { "type": "array", "items": { "type": "string" } },
+        "seeds_and_aggregation": { "type": "string" },
+        "metrics": { "type": "array", "items": { "type": "string" } },
+        "baselines_and_ablations": { "type": "array", "items": { "type": "string" } },
+        "hardware_and_budget": { "type": "string" },
+        "checkpoint_policy": { "type": "string" }
+      },
+      "required": ["datasets_and_splits", "seeds_and_aggregation", "metrics", "baselines_and_ablations", "hardware_and_budget", "checkpoint_policy"]
+    },
+    "reported_results": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "dataset": { "type": "string" },
+          "metric": { "type": "string" },
+          "value": { "type": "string" },
+          "source_url": { "type": "string" },
+          "evidence_quote": { "type": "string" }
+        },
+        "required": ["dataset", "metric", "value", "source_url", "evidence_quote"]
+      }
+    },
+    "repository_alignment": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "dimension": { "type": "string" },
+          "status": { "type": "string", "enum": ["aligned", "conflict", "unverifiable"] },
+          "paper_evidence": { "type": "string" },
+          "repo_evidence": { "type": "string" },
+          "source_urls": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["dimension", "status", "paper_evidence", "repo_evidence", "source_urls"]
+      }
+    },
+    "corrections_and_reproductions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "kind": { "type": "string" },
+          "summary": { "type": "string" },
+          "source_url": { "type": "string" },
+          "evidence_quote": { "type": "string" }
+        },
+        "required": ["kind", "summary", "source_url", "evidence_quote"]
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "url": { "type": "string" },
+          "source_type": { "type": "string" },
+          "primary": { "type": "boolean" },
+          "used_for": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["url", "source_type", "primary", "used_for"]
+      }
+    },
+    "research_gaps": { "type": "array", "items": { "type": "string" } }
+  },
+  "required": ["paper_identity", "evaluation_protocol", "reported_results", "repository_alignment", "corrections_and_reproductions", "sources", "research_gaps"]
+}
