@@ -3,22 +3,27 @@
 import { v } from "convex/values";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
+import { searchArxivPapers } from "../lib/arxiv_fetch";
 import {
   buildLinkupResearchQuery,
   citationKeyFromTitle,
   EMPTY_LINKUP_RESEARCH,
   LINKUP_RESEARCH_SCHEMA,
+  linkupOutputFromSearchHits,
   type LinkupResearchOutput,
 } from "../lib/research_helpers";
+import { searchS2Papers } from "../lib/s2_fetch";
 
 const MAX_ROUNDS = 3;
 
 async function fetchLinkupResearch(
   prompt: string,
   gapFocus?: string[]
-): Promise<LinkupResearchOutput> {
+): Promise<{ output: LinkupResearchOutput; provider: string }> {
   const linkupKey = process.env.LINKUP_API_KEY;
-  if (!linkupKey) return EMPTY_LINKUP_RESEARCH;
+  if (!linkupKey) {
+    return { output: EMPTY_LINKUP_RESEARCH, provider: "none" };
+  }
 
   const q = buildLinkupResearchQuery(prompt, gapFocus);
   const res = await fetch("https://api.linkup.so/v1/search", {
@@ -36,16 +41,74 @@ async function fetchLinkupResearch(
   });
 
   if (!res.ok) {
-    return { ...EMPTY_LINKUP_RESEARCH, research_gaps: [`Linkup error: ${res.status}`] };
+    return {
+      output: { ...EMPTY_LINKUP_RESEARCH, research_gaps: [`Linkup error: ${res.status}`] },
+      provider: "linkup-error",
+    };
   }
 
   const data = (await res.json()) as { structuredOutput?: LinkupResearchOutput };
   const structured = data.structuredOutput ?? (data as unknown as LinkupResearchOutput);
-  return {
+  const output: LinkupResearchOutput = {
     prior_papers: structured.prior_papers ?? [],
     themes: structured.themes ?? [],
     sources: structured.sources ?? [],
     research_gaps: structured.research_gaps ?? [],
+  };
+  return { output, provider: "linkup" };
+}
+
+async function fetchFallbackResearch(
+  prompt: string,
+  gapFocus?: string[]
+): Promise<{ output: LinkupResearchOutput; provider: string; meta: Record<string, unknown> }> {
+  const query = [prompt, ...(gapFocus ?? [])].join(" ").trim();
+  const seen = new Set<string>();
+  const hits: Array<{
+    title: string;
+    url: string;
+    abstract?: string;
+    year?: number;
+    provider: string;
+  }> = [];
+
+  const s2 = await searchS2Papers(query, 8);
+  for (const paper of s2.papers) {
+    if (seen.has(paper.url)) continue;
+    seen.add(paper.url);
+    hits.push({
+      title: paper.title,
+      url: paper.url,
+      abstract: paper.abstract,
+      year: paper.year,
+      provider: "semantic-scholar",
+    });
+  }
+
+  const arxiv = await searchArxivPapers(query, 8);
+  for (const paper of arxiv.papers) {
+    if (seen.has(paper.url)) continue;
+    seen.add(paper.url);
+    hits.push({
+      title: paper.title,
+      url: paper.url,
+      abstract: paper.abstract,
+      year: undefined,
+      provider: "arxiv",
+    });
+  }
+
+  return {
+    output: linkupOutputFromSearchHits(prompt, hits),
+    provider: hits.length > 0 ? "arxiv+s2" : "none",
+    meta: {
+      s2Ok: s2.ok,
+      s2Count: s2.papers.length,
+      s2Error: s2.error,
+      arxivOk: arxiv.ok,
+      arxivCount: arxiv.papers.length,
+      arxivError: arxiv.error,
+    },
   };
 }
 
@@ -110,17 +173,27 @@ export const runDiscover = internalAction({
       loopRound: args.round,
     });
 
+    const query = buildLinkupResearchQuery(run.prompt, args.gapFocus);
     await ctx.runMutation(internal.research.logResearchSession, {
       runId: args.runId,
       agent: "research:discover",
       event: "discover",
-      payload: {
-        round: args.round,
-        query: buildLinkupResearchQuery(run.prompt, args.gapFocus),
-      },
+      payload: { round: args.round, query },
     });
 
-    const output = await fetchLinkupResearch(run.prompt, args.gapFocus);
+    let provider = "linkup";
+    let discoverMeta: Record<string, unknown> = {};
+    const linkup = await fetchLinkupResearch(run.prompt, args.gapFocus);
+    let output = linkup.output;
+    provider = linkup.provider;
+
+    const linkupCount = output.prior_papers.length + output.sources.length;
+    if (linkupCount === 0) {
+      const fallback = await fetchFallbackResearch(run.prompt, args.gapFocus);
+      output = fallback.output;
+      provider = fallback.provider;
+      discoverMeta = fallback.meta;
+    }
 
     await ctx.runMutation(internal.research.logResearchSession, {
       runId: args.runId,
@@ -128,9 +201,11 @@ export const runDiscover = internalAction({
       event: "tool_call",
       payload: {
         round: args.round,
+        provider,
         priorPaperCount: output.prior_papers.length,
         sourceCount: output.sources.length,
         gaps: output.research_gaps,
+        ...discoverMeta,
       },
     });
 
@@ -150,6 +225,7 @@ export const runDiscover = internalAction({
       payload: {
         round: args.round,
         inserted: rows.length,
+        provider,
         message: `Indexed ${rows.length} sources with citation keys`,
       },
     });

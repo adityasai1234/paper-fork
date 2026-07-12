@@ -107,3 +107,54 @@ export function arxivIdFromS2(paper?: S2Paper): string | undefined {
   if (!ext) return undefined;
   return ext.replace(/^arxiv:/i, "").trim();
 }
+
+export type S2SearchHit = {
+  s2Id: string;
+  title: string;
+  abstract?: string;
+  year?: number;
+  citationCount?: number;
+  url: string;
+};
+
+export type S2SearchResult = {
+  ok: boolean;
+  papers: S2SearchHit[];
+  httpStatus?: number;
+  error?: string;
+  rateLimited?: boolean;
+};
+
+function s2PaperUrl(paper: S2Paper): string {
+  const arxivId = arxivIdFromS2(paper);
+  if (arxivId) return `https://arxiv.org/abs/${arxivId}`;
+  return `https://www.semanticscholar.org/paper/${paper.paperId}`;
+}
+
+export async function searchS2Papers(query: string, limit = 8): Promise<S2SearchResult> {
+  const q = encodeURIComponent(query.trim().slice(0, 300));
+  if (!q) return { ok: false, papers: [], error: "empty query" };
+
+  try {
+    const res = await fetch(
+      `${S2_BASE}/paper/search?query=${q}&limit=${limit}&fields=title,abstract,year,citationCount,paperId,externalIds`,
+      { headers: s2Headers() }
+    );
+    if (!res.ok) {
+      const { error, rateLimited } = s2Error(res.status);
+      return { ok: false, papers: [], httpStatus: res.status, error, rateLimited };
+    }
+    const data = (await res.json()) as { data?: S2Paper[] };
+    const papers: S2SearchHit[] = (data.data ?? []).map((paper) => ({
+      s2Id: paper.paperId,
+      title: paper.title ?? "Untitled",
+      abstract: paper.abstract,
+      year: paper.year,
+      citationCount: paper.citationCount,
+      url: s2PaperUrl(paper),
+    }));
+    return { ok: true, papers, httpStatus: res.status };
+  } catch (e) {
+    return { ok: false, papers: [], error: String(e) };
+  }
+}

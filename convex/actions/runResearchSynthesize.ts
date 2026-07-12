@@ -5,6 +5,7 @@ import { z } from "zod";
 import { internal } from "../_generated/api";
 import { internalAction } from "../_generated/server";
 import { extractStructured, isLlmAvailable, llmTurnPayload } from "../lib/ai_gateway";
+import { sourcesBasedSynthesis } from "../lib/research_helpers";
 
 const synthesisSchema = z.object({
   synthesis: z.string(),
@@ -25,20 +26,6 @@ const evaluationSchema = z.object({
   reasoning: z.string(),
 });
 
-function mockMainSynthesis(prompt: string, sourceCount: number) {
-  return {
-    synthesis: `Research synthesis (mock) for: ${prompt.slice(0, 120)}. Incorporated ${sourceCount} retrieved sources with evidence-backed claims.`,
-    claimsWithEvidence: Math.min(sourceCount, 5),
-    priorPapers: [
-      {
-        title: "Mock prior paper",
-        url: "https://arxiv.org/abs/0000.00000",
-        citationKey: "mock2026",
-        relevance: "high",
-      },
-    ],
-  };
-}
 
 export const run = internalAction({
   args: {
@@ -70,7 +57,16 @@ export const run = internalAction({
       )
       .join("\n");
 
-    let output = mockMainSynthesis(run.prompt, sources.length);
+    let output = sourcesBasedSynthesis(
+      run.prompt,
+      sources.map((s) => ({
+        title: s.title,
+        url: s.url,
+        citationKey: s.citationKey,
+        quote: s.quote,
+        usedFor: s.usedFor,
+      }))
+    );
 
     if (isLlmAvailable()) {
       try {

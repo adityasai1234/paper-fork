@@ -41,6 +41,70 @@ export function normalizeArxivId(paperId: string): string {
   return paperId.replace(/^arxiv:/i, "").trim();
 }
 
+export type ArxivSearchHit = {
+  arxivId: string;
+  title: string;
+  abstract: string;
+  url: string;
+};
+
+export type ArxivSearchResult = {
+  ok: boolean;
+  papers: ArxivSearchHit[];
+  httpStatus?: number;
+  error?: string;
+};
+
+function arxivIdFromEntryId(id?: string): string | undefined {
+  if (!id) return undefined;
+  const m = id.match(/arxiv\.org\/abs\/([^/?#]+)/i);
+  return m?.[1] ? normalizeArxivId(m[1]) : undefined;
+}
+
+/** Parse all Atom entries from an arXiv search feed. */
+export function parseArxivSearchEntries(xml: string): ArxivSearchHit[] {
+  const papers: ArxivSearchHit[] = [];
+  const entryRe = /<entry>([\s\S]*?)<\/entry>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = entryRe.exec(xml)) !== null) {
+    const entry = match[1];
+    const title = tagInBlock(entry, "title");
+    const abstract = tagInBlock(entry, "summary");
+    const id = tagInBlock(entry, "id");
+    const arxivId = arxivIdFromEntryId(id);
+    if (!title || !arxivId) continue;
+    papers.push({
+      arxivId,
+      title,
+      abstract: abstract ?? "",
+      url: `https://arxiv.org/abs/${arxivId}`,
+    });
+  }
+  return papers;
+}
+
+export async function searchArxivPapers(
+  query: string,
+  limit = 8
+): Promise<ArxivSearchResult> {
+  const q = encodeURIComponent(query.trim().slice(0, 300));
+  if (!q) return { ok: false, papers: [], error: "empty query" };
+
+  try {
+    const res = await fetch(
+      `${ARXIV_BASE}?search_query=all:${q}&start=0&max_results=${limit}`,
+      { headers: { "User-Agent": "paperfork/1.0" } }
+    );
+    const xml = await res.text();
+    if (!res.ok) {
+      return { ok: false, papers: [], httpStatus: res.status, error: `arXiv HTTP ${res.status}` };
+    }
+    return { ok: true, papers: parseArxivSearchEntries(xml), httpStatus: res.status };
+  } catch (e) {
+    return { ok: false, papers: [], error: String(e) };
+  }
+}
+
 export async function fetchArxivMetadata(arxivId: string): Promise<ArxivFetchResult> {
   const id = normalizeArxivId(arxivId);
   try {

@@ -59,6 +59,93 @@ export const EMPTY_LINKUP_RESEARCH: LinkupResearchOutput = {
   research_gaps: ["Linkup API key not configured"],
 };
 
+export function linkupOutputFromSearchHits(
+  prompt: string,
+  hits: Array<{
+    title: string;
+    url: string;
+    abstract?: string;
+    year?: number;
+    provider: string;
+  }>
+): LinkupResearchOutput {
+  if (hits.length === 0) {
+    return {
+      prior_papers: [],
+      themes: [],
+      sources: [],
+      research_gaps: ["No papers found for this query"],
+    };
+  }
+
+  const prior_papers = hits.map((hit) => ({
+    title: hit.title,
+    url: hit.url,
+    year: hit.year,
+    relevance: "high",
+    evidence_quote: (hit.abstract ?? "").slice(0, 280) || `Indexed via ${hit.provider}`,
+  }));
+
+  return {
+    prior_papers,
+    themes: prompt
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((w) => w.length > 3)
+      .slice(0, 5),
+    sources: hits.map((hit) => ({
+      url: hit.url,
+      title: hit.title,
+      source_type: hit.provider,
+      used_for: "literature discovery",
+      quote: hit.abstract?.slice(0, 200),
+    })),
+    research_gaps:
+      hits.length < 3
+        ? ["Limited search results — consider refining the research prompt"]
+        : [],
+  };
+}
+
+export function sourcesBasedSynthesis(
+  prompt: string,
+  sources: Array<{ title: string; url: string; citationKey: string; quote?: string; usedFor: string }>
+) {
+  if (sources.length === 0) {
+    return {
+      synthesis: `No literature sources were retrieved for "${prompt.slice(0, 120)}". Configure LINKUP_API_KEY on Convex or retry — arXiv/Semantic Scholar fallback also runs when Linkup is empty.`,
+      claimsWithEvidence: 0,
+      priorPapers: [] as Array<{
+        title: string;
+        url: string;
+        citationKey: string;
+        relevance: string;
+      }>,
+    };
+  }
+
+  const priorPapers = sources.slice(0, 8).map((s) => ({
+    title: s.title,
+    url: s.url,
+    citationKey: s.citationKey,
+    relevance: "high",
+  }));
+
+  const bullets = sources
+    .slice(0, 6)
+    .map((s) => {
+      const excerpt = s.quote?.trim() || s.usedFor;
+      return `- [${s.citationKey}] ${s.title}: ${excerpt.slice(0, 160)} (${s.url})`;
+    })
+    .join("\n");
+
+  return {
+    synthesis: `Research overview for "${prompt.slice(0, 120)}". Retrieved ${sources.length} source(s) from literature search:\n\n${bullets}\n\nThese papers are the strongest prior art found for this prompt. Configure AI_GATEWAY_API_KEY or GROQ_API_KEY on Convex for LLM synthesis.`,
+    claimsWithEvidence: Math.min(sources.length, 6),
+    priorPapers,
+  };
+}
+
 export function buildLinkupResearchQuery(prompt: string, gapFocus?: string[]): string {
   const gapSection =
     gapFocus && gapFocus.length > 0

@@ -10,7 +10,7 @@ export function AppHomeClient() {
     <main className="marketing">
       <header className="marketing-topbar">
         <span>Paperfork</span>
-        <Link href="/">Home</Link>
+        <Link href="/app/research">Research</Link>
       </header>
 
       <section className="hero" aria-labelledby="app-title">

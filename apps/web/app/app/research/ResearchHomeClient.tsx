@@ -12,7 +12,6 @@ export function ResearchHomeClient() {
         <span>Paperfork</span>
         <nav className="marketing-topbar-nav">
           <Link href="/app">Audit</Link>
-          <Link href="/">Home</Link>
         </nav>
       </header>
 
