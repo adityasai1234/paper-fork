@@ -18,20 +18,11 @@ Required Convex environment variables:
 
 ## Vercel (frontend — apps/web)
 
-### Option A: Vercel dashboard
+Set in Vercel project environment variables:
 
-1. Import the GitHub repo
-2. **Root Directory:** leave as repo root (uses [`vercel.json`](../vercel.json))
-3. **Environment variable:** `NEXT_PUBLIC_CONVEX_URL` = Convex production URL from deploy step
-
-### Option B: Vercel CLI
-
-```bash
-npm i -g vercel
-vercel link
-vercel env add NEXT_PUBLIC_CONVEX_URL
-vercel --prod
-```
+- `NEXT_PUBLIC_CONVEX_URL` — Convex production URL
+- `DEMO_EMAIL` — demo sign-in email (default `admin@gmail.com`)
+- `DEMO_PASSWORD` — demo sign-in password (default `pass1234`)
 
 ## Local dev
 

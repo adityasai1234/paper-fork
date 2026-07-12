@@ -10,7 +10,6 @@ const STORAGE_KEY = "paperfork:activeResearchSession";
 
 type StoredSession = {
   runId: Id<"researchRuns">;
-  sessionId: string;
 };
 
 export function ResumeResearchBanner({ basePath = "/app" }: { basePath?: string }) {
@@ -28,7 +27,7 @@ export function ResumeResearchBanner({ basePath = "/app" }: { basePath?: string 
 
   const run = useQuery(
     api.research.getResearchRun,
-    stored ? { runId: stored.runId, sessionId: stored.sessionId } : "skip"
+    stored ? { runId: stored.runId } : "skip"
   );
 
   if (!stored || run === undefined) return null;
@@ -37,16 +36,14 @@ export function ResumeResearchBanner({ basePath = "/app" }: { basePath?: string 
   return (
     <div className="card resume-banner">
       <p>Research run in progress — resume the live terminal.</p>
-      <Link
-        href={`${basePath.replace(/\/$/, "")}/research/${stored.runId}?session=${stored.sessionId}`}
-      >
+      <Link href={`${basePath.replace(/\/$/, "")}/research/${stored.runId}`}>
         Resume research
       </Link>
     </div>
   );
 }
 
-export function persistActiveResearchSession(runId: Id<"researchRuns">, sessionId: string) {
-  const payload: StoredSession = { runId, sessionId };
+export function persistActiveResearchSession(runId: Id<"researchRuns">) {
+  const payload: StoredSession = { runId };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }

@@ -26,8 +26,8 @@ export function AuditForm() {
         paperIdType,
         githubUrl: githubUrl.trim(),
       });
-      persistActiveSession(result.auditId, result.sessionId);
-      router.push(`/app/audit/${result.auditId}?session=${result.sessionId}`);
+      persistActiveSession(result.auditId);
+      router.push(`/app/audit/${result.auditId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start audit");
     } finally {

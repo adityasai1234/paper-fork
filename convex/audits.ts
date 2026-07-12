@@ -3,7 +3,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { getAuditForSessionOrNull } from "./lib/access";
+import { getAuditOrNull } from "./lib/access";
 import { parseGithubUrl } from "./lib/fork_rules";
 import { auditDoc, auditLiveProgressDoc, sessionDoc } from "./lib/validators";
 
@@ -127,8 +127,7 @@ export const getAudit = query({
     sessionId: v.optional(v.string()),
   },
   returns: v.union(auditDoc, v.null()),
-  handler: async (ctx, args) =>
-    getAuditForSessionOrNull(ctx, args.auditId, args.sessionId),
+  handler: async (ctx, args) => getAuditOrNull(ctx, args.auditId),
 });
 
 export const getAuditBySession = query({
@@ -148,9 +147,6 @@ export const getAuditBySession = query({
 
     if (!audit) return null;
 
-    const visible = await getAuditForSessionOrNull(ctx, audit._id, args.sessionId);
-    if (!visible) return null;
-
     return {
       auditId: audit._id,
       sessionId: audit.sessionId ?? args.sessionId,
@@ -165,7 +161,7 @@ export const getAuditLiveProgress = query({
   },
   returns: v.union(auditLiveProgressDoc, v.null()),
   handler: async (ctx, args) => {
-    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
+    const audit = await getAuditOrNull(ctx, args.auditId);
     if (!audit) return null;
 
     const sessions = await ctx.db
@@ -201,7 +197,7 @@ export const listSessions = query({
   },
   returns: v.array(sessionDoc),
   handler: async (ctx, args) => {
-    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
+    const audit = await getAuditOrNull(ctx, args.auditId);
     if (!audit) return [];
     return await ctx.db
       .query("sessions")

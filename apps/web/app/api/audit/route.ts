@@ -3,7 +3,15 @@ import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "@convex/_generated/api";
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
+export const dynamic = "force-dynamic";
+
+function getConvexClient() {
+  const url = process.env.NEXT_PUBLIC_CONVEX_URL;
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_CONVEX_URL is not configured");
+  }
+  return new ConvexHttpClient(url);
+}
 
 export async function POST(request: Request) {
   let body: {
@@ -32,7 +40,7 @@ export async function POST(request: Request) {
   const sessionId = body.sessionId ?? randomUUID();
 
   try {
-    const result = await convex.mutation(api.audits.createAudit, {
+    const result = await getConvexClient().mutation(api.audits.createAudit, {
       paperId,
       paperIdType,
       githubUrl,

@@ -8,6 +8,7 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/app";
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -21,19 +22,19 @@ export default function LoginForm() {
       const res = await fetch("/api/demo-access", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
         const data = (await res.json()) as { error?: string };
-        setError(data.error ?? "Invalid demo password");
+        setError(data.error ?? "Invalid email or password");
         return;
       }
 
       router.push(next.startsWith("/") ? next : "/app");
       router.refresh();
     } catch {
-      setError("Could not verify password. Try again.");
+      setError("Could not sign in. Try again.");
     } finally {
       setLoading(false);
     }
@@ -42,20 +43,29 @@ export default function LoginForm() {
   return (
     <main className="login-page">
       <div className="login-card">
-        <p className="eyebrow">PaperFork demo</p>
-        <h1>Enter demo password</h1>
-        <p className="login-copy">
-          Use the shared demo password to open the audit workspace.
-        </p>
+        <p className="eyebrow">PaperFork</p>
+        <h1>Sign in</h1>
+        <p className="login-copy">Use your demo credentials to open the audit workspace.</p>
 
         <form onSubmit={onSubmit} className="login-form">
           <label>
-            Demo password
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@gmail.com"
+              autoComplete="email"
+              required
+            />
+          </label>
+          <label>
+            Password
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Ask your host for the password"
+              placeholder="••••••••"
               autoComplete="current-password"
               required
             />
@@ -64,7 +74,7 @@ export default function LoginForm() {
           {error && <p className="form-error">{error}</p>}
 
           <button type="submit" disabled={loading}>
-            {loading ? "Checking…" : "Continue to app →"}
+            {loading ? "Signing in…" : "Continue to app →"}
           </button>
         </form>
 

@@ -34,7 +34,7 @@ export function LandingNav() {
         </div>
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/signup">Waitlist</Link>
+            <Link href="/login">Sign in</Link>
           </Button>
           <Button asChild size="sm">
             <Link href="/app">Start audit →</Link>

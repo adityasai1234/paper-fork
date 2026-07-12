@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
-import { getAuditForSessionOrNull } from "./lib/access";
+import { getAuditOrNull } from "./lib/access";
 import { githubOutputDoc, reportDoc } from "./lib/validators";
 
 export const getReport = query({
@@ -10,7 +10,7 @@ export const getReport = query({
   },
   returns: v.union(reportDoc, v.null()),
   handler: async (ctx, args) => {
-    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
+    const audit = await getAuditOrNull(ctx, args.auditId);
     if (!audit) return null;
     return await ctx.db
       .query("reports")
@@ -26,7 +26,7 @@ export const getGithubOutput = query({
   },
   returns: v.union(githubOutputDoc, v.null()),
   handler: async (ctx, args) => {
-    const audit = await getAuditForSessionOrNull(ctx, args.auditId, args.sessionId);
+    const audit = await getAuditOrNull(ctx, args.auditId);
     if (!audit) return null;
     return await ctx.db
       .query("githubOutputs")

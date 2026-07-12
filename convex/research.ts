@@ -4,7 +4,7 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import {
-  getResearchForSessionOrNull,
+  getResearchOrNull,
   newSessionId,
 } from "./lib/research_helpers";
 
@@ -312,7 +312,7 @@ export const getResearchRun = query({
     sessionId: v.optional(v.string()),
   },
   returns: v.union(researchRunDoc, v.null()),
-  handler: async (ctx, args) => getResearchForSessionOrNull(ctx, args.runId, args.sessionId),
+  handler: async (ctx, args) => getResearchOrNull(ctx, args.runId),
 });
 
 export const getResearchLiveProgress = query({
@@ -330,7 +330,7 @@ export const getResearchLiveProgress = query({
     v.null()
   ),
   handler: async (ctx, args) => {
-    const run = await getResearchForSessionOrNull(ctx, args.runId, args.sessionId);
+    const run = await getResearchOrNull(ctx, args.runId);
     if (!run) return null;
 
     const sessions = await ctx.db
@@ -364,7 +364,7 @@ export const listResearchSessions = query({
   },
   returns: v.array(researchSessionDoc),
   handler: async (ctx, args) => {
-    const run = await getResearchForSessionOrNull(ctx, args.runId, args.sessionId);
+    const run = await getResearchOrNull(ctx, args.runId);
     if (!run) return [];
     const sessions = await ctx.db
       .query("researchSessions")
@@ -399,7 +399,7 @@ export const getResearchReport = query({
     v.null()
   ),
   handler: async (ctx, args) => {
-    const run = await getResearchForSessionOrNull(ctx, args.runId, args.sessionId);
+    const run = await getResearchOrNull(ctx, args.runId);
     if (!run || run.isBaseline) return null;
 
     const report = await ctx.db

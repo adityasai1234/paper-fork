@@ -16,24 +16,19 @@ export function citationKeyFromTitle(title: string, year?: number): string {
   return `${words.join("")}${y}`.slice(0, 32) || `source${y}`;
 }
 
-export async function getResearchForSessionOrNull(
+export async function getResearchOrNull(
   ctx: QueryCtx | MutationCtx,
-  runId: Id<"researchRuns">,
-  sessionId?: string
+  runId: Id<"researchRuns">
 ): Promise<Doc<"researchRuns"> | null> {
-  const run = await ctx.db.get("researchRuns", runId);
-  if (!run) return null;
-  if (sessionId && run.sessionId === sessionId) return run;
-  return null;
+  return await ctx.db.get("researchRuns", runId);
 }
 
-export async function requireResearchSession(
+export async function requireResearch(
   ctx: QueryCtx | MutationCtx,
-  runId: Id<"researchRuns">,
-  sessionId?: string
+  runId: Id<"researchRuns">
 ): Promise<Doc<"researchRuns">> {
-  const run = await getResearchForSessionOrNull(ctx, runId, sessionId);
-  if (!run) throw new Error("Unauthorized");
+  const run = await getResearchOrNull(ctx, runId);
+  if (!run) throw new Error("Research run not found");
   return run;
 }
 

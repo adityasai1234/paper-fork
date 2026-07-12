@@ -10,7 +10,6 @@ const STORAGE_KEY = "paperfork:activeSession";
 
 type StoredSession = {
   auditId: Id<"audits">;
-  sessionId: string;
 };
 
 export function ResumeAuditBanner({ basePath = "/app" }: { basePath?: string }) {
@@ -28,7 +27,7 @@ export function ResumeAuditBanner({ basePath = "/app" }: { basePath?: string }) 
 
   const audit = useQuery(
     api.audits.getAudit,
-    stored ? { auditId: stored.auditId, sessionId: stored.sessionId } : "skip"
+    stored ? { auditId: stored.auditId } : "skip"
   );
 
   if (!stored || audit === undefined) return null;
@@ -37,14 +36,14 @@ export function ResumeAuditBanner({ basePath = "/app" }: { basePath?: string }) 
   return (
     <div className="card resume-banner">
       <p>Audit in progress — resume live hierarchy and pattern stream.</p>
-      <Link href={`${basePath.replace(/\/$/, "")}/audit/${stored.auditId}?session=${stored.sessionId}`}>
+      <Link href={`${basePath.replace(/\/$/, "")}/audit/${stored.auditId}`}>
         Resume audit
       </Link>
     </div>
   );
 }
 
-export function persistActiveSession(auditId: Id<"audits">, sessionId: string) {
-  const payload: StoredSession = { auditId, sessionId };
+export function persistActiveSession(auditId: Id<"audits">) {
+  const payload: StoredSession = { auditId };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
