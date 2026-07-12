@@ -4,6 +4,7 @@ import { useQuery } from "convex/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { AgentChips, type ChipStatus } from "@/components/AgentChips";
+import { AppShell } from "@/components/AppShell";
 import { SessionForensics } from "@/components/SessionForensics";
 import { ReportFooter } from "@/components/ReportFooter";
 import { api } from "@convex/_generated/api";
@@ -16,27 +17,31 @@ export default function AuditPage() {
   const report = useQuery(api.reports.getReport, { auditId });
 
   if (audit === undefined) {
-    return <main><p>Loading audit...</p></main>;
+    return <main className="loading-state">Loading audit…</main>;
   }
 
   if (!audit) {
-    return <main><p>Audit not found.</p></main>;
+    return <main className="loading-state">Audit not found.</main>;
   }
 
   const isComplete = audit.status === "done" || audit.status === "blocked";
 
   return (
-    <main>
-      <h1>Audit in progress</h1>
-      <p className="subtitle">Status: {audit.status}</p>
+    <AppShell
+      eyebrow="Live research operation"
+      title="Evidence audit in progress"
+      description="The Ruler coordinates independent workers and preserves every handoff for review."
+    >
+      <div className="status-band">
+        <strong>Current operation state</strong>
+        <span className="status-value">{audit.status}</span>
+      </div>
       <AgentChips chips={audit.chips as { literature: ChipStatus; repo: ChipStatus; web: ChipStatus }} />
       <SessionForensics auditId={auditId} />
       {(isComplete || report) && (
-        <p style={{ marginTop: "1rem" }}>
-          <Link href={`/report/${auditId}`}>View report</Link>
-        </p>
+        <Link className="button-link" href={`/report/${auditId}`}>Open fork report →</Link>
       )}
       <ReportFooter />
-    </main>
+    </AppShell>
   );
 }
