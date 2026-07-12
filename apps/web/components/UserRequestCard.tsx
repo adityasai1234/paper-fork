@@ -4,6 +4,15 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import type { Id } from "../../../convex/_generated/dataModel";
 
+type UserRequest = {
+  _id: Id<"userRequests">;
+  type: string;
+  status: string;
+  reason: string;
+  command?: string;
+  simulatedOutput?: string;
+};
+
 export function UserRequestCard({ auditId }: { auditId: Id<"audits"> }) {
   const requests = useQuery(api.requests.listByAudit, { auditId });
   const approve = useMutation(api.requests.approveRequest);
@@ -14,7 +23,7 @@ export function UserRequestCard({ auditId }: { auditId: Id<"audits"> }) {
   return (
     <div className="card">
       <h2>User requests</h2>
-      {requests.map((r) => (
+      {requests.map((r: UserRequest) => (
         <div key={r._id} style={{ marginTop: "1rem", padding: "1rem", background: "#0a0a0a", borderRadius: 6 }}>
           <p><strong>{r.type}</strong> — {r.status}</p>
           <p>{r.reason}</p>

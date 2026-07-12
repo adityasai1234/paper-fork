@@ -12,8 +12,8 @@ import { ReproAppendix } from "@/components/ReproAppendix";
 import { ReportFooter } from "@/components/ReportFooter";
 import { UserRequestCard } from "@/components/UserRequestCard";
 import { VoicePlayer } from "@/components/VoicePlayer";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 
 export default function ReportPage() {
   const params = useParams();
@@ -58,7 +58,7 @@ export default function ReportPage() {
         <div className="card">
           <h2>Linkup sources</h2>
           <ul>
-            {report.linkupSources.map((s, i) => (
+            {report.linkupSources.map((s: { url: string; usedFor: string }, i: number) => (
               <li key={i}>
                 <a href={s.url}>{s.usedFor}</a>
               </li>
