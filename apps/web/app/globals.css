@@ -939,6 +939,82 @@ footer {
   white-space: pre-wrap;
 }
 
+/* Research surfaces stay legible even when embedded in the dark marketing shell. */
+.app-shell .session-bar,
+.app-shell .research-progress,
+.app-shell .research-baseline-card,
+.app-shell .research-report-card {
+  background: #ffffff;
+  color: #1f1f23;
+}
+
+.app-shell .session-bar *,
+.app-shell .research-progress *,
+.app-shell .research-baseline-card *,
+.app-shell .research-report-card * {
+  color: inherit;
+}
+
+.app-shell .session-label,
+.app-shell .hierarchy-subtitle,
+.app-shell .research-baseline-summary,
+.app-shell .research-report-card .text-muted {
+  color: #6f6f76;
+}
+
+.app-shell .session-id,
+.app-shell .session-status {
+  color: #1f1f23;
+  font-weight: 650;
+}
+
+.app-shell .research-progress {
+  padding: 1.25rem 1.4rem;
+}
+
+.app-shell .research-progress h2 {
+  margin-bottom: 0.25rem;
+}
+
+.app-shell .research-progress .research-step-chip {
+  color: #6f6f76;
+  border-color: #d8d8d4;
+}
+
+.app-shell .research-progress .research-step-chip.running {
+  color: #a16207;
+  border-color: #a16207;
+  background: #fff8e7;
+}
+
+.app-shell .research-progress .research-step-chip.done {
+  color: #2f6f4e;
+  border-color: #2f6f4e;
+  background: #edf7f1;
+}
+
+.research-report-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.research-stat {
+  padding: 1rem;
+  border: 1px solid #e8e8e5;
+  border-radius: 6px;
+  background: #fff;
+  color: #1f1f23;
+}
+
+.research-stat span { display: block; color: #6f6f76; font-size: 0.75rem; }
+.research-stat strong { display: block; margin-top: 0.35rem; font-size: 1.55rem; }
+
+@media (max-width: 760px) {
+  .research-report-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .marketing-topbar-nav {
   display: flex;
   gap: 1rem;
