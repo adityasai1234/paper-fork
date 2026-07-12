@@ -25,7 +25,6 @@ body {
   position: relative;
 }
 
-/* ponytail: CSS grain — upgrade path = Three.js noise overlay like Hermes */
 body::before {
   content: "";
   position: fixed;
@@ -58,46 +57,23 @@ a:focus-visible {
   border-radius: 2px;
 }
 
-main {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
-h1 {
-  font-size: 2rem;
-  margin-bottom: 0.5rem;
-}
-
-.subtitle {
-  color: #999;
-  margin-bottom: 2rem;
-}
-
-.card {
-  background: #141414;
-  border: 1px solid #2a2a2a;
-  border-radius: 8px;
-  padding: 1.25rem;
-  margin-bottom: 1rem;
-}
-
 label {
   display: block;
   font-size: 0.875rem;
-  color: #aaa;
+  color: var(--text-muted);
   margin-bottom: 0.25rem;
 }
 
 input,
 select {
   width: 100%;
-  padding: 0.6rem 0.75rem;
+  padding: 0.75rem;
   margin-bottom: 1rem;
-  background: #0a0a0a;
-  border: 1px solid #333;
-  border-radius: 6px;
-  color: #fff;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
 }
 
 input:focus-visible,
@@ -111,7 +87,7 @@ button {
   background: #fff;
   color: #000;
   border: none;
-  padding: 0.65rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border-radius: 6px;
   font-weight: 600;
   font-family: var(--font-body);
@@ -129,11 +105,6 @@ button:focus-visible {
   outline-offset: 2px;
 }
 
-button.secondary {
-  background: #2a2a2a;
-  color: #fff;
-}
-
 button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -141,60 +112,9 @@ button:disabled {
   box-shadow: none;
 }
 
-.chip {
-  display: inline-block;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  margin-right: 0.5rem;
-}
-
-.chip.pending { background: #333; }
-.chip.running { background: #3d3d00; color: #ffe566; }
-.chip.done { background: #0d3d1f; color: #6ee7a0; }
-.chip.error { background: #3d0d0d; color: #f87171; }
-
-.verdict-FORKED { color: #f87171; }
-.verdict-ALIGNED { color: #6ee7a0; }
-.verdict-UNVERIFIABLE { color: #fbbf24; }
-
-.check-red { color: #f87171; }
-.check-amber { color: #fbbf24; }
-.check-green { color: #6ee7a0; }
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-th,
-td {
-  text-align: left;
-  padding: 0.5rem;
-  border-bottom: 1px solid #2a2a2a;
-}
-
-pre {
-  background: #0a0a0a;
-  padding: 1rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  font-size: 0.8rem;
-}
-
-footer {
-  margin-top: 3rem;
-  padding-top: 1rem;
-  border-top: 1px solid #2a2a2a;
-  color: #666;
-  font-size: 0.875rem;
-}
-
-/* ── Marketing pages (hero + signup) ── */
-
 .marketing {
   max-width: 720px;
+  margin: 0 auto;
   padding: min(12vh, 6rem) 1.5rem 3rem;
 }
 
@@ -250,7 +170,6 @@ footer {
   z-index: -1;
 }
 
-/* Fork motif — two diverging lines behind headline */
 .hero::after {
   content: "";
   position: absolute;
@@ -285,7 +204,6 @@ footer {
   color: var(--text-muted);
   max-width: 42ch;
   line-height: 1.55;
-  margin-bottom: 0;
   animation: hero-enter 0.6s ease-out 0.1s both;
 }
 
@@ -331,31 +249,12 @@ footer {
 }
 
 .marketing-card label {
-  color: var(--text-muted);
   font-size: 0.8125rem;
   font-weight: 500;
 }
 
-.marketing-card input,
-.marketing-card select {
-  padding: 0.75rem;
-  margin-bottom: 1rem;
-  background: var(--bg-deep);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  color: var(--text-primary);
-  font-family: var(--font-body);
-  transition: border-color 0.15s ease;
-}
-
-.marketing-card input:focus-visible,
-.marketing-card select:focus-visible {
-  border-color: var(--accent-primary);
-}
-
 .marketing-card button[type="submit"] {
   width: 100%;
-  padding: 0.75rem 1.25rem;
   margin-top: 0.25rem;
 }
 
@@ -371,24 +270,18 @@ footer {
   margin-top: 0.35rem;
 }
 
-/* Signup page — narrower centered card */
 .signup-page {
   max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
 }
 
-.signup-page .hero {
+.signup-page .hero,
+.signup-page .marketing-eyebrow {
   text-align: center;
 }
 
 .signup-page .hero-subtitle {
   margin-left: auto;
   margin-right: auto;
-}
-
-.signup-page .marketing-eyebrow {
-  text-align: center;
 }
 
 .signup-alt {
@@ -402,6 +295,12 @@ footer {
   color: #f87171;
   font-size: 0.8125rem;
   margin-bottom: 0.75rem;
+}
+
+.form-status-error {
+  color: #f87171;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
 }
 
 .waitlist-success {
@@ -428,10 +327,7 @@ footer {
     animation: none;
   }
 
-  button {
-    transition: none;
-  }
-
+  button,
   .marketing-card {
     transition: none;
   }

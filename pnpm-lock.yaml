@@ -7,7 +7,26 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@ai-sdk/gateway':
+        specifier: ^3.0.148
+        version: 3.0.148(zod@3.25.76)
+      '@ai-sdk/groq':
+        specifier: ^2.0.32
+        version: 2.0.43(zod@3.25.76)
+      ai:
+        specifier: ^6.0.224
+        version: 6.0.224(zod@3.25.76)
+      convex:
+        specifier: ^1.17.4
+        version: 1.42.1(react@19.2.7)
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.1
       tsx:
         specifier: ^4.23.0
         version: 4.23.0
@@ -60,6 +79,31 @@ importers:
       zod:
         specifier: ^3.25.76
         version: 3.25.76
+
+  frontend:
+    dependencies:
+      next:
+        specifier: ^15.1.0
+        version: 15.5.20(@opentelemetry/api@1.9.1)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
+      react:
+        specifier: ^19.0.0
+        version: 19.2.7
+      react-dom:
+        specifier: ^19.0.0
+        version: 19.2.7(react@19.2.7)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.20.1
+      '@types/react':
+        specifier: ^19.0.2
+        version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.0.2
+        version: 19.2.3(@types/react@19.2.17)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
 
   packages/eval:
     devDependencies:

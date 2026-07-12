@@ -1,10 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 export function AuditForm() {
-  const router = useRouter();
   const [paperId, setPaperId] = useState("");
   const [paperIdType, setPaperIdType] = useState<"arxiv" | "doi">("arxiv");
   const [githubUrl, setGithubUrl] = useState("");
@@ -16,7 +16,7 @@ export function AuditForm() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/audit", {
+      const res = await fetch(`${APP_URL}/api/audit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ paperId, paperIdType, githubUrl }),
@@ -25,7 +25,7 @@ export function AuditForm() {
       if (!res.ok || !data.auditId) {
         throw new Error(data.error ?? "Failed to start audit");
       }
-      router.push(`/audit/${data.auditId}`);
+      window.location.href = `${APP_URL}/audit/${data.auditId}`;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start audit");
     } finally {
@@ -64,11 +64,7 @@ export function AuditForm() {
       <button type="submit" disabled={loading}>
         {loading ? "Starting audit..." : "Find the fork"}
       </button>
-      {error && (
-        <p style={{ color: "#f66", marginTop: "0.75rem", fontSize: "0.9rem" }}>
-          {error}
-        </p>
-      )}
+      {error ? <p className="form-status-error">{error}</p> : null}
     </form>
   );
 }

@@ -3,12 +3,22 @@
   "private": true,
   "scripts": {
     "dev": "pnpm --filter web dev",
+    "dev:frontend": "pnpm --filter frontend dev",
     "build": "pnpm --filter web build",
+    "build:frontend": "pnpm --filter frontend build",
     "eval": "pnpm --filter @paperfork/eval run run",
     "probe:text": "tsx scripts/text-track-probe.ts",
     "convex:dev": "npx convex dev"
   },
+  "dependencies": {
+    "@ai-sdk/gateway": "^3.0.148",
+    "@ai-sdk/groq": "^2.0.32",
+    "ai": "^6.0.224",
+    "convex": "^1.17.4",
+    "zod": "^3.25.76"
+  },
   "devDependencies": {
+    "@types/node": "^22.10.2",
     "tsx": "^4.23.0",
     "typescript": "^5.7.2"
   },
