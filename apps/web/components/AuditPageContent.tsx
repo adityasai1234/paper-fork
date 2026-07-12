@@ -36,7 +36,7 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
 
   return (
     <AppShell
-      activeNav="audit"
+      activeNav="research"
       eyebrow="Live research operation"
       title="Evidence audit in progress"
       description="The Ruler coordinates independent workers. Session URL preserves live hierarchy and pattern progress."

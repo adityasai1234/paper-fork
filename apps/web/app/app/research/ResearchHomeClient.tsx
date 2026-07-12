@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ResearchForm } from "@/components/ResearchForm";
 import { ResumeResearchBanner } from "@/components/ResumeResearchBanner";
 import { ReportFooter } from "@/components/ReportFooter";
@@ -10,9 +9,6 @@ export function ResearchHomeClient() {
     <main className="marketing">
       <header className="marketing-topbar">
         <span>Paperfork</span>
-        <nav className="marketing-topbar-nav">
-          <Link href="/app">Audit</Link>
-        </nav>
       </header>
 
       <section className="hero" aria-labelledby="research-title">

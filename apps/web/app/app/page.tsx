@@ -1,7 +1,7 @@
-import { AppHomeClient } from "./AppHomeClient";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 export default function AppHomePage() {
-  return <AppHomeClient />;
+  redirect("/app/research");
 }

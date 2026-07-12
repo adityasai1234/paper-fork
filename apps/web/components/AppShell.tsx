@@ -4,34 +4,30 @@ export function AppShell({
   eyebrow,
   title,
   description,
-  activeNav = "audit",
+  activeNav = "research",
   children,
 }: {
   eyebrow: string;
   title: string;
   description?: string;
-  activeNav?: "audit" | "research";
+  activeNav?: "research";
   children: React.ReactNode;
 }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link className="brand" href="/" aria-label="Paperfork home">
+        <Link className="brand" href="/app/research" aria-label="Paperfork home">
           <span className="brand-mark" aria-hidden="true">
             PF
           </span>
           <span>Paperfork</span>
         </Link>
         <nav className="side-nav" aria-label="Primary navigation">
-          <Link className={`nav-item${activeNav === "audit" ? " active" : ""}`} href="/app">
-            <span className="nav-index">01</span>
-            Audit
-          </Link>
           <Link
             className={`nav-item${activeNav === "research" ? " active" : ""}`}
             href="/app/research"
           >
-            <span className="nav-index">02</span>
+            <span className="nav-index">01</span>
             Research
           </Link>
         </nav>

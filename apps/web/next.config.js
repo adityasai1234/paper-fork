@@ -17,18 +17,23 @@ const nextConfig = {
         permanent: false,
       },
       {
+        source: "/app",
+        destination: "/app/research",
+        permanent: false,
+      },
+      {
         source: "/login",
-        destination: "/app",
+        destination: "/app/research",
         permanent: false,
       },
       {
         source: "/signup",
-        destination: "/app",
+        destination: "/app/research",
         permanent: false,
       },
       {
         source: "/signin",
-        destination: "/app",
+        destination: "/app/research",
         permanent: false,
       },
     ];

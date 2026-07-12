@@ -29,7 +29,7 @@ export function ResearchForm() {
   }
 
   return (
-    <form className="card audit-form" onSubmit={onSubmit}>
+    <form className="marketing-card hero-form" onSubmit={onSubmit}>
       <div className="field">
         <label htmlFor="researchPrompt">Research prompt</label>
         <textarea
@@ -44,7 +44,7 @@ export function ResearchForm() {
         />
       </div>
       {error && <p className="form-error">{error}</p>}
-      <button type="submit" className="button-link" disabled={loading || prompt.trim().length < 10}>
+      <button type="submit" disabled={loading || prompt.trim().length < 10}>
         {loading ? "Starting…" : "Start research run"}
       </button>
     </form>

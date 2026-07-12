@@ -33,11 +33,8 @@ export function LandingNav() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-            <Link href="/login">Sign in</Link>
-          </Button>
           <Button asChild size="sm">
-            <Link href="/app">Start audit →</Link>
+            <Link href="/app/research">Start research →</Link>
           </Button>
         </div>
       </div>

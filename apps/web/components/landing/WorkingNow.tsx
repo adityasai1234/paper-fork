@@ -26,7 +26,7 @@ export function WorkingNow() {
               .
             </p>
             <Button asChild className="mt-8" variant="secondary">
-              <Link href="/app">Try the live app →</Link>
+              <Link href="/app/research">Try the live app →</Link>
             </Button>
           </div>
 
