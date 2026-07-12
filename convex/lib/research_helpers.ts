@@ -113,7 +113,7 @@ export function sourcesBasedSynthesis(
 ) {
   if (sources.length === 0) {
     return {
-      synthesis: `No literature sources were retrieved for "${prompt.slice(0, 120)}". Configure LINKUP_API_KEY on Convex or retry — arXiv/Semantic Scholar fallback also runs when Linkup is empty.`,
+      synthesis: `No literature sources were retrieved for this research goal:\n\n${prompt}\n\nRetry after confirming the production retrieval providers are available.`,
       claimsWithEvidence: 0,
       priorPapers: [] as Array<{
         title: string;
@@ -140,7 +140,7 @@ export function sourcesBasedSynthesis(
     .join("\n");
 
   return {
-    synthesis: `Research overview for "${prompt.slice(0, 120)}". Retrieved ${sources.length} source(s) from literature search:\n\n${bullets}\n\nThese papers are the strongest prior art found for this prompt. Configure AI_GATEWAY_API_KEY or GROQ_API_KEY on Convex for LLM synthesis.`,
+    synthesis: `Research goal:\n${prompt}\n\nRetrieved ${sources.length} source(s) from literature search:\n\n${bullets}\n\nThese papers are the strongest evidence-backed prior art found for the submitted research goal.`,
     claimsWithEvidence: Math.min(sources.length, 6),
     priorPapers,
   };

@@ -14,7 +14,7 @@ const DEFAULT_MODEL = process.env.PAPERFORK_LLM_MODEL ?? "openai/gpt-5.4";
 const FALLBACK_MODEL = "anthropic/claude-sonnet-4.6";
 const GROQ_GATEWAY_MODEL =
   process.env.PAPERFORK_LLM_GROQ_MODEL ?? "groq/llama-3.3-70b-versatile";
-const GROQ_DIRECT_MODEL = process.env.PAPERFORK_GROQ_MODEL ?? "llama-3.3-70b-versatile";
+const GROQ_DIRECT_MODEL = process.env.PAPERFORK_GROQ_MODEL ?? "openai/gpt-oss-120b";
 
 export function isGatewayAvailable(): boolean {
   return Boolean(process.env.AI_GATEWAY_API_KEY || process.env.VERCEL_OIDC_TOKEN);
@@ -28,9 +28,9 @@ export function isLlmAvailable(): boolean {
   return isGatewayAvailable() || isGroqDirectAvailable();
 }
 
-/** Structured JSON schema output (research/audit agents). Groq direct llama models lack json_schema support. */
+/** Structured JSON schema output is supported by Gateway models and Groq GPT-OSS. */
 export function isStructuredLlmAvailable(): boolean {
-  return isGatewayAvailable();
+  return isGatewayAvailable() || isGroqDirectAvailable();
 }
 
 /** Deterministic mock for local eval / dry-run (no Gateway calls). */
