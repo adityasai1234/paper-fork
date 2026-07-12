@@ -20,5 +20,6 @@ echo "Setting Convex Auth env on current deployment..."
 printf '%s' "$JWT_PRIVATE_KEY" | npx convex env set JWT_PRIVATE_KEY
 printf '%s' "$JWKS" | npx convex env set JWKS
 printf '%s' "$SITE_URL" | npx convex env set SITE_URL
+printf '%s' "$SITE_URL" | npx convex env set CONVEX_SITE_URL
 
-echo "Done. Auth env vars set (JWT_PRIVATE_KEY, JWKS, SITE_URL=$SITE_URL)."
+echo "Done. Auth env vars set (JWT_PRIVATE_KEY, JWKS, SITE_URL=$SITE_URL, CONVEX_SITE_URL=$SITE_URL)."

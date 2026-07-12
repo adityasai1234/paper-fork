@@ -1,8 +1,8 @@
 import { v } from "convex/values";
-import { internalMutation, query } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import { memoryDoc } from "./lib/validators";
 
-export const listRecallableByOwner = query({
+export const listRecallableByOwner = internalQuery({
   args: { repoOwner: v.string() },
   returns: v.array(memoryDoc),
   handler: async (ctx, args) => {

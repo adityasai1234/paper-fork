@@ -12,6 +12,28 @@ export async function requireAuthUserId(ctx: AuthCtx): Promise<Id<"users">> {
   return userId;
 }
 
+export async function getAuditForViewerOrNull(
+  ctx: AuthCtx,
+  auditId: Id<"audits">,
+  sessionId?: string
+): Promise<Doc<"audits"> | null> {
+  const audit = await ctx.db.get("audits", auditId);
+  if (!audit) {
+    return null;
+  }
+
+  if (sessionId && audit.sessionId === sessionId) {
+    return audit;
+  }
+
+  const userId = await getAuthUserId(ctx);
+  if (userId !== null && audit.ownerUserId === userId) {
+    return audit;
+  }
+
+  return null;
+}
+
 export async function getOwnedAuditOrNull(
   ctx: AuthCtx,
   auditId: Id<"audits">
@@ -21,7 +43,7 @@ export async function getOwnedAuditOrNull(
     return null;
   }
 
-  const audit = await ctx.db.get(auditId);
+  const audit = await ctx.db.get("audits", auditId);
   if (!audit?.ownerUserId || audit.ownerUserId !== userId) {
     return null;
   }
