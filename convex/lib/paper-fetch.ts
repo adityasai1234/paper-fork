@@ -93,25 +93,23 @@ async function fetchArxivHtmlSections(
     if (!res.ok) {
       return {
         sections: {},
-        meta: { htmlStatus: res.status, sectionsFound: [], source: "abstract_only", parseMode: "none" },
+        meta: { htmlStatus: res.status, parseMode: "none" },
       };
     }
     const html = await res.text();
     const ltx = parseLtxSections(html);
     if (Object.keys(ltx).length > 0) {
-      return { sections: ltx, meta: { htmlStatus: res.status, sectionsFound: [], source: "html", parseMode: "ltx_section" } };
+      return { sections: ltx, meta: { htmlStatus: res.status, parseMode: "ltx_section" } };
     }
     const h2 = parseH2Sections(html);
     if (Object.keys(h2).length > 0) {
-      return { sections: h2, meta: { htmlStatus: res.status, sectionsFound: [], source: "html", parseMode: "h2" } };
+      return { sections: h2, meta: { htmlStatus: res.status, parseMode: "h2" } };
     }
     const lines = parseLineSections(html);
     return {
       sections: lines,
       meta: {
         htmlStatus: res.status,
-        sectionsFound: [],
-        source: Object.keys(lines).length > 0 ? "html" : "abstract_only",
         parseMode: Object.keys(lines).length > 0 ? "lines" : "none",
       },
     };
