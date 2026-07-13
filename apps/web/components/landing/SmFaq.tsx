@@ -30,11 +30,15 @@ export function SmFaq() {
                 >
                   <span className="sm-faq-num">{item.id}</span>
                   <span>{item.q}</span>
-                  <span className="sm-faq-chevron" aria-hidden>
-                    {expanded ? "−" : "+"}
+                  <span className={`sm-faq-chevron${expanded ? " is-open" : ""}`} aria-hidden>
+                    +
                   </span>
                 </button>
-                {expanded ? <div className="sm-faq-panel">{item.a}</div> : null}
+                <div className={`sm-faq-panel-wrap${expanded ? " is-open" : ""}`}>
+                  <div className="sm-faq-panel-inner">
+                    <div className="sm-faq-panel">{item.a}</div>
+                  </div>
+                </div>
               </div>
             );
           })}

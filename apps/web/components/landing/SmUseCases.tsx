@@ -34,7 +34,7 @@ export function SmUseCases() {
               →
             </button>
           </div>
-          <article className="sm-usecase-card">
+          <article key={index} className="sm-usecase-card sm-swap-in">
             <h3>{item.title}</h3>
             <p>{item.body}</p>
             <p className="sm-usecase-index">

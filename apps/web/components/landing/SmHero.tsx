@@ -4,7 +4,7 @@ import { SM_HERO } from "./data";
 export function SmHero() {
   return (
     <section className="sm-hero sm-dot-sides">
-      <div className="sm-container sm-hero-inner">
+      <div className="sm-container sm-hero-inner sm-hero-animate">
         <Link href={SM_HERO.badgeHref} className="sm-badge no-underline hover:no-underline">
           <span className="sm-badge-new">New</span>
           <span>{SM_HERO.badge}</span>

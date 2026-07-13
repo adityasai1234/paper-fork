@@ -2299,13 +2299,11 @@ body {
 .sm-faq-chevron {
   color: var(--sm-muted);
   font-size: 1.25rem;
+  transition: transform 0.3s ease;
 }
 
-.sm-faq-panel {
-  padding: 0 0 1.25rem 2.5rem;
-  line-height: 1.65;
-  color: var(--sm-muted);
-  max-width: 48rem;
+.sm-faq-chevron.is-open {
+  transform: rotate(45deg);
 }
 
 .sm-faq-foot {
@@ -2433,9 +2431,148 @@ body {
   to { transform: translateX(-50%); }
 }
 
+@keyframes sm-hero-in {
+  from {
+    opacity: 0;
+    transform: translateY(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sm-swap-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.65rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sm-reveal {
+  opacity: 0;
+  transform: translateY(1.5rem);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--sm-reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.sm-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+.sm-hero-animate > * {
+  animation: sm-hero-in 0.75s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sm-hero-animate > *:nth-child(1) { animation-delay: 0.05s; }
+.sm-hero-animate > *:nth-child(2) { animation-delay: 0.12s; }
+.sm-hero-animate > *:nth-child(3) { animation-delay: 0.19s; }
+.sm-hero-animate > *:nth-child(4) { animation-delay: 0.26s; }
+.sm-hero-animate > *:nth-child(5) { animation-delay: 0.33s; }
+.sm-hero-animate > *:nth-child(6) { animation-delay: 0.4s; }
+
+.sm-swap-in {
+  animation: sm-swap-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sm-catalog-list-btn {
+  position: relative;
+}
+
+.sm-catalog-list-btn.is-active::before {
+  content: "";
+  position: absolute;
+  left: -0.5rem;
+  top: 50%;
+  width: 3px;
+  height: 60%;
+  border-radius: 999px;
+  background: var(--sm-blue);
+  transform: translateY(-50%) scaleY(0);
+  animation: sm-swap-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.sm-what-card,
+.sm-compare-card,
+.sm-benchmark-card,
+.sm-enterprise-card,
+.sm-testimonial-card,
+.sm-pricing-card,
+.sm-how-item {
+  transition:
+    transform 0.25s ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.sm-what-card:hover,
+.sm-benchmark-card:hover,
+.sm-enterprise-card:hover,
+.sm-testimonial-card:hover,
+.sm-pricing-card:hover {
+  transform: translateY(-3px);
+}
+
+.sm-faq-panel-wrap {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sm-faq-panel-wrap.is-open {
+  grid-template-rows: 1fr;
+}
+
+.sm-faq-panel-inner {
+  overflow: hidden;
+}
+
+.sm-faq-panel {
+  padding: 0 0 1.25rem 2.5rem;
+  line-height: 1.65;
+  color: var(--sm-muted);
+  max-width: 48rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sm-marquee-track {
     animation: none;
+  }
+
+  .sm-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .sm-hero-animate > *,
+  .sm-swap-in,
+  .sm-catalog-list-btn.is-active::before {
+    animation: none;
+  }
+
+  .sm-what-card:hover,
+  .sm-benchmark-card:hover,
+  .sm-enterprise-card:hover,
+  .sm-testimonial-card:hover,
+  .sm-pricing-card:hover {
+    transform: none;
+  }
+
+  .sm-faq-panel-wrap {
+    transition: none;
+  }
+
+  .sm-faq-chevron {
+    transition: none;
   }
 }
 

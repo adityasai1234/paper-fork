@@ -49,7 +49,7 @@ export function SmProductCatalog() {
               </ol>
             </div>
 
-            <article className="sm-catalog-detail">
+            <article key={feature.id} className="sm-catalog-detail sm-swap-in">
               <div className="sm-catalog-preview">
                 <FeaturePreview kind={feature.preview} />
               </div>
