@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { routes } from "@/lib/routes";
 
 export function SessionBar({
   auditId,
   sessionId,
   status,
   urlSessionId,
-  basePath = "",
   resourceType = "audit",
   label = "Session",
 }: {
@@ -15,19 +15,16 @@ export function SessionBar({
   sessionId?: string;
   status: string;
   urlSessionId?: string | null;
-  basePath?: string;
   resourceType?: "audit" | "research";
   label?: string;
 }) {
   const [copied, setCopied] = useState(false);
   const effectiveSession = sessionId ?? urlSessionId ?? "";
-  const prefix = basePath.replace(/\/$/, "");
-  const segment = resourceType === "research" ? "research" : "audit";
   const shareUrl =
     typeof window !== "undefined"
-      ? effectiveSession
-        ? `${window.location.origin}${prefix}/${segment}/${auditId}?session=${effectiveSession}`
-        : `${window.location.origin}${prefix}/${segment}/${auditId}`
+      ? resourceType === "research"
+        ? `${window.location.origin}${routes.researchRun(auditId, effectiveSession || undefined)}`
+        : `${window.location.origin}${routes.audit(auditId, effectiveSession || undefined)}`
       : "";
 
   const mismatch =
@@ -40,7 +37,6 @@ export function SessionBar({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // ponytail: fallback for non-secure contexts
       const input = document.createElement("textarea");
       input.value = shareUrl;
       document.body.appendChild(input);

@@ -27,7 +27,7 @@ export function OpenSourceCta() {
                 </a>
               </Button>
               <Button asChild variant="secondary" size="lg">
-                <Link href="/app/audit">Start audit</Link>
+                <Link href="/login">Start audit</Link>
               </Button>
             </div>
           </div>

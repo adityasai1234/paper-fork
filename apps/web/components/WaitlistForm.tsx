@@ -41,7 +41,7 @@ export function WaitlistForm() {
           You&apos;re on the list. We&apos;ll be in touch at{" "}
           <strong>{submittedEmail}</strong>.
         </p>
-        <Link href="/app/audit">Run an audit</Link>
+        <Link href="/login">Run an audit</Link>
       </div>
     );
   }

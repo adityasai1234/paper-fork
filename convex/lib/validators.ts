@@ -41,6 +41,7 @@ export const auditDoc = v.object({
     v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
   ),
   sessionId: v.optional(v.string()),
+  userId: v.optional(v.id("users")),
   createdAt: v.number(),
 });
 

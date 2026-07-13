@@ -5,12 +5,15 @@
   "type": "module",
   "scripts": {
     "run": "tsx run.ts",
-    "test": "node --import tsx --test tests/**/*.test.ts && TSX_TSCONFIG_PATH=../../apps/web/tests/tsconfig.json node --import tsx --test ../../apps/web/tests/**/*.test.tsx"
+    "test": "node --import tsx --test tests/**/*.test.ts && pnpm exec vitest run && TSX_TSCONFIG_PATH=../../apps/web/tests/tsconfig.json node --import tsx --test ../../apps/web/tests/**/*.test.tsx"
   },
   "devDependencies": {
+    "@edge-runtime/vm": "^5.0.0",
     "@types/react": "^19.0.2",
+    "convex-test": "^0.0.54",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tsx": "^4.23.0"
+    "tsx": "^4.23.0",
+    "vitest": "^4.1.10"
   }
 }

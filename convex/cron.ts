@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { requireAudit } from "./lib/access";
+import { requireAuditForUser } from "./lib/access";
 import { cronJobDoc } from "./lib/validators";
 
 export const schedule = mutation({
@@ -13,7 +13,7 @@ export const schedule = mutation({
   },
   returns: v.id("cronJobs"),
   handler: async (ctx, args) => {
-    const audit = await requireAudit(ctx, args.auditId);
+    const audit = await requireAuditForUser(ctx, args.auditId, args.sessionId);
     return await ctx.db.insert("cronJobs", {
       auditId: args.auditId,
       githubUrl: audit.githubUrl,
@@ -54,7 +54,7 @@ export const listByAudit = query({
   },
   returns: v.array(cronJobDoc),
   handler: async (ctx, args) => {
-    await requireAudit(ctx, args.auditId);
+    await requireAuditForUser(ctx, args.auditId, args.sessionId);
     return await ctx.db
       .query("cronJobs")
       .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))

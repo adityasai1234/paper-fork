@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { routes } from "@/lib/routes";
 
 const STORAGE_KEY = "paperfork:activeResearchSession";
 
@@ -12,7 +13,7 @@ type StoredSession = {
   runId: Id<"researchRuns">;
 };
 
-export function ResumeResearchBanner({ basePath = "/app" }: { basePath?: string }) {
+export function ResumeResearchBanner() {
   const [stored, setStored] = useState<StoredSession | null>(null);
 
   useEffect(() => {
@@ -36,9 +37,7 @@ export function ResumeResearchBanner({ basePath = "/app" }: { basePath?: string 
   return (
     <div className="card resume-banner">
       <p>Research run in progress — resume the live terminal.</p>
-      <Link href={`${basePath.replace(/\/$/, "")}/research/${stored.runId}`}>
-        Resume research
-      </Link>
+      <Link href={routes.researchRun(stored.runId)}>Resume research</Link>
     </div>
   );
 }

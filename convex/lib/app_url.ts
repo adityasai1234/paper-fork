@@ -9,12 +9,12 @@ export function contactEmail(): string {
 }
 
 export function auditPageUrl(auditId: string, sessionId?: string): string {
-  const base = `${appBaseUrl()}/app/audit/${auditId}`;
+  const base = `${appBaseUrl()}/audits/${auditId}`;
   return sessionId ? `${base}?session=${sessionId}` : base;
 }
 
 export function reportPageUrl(auditId: string, sessionId?: string): string {
-  const base = `${appBaseUrl()}/app/report/${auditId}`;
+  const base = `${appBaseUrl()}/audits/${auditId}/report`;
   return sessionId ? `${base}?session=${sessionId}` : base;
 }
 

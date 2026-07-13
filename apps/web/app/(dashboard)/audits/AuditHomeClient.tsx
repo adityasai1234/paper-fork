@@ -13,7 +13,7 @@ export function AuditHomeClient() {
       description="Submit an arXiv ID or DOI plus a GitHub repo. Paperfork runs literature, repo, web, and methods workers — then judges where the paper diverged from the code."
       activeNav="audit"
     >
-      <ResumeAuditBanner basePath="/app" />
+      <ResumeAuditBanner />
       <AuditForm />
       <p className="hero-spec">arxiv · doi · github · fork ledger · voice brief</p>
       <ReportFooter className="marketing-footer" />

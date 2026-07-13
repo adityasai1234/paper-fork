@@ -37,7 +37,7 @@ export function LandingNav() {
             <Link href="/signup">Waitlist</Link>
           </Button>
           <Button asChild size="sm">
-            <Link href="/app/audit">Start audit →</Link>
+            <Link href="/login">Start audit →</Link>
           </Button>
         </div>
       </div>

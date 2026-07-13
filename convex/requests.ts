@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { mutation, query } from "./_generated/server";
-import { requireAudit } from "./lib/access";
+import { requireAuditForUser } from "./lib/access";
 import { reportPageUrl } from "./lib/app_url";
 import { userRequestDoc } from "./lib/validators";
 
@@ -12,7 +12,7 @@ export const listByAudit = query({
   },
   returns: v.array(userRequestDoc),
   handler: async (ctx, args) => {
-    await requireAudit(ctx, args.auditId);
+    await requireAuditForUser(ctx, args.auditId, args.sessionId);
     return await ctx.db
       .query("userRequests")
       .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
@@ -30,7 +30,7 @@ export const approveRequest = mutation({
     const request = await ctx.db.get(args.requestId);
     if (!request || request.status !== "pending") return null;
 
-    await requireAudit(ctx, request.auditId);
+    await requireAuditForUser(ctx, request.auditId, args.sessionId);
 
     const reportUrl = reportPageUrl(request.auditId);
     const approvalOutput =
@@ -63,7 +63,7 @@ export const denyRequest = mutation({
     const request = await ctx.db.get(args.requestId);
     if (!request || request.status !== "pending") return null;
 
-    await requireAudit(ctx, request.auditId);
+    await requireAuditForUser(ctx, request.auditId, args.sessionId);
     await ctx.db.patch(args.requestId, { status: "denied" });
     return null;
   },

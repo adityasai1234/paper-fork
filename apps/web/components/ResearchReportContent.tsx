@@ -7,13 +7,13 @@ import { AppShell } from "@/components/AppShell";
 import { ReportFooter } from "@/components/ReportFooter";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { routes } from "@/lib/routes";
 
-export function ResearchReportContent({ basePath = "" }: { basePath?: string }) {
+export function ResearchReportContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const runId = params.id as Id<"researchRuns">;
   const urlSessionId = searchParams.get("session");
-  const prefix = basePath.replace(/\/$/, "");
   const sessionArgs = urlSessionId ? { sessionId: urlSessionId } : {};
 
   const data = useQuery(api.research.getResearchReport, { runId, ...sessionArgs });
@@ -125,7 +125,7 @@ export function ResearchReportContent({ basePath = "" }: { basePath?: string }) 
 
       <Link
         className="button-link secondary"
-        href={`${prefix}/research/${runId}${urlSessionId ? `?session=${urlSessionId}` : ""}`}
+        href={routes.researchRun(runId, urlSessionId ?? undefined)}
       >
         ← Back to terminal
       </Link>

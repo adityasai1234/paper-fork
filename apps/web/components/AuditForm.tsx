@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { api } from "@convex/_generated/api";
 import { persistActiveSession } from "@/components/ResumeAuditBanner";
+import { routes } from "@/lib/routes";
 
 export function AuditForm() {
   const router = useRouter();
@@ -27,7 +28,7 @@ export function AuditForm() {
         githubUrl: githubUrl.trim(),
       });
       persistActiveSession(result.auditId);
-      router.push(`/app/audit/${result.auditId}`);
+      router.push(routes.audit(result.auditId, result.sessionId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start audit");
     } finally {

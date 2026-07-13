@@ -14,20 +14,20 @@ import { ReportFooter } from "@/components/ReportFooter";
 import { SessionBar } from "@/components/SessionBar";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { routes } from "@/lib/routes";
 
-export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
+export function ResearchPageContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const runId = params.id as Id<"researchRuns">;
   const urlSessionId = searchParams.get("session");
-  const prefix = basePath.replace(/\/$/, "");
   const sessionArgs = urlSessionId ? { sessionId: urlSessionId } : {};
   const [stepFilter, setStepFilter] = useState<ResearchStepFilter>("all");
 
   const run = useQuery(api.research.getResearchRun, { runId, ...sessionArgs });
   const live = useQuery(api.research.getResearchLiveProgress, { runId, ...sessionArgs });
-  const reportUrl = `${prefix}/research/${runId}/report${urlSessionId ? `?session=${urlSessionId}` : ""}`;
+  const reportUrl = routes.researchReport(runId, urlSessionId ?? undefined);
 
   useEffect(() => {
     if (run?.status !== "done") return;
@@ -43,8 +43,7 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
     return <main className="loading-state">Research run not found.</main>;
   }
 
-  const showReportLink =
-    run.status === "done" || live?.reportReady === true;
+  const showReportLink = run.status === "done" || live?.reportReady === true;
 
   return (
     <AppShell
@@ -59,13 +58,12 @@ export function ResearchPageContent({ basePath = "" }: { basePath?: string }) {
         sessionId={run.sessionId}
         status={run.status}
         urlSessionId={urlSessionId}
-        basePath={prefix}
         label="Research session"
       />
       {run.status === "failed" && (
         <div className="card form-error" role="alert">
           <p>Research run failed{run.error ? `: ${run.error}` : "."}</p>
-          <Link className="button-link" href={`${prefix}/research`}>
+          <Link className="button-link" href={routes.research()}>
             Start a new run →
           </Link>
         </div>

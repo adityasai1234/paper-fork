@@ -19,15 +19,15 @@ export default function SignupPage() {
           Join the waitlist
         </h1>
         <p className="hero-subtitle">
-          We&apos;ll email you when full accounts and team features launch. You can run audits and
-          research today without signing up.
+          We&apos;ll email you when full accounts and team features launch. Sign in to run audits
+          and research today.
         </p>
       </section>
 
       <WaitlistForm />
 
       <p className="hero-spec">
-        <Link href="/app/audit">Run an audit now →</Link>
+        <Link href="/login">Sign in to run an audit →</Link>
       </p>
     </main>
   );

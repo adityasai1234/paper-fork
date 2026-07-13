@@ -12,13 +12,13 @@ import { SessionForensics } from "@/components/SessionForensics";
 import { ReportFooter } from "@/components/ReportFooter";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
+import { routes } from "@/lib/routes";
 
-export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
+export function AuditPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const auditId = params.id as Id<"audits">;
   const urlSessionId = searchParams.get("session");
-  const prefix = basePath.replace(/\/$/, "");
   const sessionArgs = urlSessionId ? { sessionId: urlSessionId } : {};
 
   const audit = useQuery(api.audits.getAudit, { auditId, ...sessionArgs });
@@ -36,7 +36,7 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
 
   return (
     <AppShell
-      activeNav="research"
+      activeNav="audit"
       eyebrow="Live research operation"
       title="Evidence audit in progress"
       description="The Ruler coordinates independent workers. Session URL preserves live hierarchy and pattern progress."
@@ -46,7 +46,7 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
         sessionId={audit.sessionId}
         status={audit.status}
         urlSessionId={urlSessionId}
-        basePath={prefix}
+        resourceType="audit"
       />
       <AgentHierarchyLive auditId={auditId} sessionId={urlSessionId ?? undefined} />
       <div className="audit-demo-grid">
@@ -69,7 +69,7 @@ export function AuditPageContent({ basePath = "" }: { basePath?: string }) {
       {(isComplete || report) && (
         <Link
           className="button-link"
-          href={`${prefix}/report/${auditId}${urlSessionId ? `?session=${urlSessionId}` : ""}`}
+          href={routes.auditReport(auditId, urlSessionId ?? undefined)}
         >
           Open fork report →
         </Link>

@@ -16,7 +16,7 @@ import { VoicePlayer } from "@/components/VoicePlayer";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 
-export default function ReportPage() {
+export default function AuditReportPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const auditId = params.id as Id<"audits">;

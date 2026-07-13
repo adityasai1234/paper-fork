@@ -285,7 +285,7 @@ describe("runForkRules helpers", () => {
         effort: "M",
       },
     ]);
-    assert.match(body, /report\/audit123/);
+    assert.match(body, /audits\/audit123\/report/);
     assert.match(body, /Forked items \(1\)/);
   });
 

@@ -40,8 +40,11 @@ Set `NEXT_PUBLIC_CONVEX_URL` in `apps/web/.env.local` from `npx convex dev` outp
 | `/` | Public landing |
 | `/login` | Public demo sign-in |
 | `/signup` | Public waitlist UI |
-| `/app` | Authenticated — audit form |
-| `/app/audit/[id]` | Authenticated — audit progress |
-| `/app/report/[id]` | Authenticated — fork report |
+| `/audits` | Authenticated — audit form |
+| `/audits/[id]` | Authenticated — audit progress |
+| `/audits/[id]/report` | Authenticated — fork report |
+| `/research` | Authenticated — research form |
+| `/research/[id]` | Authenticated — research progress |
+| `/research/[id]/report` | Authenticated — research report |
 
-Legacy `/audit/*` and `/report/*` redirect to `/app/*`.
+Legacy `/app/*`, `/audit/*`, and `/report/*` redirect to the routes above.

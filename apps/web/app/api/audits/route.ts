@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { ConvexHttpClient } from "convex/browser";
 import { NextResponse } from "next/server";
 import { api } from "@convex/_generated/api";
+import { routes } from "@/lib/routes";
 
 export const dynamic = "force-dynamic";
 
@@ -50,10 +51,12 @@ export async function POST(request: Request) {
     return NextResponse.json({
       auditId: result.auditId,
       sessionId: result.sessionId,
-      auditUrl: `/app/audit/${result.auditId}?session=${result.sessionId}`,
+      auditUrl: routes.audit(result.auditId, result.sessionId),
+      reportUrl: routes.auditReport(result.auditId, result.sessionId),
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Audit creation failed";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const status = message === "Unauthenticated" ? 401 : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { routes } from "@/lib/routes";
 
 export function AppShell({
   eyebrow,
@@ -16,21 +17,21 @@ export function AppShell({
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <Link className="brand" href="/app/research" aria-label="Paperfork home">
+        <Link className="brand" href={routes.research()} aria-label="Paperfork home">
           <span className="brand-mark" aria-hidden="true">PF</span>
           <span>Paperfork</span>
         </Link>
         <nav className="side-nav" aria-label="Primary navigation">
           <Link
             className={`nav-item${activeNav === "audit" ? " active" : ""}`}
-            href="/app/audit"
+            href={routes.audits()}
           >
             <span className="nav-index">01</span>
             Audit
           </Link>
           <Link
             className={`nav-item${activeNav === "research" ? " active" : ""}`}
-            href="/app/research"
+            href={routes.research()}
           >
             <span className="nav-index">02</span>
             Research

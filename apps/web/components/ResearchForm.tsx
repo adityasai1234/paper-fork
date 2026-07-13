@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { api } from "@convex/_generated/api";
 import { persistActiveResearchSession } from "@/components/ResumeResearchBanner";
+import { routes } from "@/lib/routes";
 
 export function ResearchForm() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export function ResearchForm() {
     try {
       const result = await createResearchRun({ prompt: prompt.trim() });
       persistActiveResearchSession(result.runId);
-      router.push(`/app/research/${result.runId}?session=${result.sessionId}`);
+      router.push(routes.researchRun(result.runId, result.sessionId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to start research run");
     } finally {

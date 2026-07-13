@@ -3,7 +3,12 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
-import { getAuditOrNull } from "./lib/access";
+import {
+  canAccessAudit,
+  getAuditOrNull,
+  requireAuditForUser,
+} from "./lib/access";
+import { requireAuthUserId } from "./lib/auth_session";
 import { parseGithubUrl } from "./lib/fork_rules";
 import { auditDoc, auditLiveProgressDoc, sessionDoc } from "./lib/validators";
 
@@ -14,6 +19,7 @@ type CreateAuditArgs = {
   telegramChatId?: string;
   ingressSource?: "webhook" | "web" | "cron";
   sessionId?: string;
+  userId?: Id<"users">;
 };
 
 function newSessionId(): string {
@@ -32,6 +38,7 @@ async function insertAuditAndScheduleWorkers(
     telegramChatId: args.telegramChatId,
     ingressSource: args.ingressSource ?? "web",
     sessionId,
+    userId: args.userId,
     status: "queued",
     chips: { literature: "pending", repo: "pending", web: "pending", methods: "pending" },
     scaleRound: 0,
@@ -114,11 +121,14 @@ export const createAudit = mutation({
     auditId: v.id("audits"),
     sessionId: v.string(),
   }),
-  handler: async (ctx, args) =>
-    insertAuditAndScheduleWorkers(ctx, {
+  handler: async (ctx, args) => {
+    const userId = await requireAuthUserId(ctx);
+    return await insertAuditAndScheduleWorkers(ctx, {
       ...args,
       ingressSource: "web",
-    }),
+      userId,
+    });
+  },
 });
 
 export const getAudit = query({
@@ -127,7 +137,12 @@ export const getAudit = query({
     sessionId: v.optional(v.string()),
   },
   returns: v.union(auditDoc, v.null()),
-  handler: async (ctx, args) => getAuditOrNull(ctx, args.auditId),
+  handler: async (ctx, args) => {
+    const audit = await getAuditOrNull(ctx, args.auditId);
+    if (!audit) return null;
+    if (!(await canAccessAudit(ctx, audit, args.sessionId))) return null;
+    return audit;
+  },
 });
 
 export const getAuditBySession = query({
@@ -146,6 +161,7 @@ export const getAuditBySession = query({
       .first();
 
     if (!audit) return null;
+    if (!(await canAccessAudit(ctx, audit, args.sessionId))) return null;
 
     return {
       auditId: audit._id,
@@ -162,7 +178,7 @@ export const getAuditLiveProgress = query({
   returns: v.union(auditLiveProgressDoc, v.null()),
   handler: async (ctx, args) => {
     const audit = await getAuditOrNull(ctx, args.auditId);
-    if (!audit) return null;
+    if (!audit || !(await canAccessAudit(ctx, audit, args.sessionId))) return null;
 
     const sessions = await ctx.db
       .query("sessions")
@@ -198,7 +214,7 @@ export const listSessions = query({
   returns: v.array(sessionDoc),
   handler: async (ctx, args) => {
     const audit = await getAuditOrNull(ctx, args.auditId);
-    if (!audit) return [];
+    if (!audit || !(await canAccessAudit(ctx, audit, args.sessionId))) return [];
     return await ctx.db
       .query("sessions")
       .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))

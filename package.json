@@ -18,6 +18,8 @@
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.148",
     "@ai-sdk/groq": "^2.0.32",
+    "@auth/core": "0.41.1",
+    "@convex-dev/auth": "^0.0.94",
     "ai": "^6.0.224",
     "convex": "^1.17.4",
     "zod": "^3.25.76"

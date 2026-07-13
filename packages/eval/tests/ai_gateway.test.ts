@@ -53,9 +53,11 @@ describe("ai_gateway env helpers", () => {
     assert.equal(isLlmAvailable(), true);
   });
 
-  it("isStructuredLlmAvailable only when gateway configured", () => {
-    process.env.GROQ_API_KEY = "groq";
+  it("isStructuredLlmAvailable when gateway or groq configured", () => {
     assert.equal(isStructuredLlmAvailable(), false);
+    process.env.GROQ_API_KEY = "groq";
+    assert.equal(isStructuredLlmAvailable(), true);
+    delete process.env.GROQ_API_KEY;
     process.env.AI_GATEWAY_API_KEY = "gateway";
     assert.equal(isStructuredLlmAvailable(), true);
   });

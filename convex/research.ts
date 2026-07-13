@@ -4,6 +4,10 @@ import type { Id } from "./_generated/dataModel";
 import type { MutationCtx } from "./_generated/server";
 import { internalMutation, mutation, query } from "./_generated/server";
 import {
+  canAccessResearch,
+} from "./lib/access";
+import { requireAuthUserId } from "./lib/auth_session";
+import {
   getResearchOrNull,
   newSessionId,
 } from "./lib/research_helpers";
@@ -31,6 +35,7 @@ const researchRunDoc = v.object({
     )
   ),
   sessionId: v.string(),
+  userId: v.optional(v.id("users")),
   error: v.optional(v.string()),
   createdAt: v.number(),
 });
@@ -246,7 +251,8 @@ export const insertResearchReport = internalMutation({
 async function createRunPair(
   ctx: MutationCtx,
   prompt: string,
-  sessionId: string
+  sessionId: string,
+  userId: Id<"users">
 ): Promise<{ runId: Id<"researchRuns">; baselineRunId: Id<"researchRuns">; sessionId: string }> {
   const baselineRunId = await ctx.db.insert("researchRuns", {
     prompt,
@@ -254,6 +260,7 @@ async function createRunPair(
     isBaseline: true,
     loopRound: 0,
     sessionId,
+    userId,
     createdAt: Date.now(),
   });
 
@@ -264,6 +271,7 @@ async function createRunPair(
     baselineRunId,
     loopRound: 0,
     sessionId,
+    userId,
     createdAt: Date.now(),
   });
 
@@ -301,8 +309,9 @@ export const createResearchRun = mutation({
     if (trimmed.length < 10) {
       throw new Error("Research prompt must be at least 10 characters");
     }
+    const userId = await requireAuthUserId(ctx);
     const sessionId = args.sessionId ?? newSessionId();
-    return await createRunPair(ctx, trimmed, sessionId);
+    return await createRunPair(ctx, trimmed, sessionId, userId);
   },
 });
 
@@ -312,7 +321,11 @@ export const getResearchRun = query({
     sessionId: v.optional(v.string()),
   },
   returns: v.union(researchRunDoc, v.null()),
-  handler: async (ctx, args) => getResearchOrNull(ctx, args.runId),
+  handler: async (ctx, args) => {
+    const run = await getResearchOrNull(ctx, args.runId);
+    if (!run || !(await canAccessResearch(ctx, run, args.sessionId))) return null;
+    return run;
+  },
 });
 
 export const getResearchLiveProgress = query({
@@ -331,7 +344,7 @@ export const getResearchLiveProgress = query({
   ),
   handler: async (ctx, args) => {
     const run = await getResearchOrNull(ctx, args.runId);
-    if (!run) return null;
+    if (!run || !(await canAccessResearch(ctx, run, args.sessionId))) return null;
 
     const sessions = await ctx.db
       .query("researchSessions")
@@ -365,7 +378,7 @@ export const listResearchSessions = query({
   returns: v.array(researchSessionDoc),
   handler: async (ctx, args) => {
     const run = await getResearchOrNull(ctx, args.runId);
-    if (!run) return [];
+    if (!run || !(await canAccessResearch(ctx, run, args.sessionId))) return [];
     const sessions = await ctx.db
       .query("researchSessions")
       .withIndex("by_run", (q) => q.eq("runId", args.runId))
@@ -400,7 +413,9 @@ export const getResearchReport = query({
   ),
   handler: async (ctx, args) => {
     const run = await getResearchOrNull(ctx, args.runId);
-    if (!run || run.isBaseline) return null;
+    if (!run || run.isBaseline || !(await canAccessResearch(ctx, run, args.sessionId))) {
+      return null;
+    }
 
     const report = await ctx.db
       .query("researchReports")

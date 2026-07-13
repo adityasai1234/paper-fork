@@ -1,3 +1,4 @@
+import { authTables } from "@convex-dev/auth/server";
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -64,6 +65,7 @@ const verdict = v.union(
 );
 
 export default defineSchema({
+  ...authTables,
   audits: defineTable({
     paperId: v.string(),
     paperIdType: v.union(v.literal("arxiv"), v.literal("doi")),
@@ -82,10 +84,12 @@ export default defineSchema({
       v.union(v.literal("webhook"), v.literal("web"), v.literal("cron"))
     ),
     sessionId: v.optional(v.string()),
+    userId: v.optional(v.id("users")),
     createdAt: v.number(),
   })
     .index("by_created", ["createdAt"])
-    .index("by_session", ["sessionId"]),
+    .index("by_session", ["sessionId"])
+    .index("by_user", ["userId"]),
 
   agentOutputs: defineTable({
     auditId: v.id("audits"),
@@ -267,12 +271,14 @@ export default defineSchema({
     loopRound: v.number(),
     step: v.optional(researchStep),
     sessionId: v.string(),
+    userId: v.optional(v.id("users")),
     error: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_session", ["sessionId"])
     .index("by_created", ["createdAt"])
-    .index("by_main_run", ["mainRunId"]),
+    .index("by_main_run", ["mainRunId"])
+    .index("by_user", ["userId"]),
 
   researchSources: defineTable({
     runId: v.id("researchRuns"),

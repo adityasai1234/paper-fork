@@ -1,16 +1,13 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { auth } from "./auth";
 import { auditPageUrl, reportPageUrl } from "./lib/app_url";
+import { validateWebhookSecret } from "./lib/auth_helpers";
 
 const http = httpRouter();
 
-function timingSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) return false;
-  let out = 0;
-  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return out === 0;
-}
+auth.addHttpRoutes(http);
 
 http.route({
   path: "/audit",
@@ -25,12 +22,11 @@ http.route({
       telegramChatId?: string;
     };
 
-    const expected = process.env.PAPERFORK_WEBHOOK_SECRET;
-    if (!expected) {
-      return new Response(JSON.stringify({ error: "webhook not configured" }), { status: 503 });
-    }
-    if (!secret || !timingSafeEqual(secret, expected)) {
-      return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
+    const validation = validateWebhookSecret(secret, process.env.PAPERFORK_WEBHOOK_SECRET);
+    if (!validation.ok) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: validation.status,
+      });
     }
 
     if (!paperId || !githubUrl) {
