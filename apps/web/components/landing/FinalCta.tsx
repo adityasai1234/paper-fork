@@ -8,14 +8,12 @@ export function FinalCta() {
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-col items-start justify-between gap-8 border border-white/10 bg-surface/60 p-8 md:flex-row md:items-center md:p-12">
           <div>
-            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-signal">
-              Ready
-            </p>
-            <h2 className="mt-3 font-display text-3xl uppercase tracking-[-0.02em] md:text-4xl">
-              Find where the paper forked
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-signal">Ready</p>
+            <h2 className="mt-3 font-display text-3xl tracking-[-0.02em] md:text-4xl">
+              Find where the paper <em className="italic text-signal">forked</em>
             </h2>
             <p className="mt-3 max-w-lg text-muted">
-              Sign in to run a live audit, or clone the repo and wire your own Convex deployment.
+              Sign in to run a live audit, or explore the open-source repo on GitHub.
             </p>
           </div>
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">

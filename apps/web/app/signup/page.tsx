@@ -1,5 +1,8 @@
 import Link from "next/link";
+import { ForkMotif } from "@/components/art/ForkMotif";
+import { MarketingShell } from "@/components/MarketingShell";
 import { WaitlistForm } from "@/components/WaitlistForm";
+import { routes } from "@/lib/routes";
 
 export const metadata = {
   title: "Join waitlist — Paperfork",
@@ -8,27 +11,25 @@ export const metadata = {
 
 export default function SignupPage() {
   return (
-    <main className="marketing min-h-screen">
-      <header className="marketing-topbar">
-        <Link href="/">Paperfork</Link>
-      </header>
-
-      <section className="hero" aria-labelledby="signup-title">
-        <p className="marketing-eyebrow">Early access</p>
-        <h1 id="signup-title" className="hero-title">
-          Join the waitlist
-        </h1>
-        <p className="hero-subtitle">
-          We&apos;ll email you when full accounts and team features launch. Sign in to run audits
-          and research today.
+    <MarketingShell centered>
+      <div className="relative">
+        <ForkMotif className="absolute -right-6 -top-4 h-28 w-20 opacity-40" />
+        <div className="mb-8 text-center">
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-signal">
+            #02 · Waitlist
+          </p>
+          <h1 className="mt-3 font-display text-4xl tracking-[-0.02em]">Get early access</h1>
+          <p className="mt-3 text-sm text-muted">
+            We&apos;ll email you when full accounts launch. Sign in today to run audits.
+          </p>
+        </div>
+        <WaitlistForm />
+        <p className="mt-6 text-center text-sm text-muted">
+          <Link href={routes.login()} className="text-signal hover:underline">
+            Sign in to run an audit →
+          </Link>
         </p>
-      </section>
-
-      <WaitlistForm />
-
-      <p className="hero-spec">
-        <Link href="/login">Sign in to run an audit →</Link>
-      </p>
-    </main>
+      </div>
+    </MarketingShell>
   );
 }

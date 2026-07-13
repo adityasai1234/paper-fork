@@ -15,8 +15,10 @@ export function AuditHomeClient() {
     >
       <ResumeAuditBanner />
       <AuditForm />
-      <p className="hero-spec">arxiv · doi · github · fork ledger · voice brief</p>
-      <ReportFooter className="marketing-footer" />
+      <p className="mt-6 font-mono text-xs tracking-wide text-muted">
+        arxiv · doi · github · fork ledger · voice brief
+      </p>
+      <ReportFooter />
     </AppShell>
   );
 }

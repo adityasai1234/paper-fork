@@ -31,7 +31,7 @@ export function UserRequestCard({
     <div className="card">
       <h2>User requests</h2>
       {requests.map((r: UserRequest) => (
-        <div key={r._id} style={{ marginTop: "1rem", padding: "1rem", background: "#0a0a0a", borderRadius: 6 }}>
+        <div key={r._id} className="request-item">
           <p><strong>{r.type}</strong> — {r.status}</p>
           <p>{r.reason}</p>
           {r.command && <pre>{r.command}</pre>}

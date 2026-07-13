@@ -4,6 +4,9 @@ import { useMutation } from "convex/react";
 import Link from "next/link";
 import { useState } from "react";
 import { api } from "@convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -36,40 +39,58 @@ export function WaitlistForm() {
 
   if (submittedEmail) {
     return (
-      <div className="marketing-card waitlist-success">
-        <p>
-          You&apos;re on the list. We&apos;ll be in touch at{" "}
-          <strong>{submittedEmail}</strong>.
-        </p>
-        <Link href="/login">Run an audit</Link>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-xl font-normal">You&apos;re on the list</CardTitle>
+          <CardDescription>
+            We&apos;ll be in touch at <strong className="text-white">{submittedEmail}</strong>.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button asChild variant="secondary">
+            <Link href="/login">Run an audit</Link>
+          </Button>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <form className="marketing-card" onSubmit={onSubmit} noValidate>
-      <label htmlFor="waitlist-email">Email address</label>
-      <input
-        id="waitlist-email"
-        type="email"
-        value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (error) setError(null);
-        }}
-        placeholder="you@lab.edu"
-        autoComplete="email"
-        autoFocus
-        disabled={loading}
-      />
-      {error ? (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      ) : null}
-      <button type="submit" disabled={loading}>
-        {loading ? "Joining…" : "Join waitlist"}
-      </button>
-    </form>
+    <Card>
+      <CardHeader>
+        <CardTitle className="font-display text-xl font-normal">Join waitlist</CardTitle>
+        <CardDescription>We&apos;ll email you when accounts open.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="grid gap-4" onSubmit={onSubmit} noValidate>
+          <div className="grid gap-2">
+            <label htmlFor="waitlist-email" className="text-sm text-muted">
+              Email address
+            </label>
+            <Input
+              id="waitlist-email"
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder="you@lab.edu"
+              autoComplete="email"
+              autoFocus
+              disabled={loading}
+            />
+          </div>
+          {error ? (
+            <p className="text-sm text-red-400" role="alert">
+              {error}
+            </p>
+          ) : null}
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? "Joining…" : "Join waitlist"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

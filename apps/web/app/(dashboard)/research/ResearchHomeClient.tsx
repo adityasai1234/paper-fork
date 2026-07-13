@@ -15,8 +15,10 @@ export function ResearchHomeClient() {
     >
       <ResumeResearchBanner />
       <ResearchForm />
-      <p className="hero-spec">prompt · linkup · citations · synthesis · baseline</p>
-      <ReportFooter className="marketing-footer" />
+      <p className="mt-6 font-mono text-xs tracking-wide text-muted">
+        prompt · linkup · citations · synthesis · baseline
+      </p>
+      <ReportFooter />
     </AppShell>
   );
 }

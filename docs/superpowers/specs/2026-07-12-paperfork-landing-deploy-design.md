@@ -1,7 +1,7 @@
 # Paperfork Landing + Deploy Design
 
 **Date:** 2026-07-12  
-**Status:** Implemented
+**Status:** Implemented — see [2026-07-13-paperfork-hermes-full-ui-design.md](./2026-07-13-paperfork-hermes-full-ui-design.md) for full-app dark Hermes theme.
 
 ## Summary
 

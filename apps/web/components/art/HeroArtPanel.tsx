@@ -1,6 +1,6 @@
-import { AGENT_TREE } from "./data";
+import { AGENT_TREE } from "@/components/landing/data";
 
-export function AuditFlowPreview() {
+export function HeroArtPanel() {
   return (
     <div className="relative">
       <div className="overflow-hidden rounded-xl border border-white/15 bg-black/30 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-sm">
@@ -33,7 +33,9 @@ export function AuditFlowPreview() {
           </div>
           <div className="rounded-md border border-red-400/30 bg-red-500/10 p-3">
             <p className="text-[10px] uppercase tracking-wider text-red-300">Verdict</p>
-            <p className="mt-1 text-sm uppercase tracking-wide text-red-200">Forked — missing eval seeds</p>
+            <p className="mt-1 font-display text-sm text-red-200">
+              Forked — missing eval seeds
+            </p>
           </div>
         </div>
       </div>

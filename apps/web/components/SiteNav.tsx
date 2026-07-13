@@ -2,25 +2,19 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { GITHUB_REPO } from "./data";
+import { GITHUB_REPO } from "@/components/landing/data";
 
-export function LandingNav() {
+export function SiteNav() {
   return (
     <header className="sticky top-0 z-20 border-b border-white/10 bg-ink/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="font-display text-sm uppercase tracking-[0.14em] text-white">
+          <Link href="/" className="font-display text-lg text-white">
             Paperfork
           </Link>
-          <nav className="hidden items-center gap-6 text-xs font-medium uppercase tracking-[0.08em] text-muted md:flex">
-            <a href="#how-it-works" className="transition-colors hover:text-white">
-              How it works
-            </a>
+          <nav className="hidden items-center gap-6 text-sm text-muted md:flex">
             <a href="#features" className="transition-colors hover:text-white">
-              Workers
-            </a>
-            <a href="#working" className="transition-colors hover:text-white">
-              Working now
+              Features
             </a>
             <a
               href={GITHUB_REPO}
