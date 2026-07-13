@@ -1291,6 +1291,7 @@ body {
   color: var(--sm-text);
   font-family: var(--font-dm-sans), "DM Sans", ui-sans-serif, system-ui, sans-serif;
   min-height: 100vh;
+  scroll-behavior: smooth;
 }
 
 .sm-landing a:not(.sm-btn):not(.sm-logo):not(.sm-badge):not(.sm-what-card) {
@@ -1342,6 +1343,8 @@ body {
 }
 
 .sm-nav-links {
+  display: flex;
+  align-items: center;
   gap: 1.25rem;
   font-size: 0.875rem;
   color: var(--sm-muted);
@@ -1349,10 +1352,109 @@ body {
 
 .sm-nav-links a {
   text-decoration: none;
+  cursor: pointer;
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
 
-.sm-nav-links a:hover {
+.sm-nav-links a:hover,
+.sm-nav-links a:focus-visible {
   color: var(--sm-text);
+}
+
+.sm-nav-links a:focus-visible {
+  outline: 2px solid var(--sm-blue);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.sm-nav-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--sm-border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sm-text);
+  cursor: pointer;
+}
+
+.sm-nav-menu-btn:hover,
+.sm-nav-menu-btn:focus-visible {
+  background: var(--sm-surface);
+  outline: none;
+}
+
+.sm-nav-menu-btn:focus-visible {
+  box-shadow: 0 0 0 2px var(--sm-blue);
+}
+
+.sm-nav-menu-icon,
+.sm-nav-menu-icon::before,
+.sm-nav-menu-icon::after {
+  display: block;
+  width: 1rem;
+  height: 2px;
+  background: currentColor;
+  border-radius: 1px;
+  position: relative;
+}
+
+.sm-nav-menu-icon::before,
+.sm-nav-menu-icon::after {
+  content: "";
+  position: absolute;
+  left: 0;
+}
+
+.sm-nav-menu-icon::before {
+  top: -5px;
+}
+
+.sm-nav-menu-icon::after {
+  top: 5px;
+}
+
+.sm-nav-mobile {
+  border-top: 1px solid var(--sm-border);
+  background: rgba(8, 10, 16, 0.98);
+  animation: sm-nav-slide 0.18s ease-out;
+}
+
+@keyframes sm-nav-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sm-nav-mobile-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-block: 0.75rem 1rem;
+}
+
+.sm-nav-mobile-link {
+  display: block;
+  padding: 0.65rem 0.25rem;
+  font-size: 0.9375rem;
+  color: var(--sm-muted);
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.sm-nav-mobile-link:hover,
+.sm-nav-mobile-link:focus-visible {
+  color: var(--sm-text);
+  background: var(--sm-surface);
+  outline: none;
 }
 
 .sm-nav-actions {
