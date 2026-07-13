@@ -1,13 +1,106 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import { auth } from "./auth";
+import { appBaseUrl } from "./lib/app_url";
 import { auditPageUrl, reportPageUrl } from "./lib/app_url";
 import { validateWebhookSecret } from "./lib/auth_helpers";
 
 const http = httpRouter();
 
 auth.addHttpRoutes(http);
+
+function githubCallbackUrl(): string {
+  const site = process.env.CONVEX_SITE_URL?.replace(/\/$/, "");
+  if (!site) throw new Error("CONVEX_SITE_URL not configured");
+  return process.env.GITHUB_OAUTH_CALLBACK_URL ?? `${site}/integrations/github/callback`;
+}
+
+http.route({
+  path: "/integrations/github/callback",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const appUrl = appBaseUrl();
+
+    if (!code || !state) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${appUrl}/audits?github=error` },
+      });
+    }
+
+    const userId = await ctx.runQuery(internal.github.getOAuthStateUser, { state });
+    if (!userId) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${appUrl}/audits?github=expired` },
+      });
+    }
+
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+    if (!clientId || !clientSecret) {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${appUrl}/audits?github=unconfigured` },
+      });
+    }
+
+    try {
+      const tokenRes = await fetch("https://github.com/login/oauth/access_token", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: clientId,
+          client_secret: clientSecret,
+          code,
+          redirect_uri: githubCallbackUrl(),
+        }),
+      });
+
+      if (!tokenRes.ok) throw new Error("token exchange failed");
+      const tokenData = (await tokenRes.json()) as {
+        access_token?: string;
+        error?: string;
+      };
+      if (!tokenData.access_token) {
+        throw new Error(tokenData.error ?? "no token");
+      }
+
+      const userRes = await fetch("https://api.github.com/user", {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+          Accept: "application/vnd.github+json",
+          "User-Agent": "paperfork",
+        },
+      });
+      if (!userRes.ok) throw new Error("user fetch failed");
+      const userData = (await userRes.json()) as { login: string };
+
+      await ctx.runMutation(api.github.upsertGithubConnection, {
+        state,
+        githubLogin: userData.login,
+        accessToken: tokenData.access_token,
+      });
+
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${appUrl}/audits?github=connected` },
+      });
+    } catch {
+      return new Response(null, {
+        status: 302,
+        headers: { Location: `${appUrl}/audits?github=error` },
+      });
+    }
+  }),
+});
 
 http.route({
   path: "/audit",

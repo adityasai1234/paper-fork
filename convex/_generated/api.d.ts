@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as actions_compilePaperPdf from "../actions/compilePaperPdf.js";
 import type * as actions_emitOutputs from "../actions/emitOutputs.js";
 import type * as actions_generateVoiceBrief from "../actions/generateVoiceBrief.js";
 import type * as actions_runJudge from "../actions/runJudge.js";
@@ -25,6 +26,7 @@ import type * as audits from "../audits.js";
 import type * as auth from "../auth.js";
 import type * as cron from "../cron.js";
 import type * as crons from "../crons.js";
+import type * as github from "../github.js";
 import type * as http from "../http.js";
 import type * as lib_access from "../lib/access.js";
 import type * as lib_agent_hierarchy from "../lib/agent_hierarchy.js";
@@ -34,6 +36,7 @@ import type * as lib_arxiv_fetch from "../lib/arxiv_fetch.js";
 import type * as lib_audit_helpers from "../lib/audit_helpers.js";
 import type * as lib_audit_registry from "../lib/audit_registry.js";
 import type * as lib_auth_helpers from "../lib/auth_helpers.js";
+import type * as lib_auth_session from "../lib/auth_session.js";
 import type * as lib_fork_rules from "../lib/fork_rules.js";
 import type * as lib_hermes_parse from "../lib/hermes_parse.js";
 import type * as lib_linkup_fetch from "../lib/linkup_fetch.js";
@@ -56,6 +59,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "actions/compilePaperPdf": typeof actions_compilePaperPdf;
   "actions/emitOutputs": typeof actions_emitOutputs;
   "actions/generateVoiceBrief": typeof actions_generateVoiceBrief;
   "actions/runJudge": typeof actions_runJudge;
@@ -73,6 +77,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   cron: typeof cron;
   crons: typeof crons;
+  github: typeof github;
   http: typeof http;
   "lib/access": typeof lib_access;
   "lib/agent_hierarchy": typeof lib_agent_hierarchy;
@@ -82,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   "lib/audit_helpers": typeof lib_audit_helpers;
   "lib/audit_registry": typeof lib_audit_registry;
   "lib/auth_helpers": typeof lib_auth_helpers;
+  "lib/auth_session": typeof lib_auth_session;
   "lib/fork_rules": typeof lib_fork_rules;
   "lib/hermes_parse": typeof lib_hermes_parse;
   "lib/linkup_fetch": typeof lib_linkup_fetch;

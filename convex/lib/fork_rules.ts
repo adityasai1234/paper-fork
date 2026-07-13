@@ -387,3 +387,80 @@ export function buildReadmePatch(
   }
   return lines.join("\n");
 }
+
+export type SectionName = "methods" | "experiments" | "results";
+export type SectionVerificationStatus = "verified" | "forked" | "unverifiable";
+
+export type SectionVerification = {
+  section: SectionName;
+  status: SectionVerificationStatus;
+  discrepancies: string[];
+};
+
+const SECTION_DIMENSIONS: Record<SectionName, string[]> = {
+  methods: ["splits", "seeds", "eval_protocol"],
+  experiments: ["baselines", "hardware", "checkpoints", "data_leakage"],
+  results: ["metrics"],
+};
+
+function findingSection(f: ForkFinding): SectionName {
+  if (f.section === "experiments" || f.section === "results") return f.section;
+  if (f.section === "methods") return "methods";
+  if (f.dimension && SECTION_DIMENSIONS.results.includes(f.dimension)) return "results";
+  if (f.dimension && SECTION_DIMENSIONS.experiments.includes(f.dimension)) return "experiments";
+  return "methods";
+}
+
+function signalsAlignForSection(
+  section: SectionName,
+  evalProtocol: MethodsPayload["evalProtocol"] | undefined,
+  repo: RepoPayload
+): string[] {
+  const mismatches: string[] = [];
+  if (!evalProtocol) return mismatches;
+
+  if (section === "methods") {
+    if (evalProtocol.splits && repo.splits_found.length === 0) {
+      mismatches.push("Paper describes splits; repo has no split/CV implementation");
+    }
+    if (evalProtocol.seeds && repo.seeds_found.length === 0) {
+      mismatches.push("Paper describes seeds; repo has no seed references");
+    }
+  }
+  if (section === "experiments") {
+    if (evalProtocol.baselines.length > 0 && repo.baselines_in_code.length === 0) {
+      mismatches.push("Paper lists baselines; repo has no baseline scripts");
+    }
+  }
+  if (section === "results") {
+    if (evalProtocol.metrics.length > 0 && repo.metrics_found.length === 0) {
+      mismatches.push("Paper reports metrics; repo has no metric computation code");
+    }
+  }
+  return mismatches;
+}
+
+export function buildSectionVerification(
+  forkLedger: ForkFinding[],
+  evalProtocol: MethodsPayload["evalProtocol"] | undefined,
+  repo: RepoPayload
+): SectionVerification[] {
+  const sections: SectionName[] = ["methods", "experiments", "results"];
+  return sections.map((section) => {
+    const inSection = forkLedger.filter((f) => findingSection(f) === section);
+    const forked = inSection.filter((f) => f.verdict === "FORKED");
+    const unverifiable = inSection.filter((f) => f.verdict === "UNVERIFIABLE");
+    const signalMismatches = signalsAlignForSection(section, evalProtocol, repo);
+    const discrepancies = [
+      ...forked.map((f) => f.claim),
+      ...unverifiable.map((f) => `${f.claim} (unverifiable)`),
+      ...signalMismatches,
+    ];
+
+    let status: SectionVerificationStatus = "verified";
+    if (forked.length > 0 || signalMismatches.length > 0) status = "forked";
+    else if (unverifiable.length > 0) status = "unverifiable";
+
+    return { section, status, discrepancies };
+  });
+}

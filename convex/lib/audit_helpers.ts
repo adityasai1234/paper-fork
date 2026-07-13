@@ -164,6 +164,56 @@ export const patchGithubIssueUrl = internalMutation({
   },
 });
 
+export const patchGithubPr = internalMutation({
+  args: {
+    auditId: v.id("audits"),
+    prUrl: v.optional(v.string()),
+    branchName: v.string(),
+    applyStatus: v.union(
+      v.literal("draft"),
+      v.literal("pr_opened"),
+      v.literal("failed")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const row = await ctx.db
+      .query("githubOutputs")
+      .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
+      .first();
+    if (row) {
+      await ctx.db.patch(row._id, {
+        prUrl: args.prUrl,
+        branchName: args.branchName,
+        applyStatus: args.applyStatus,
+      });
+    }
+  },
+});
+
+export const patchReportPdf = internalMutation({
+  args: {
+    auditId: v.id("audits"),
+    pdfStorageId: v.id("_storage"),
+    pdfSource: v.union(
+      v.literal("arxiv_passthrough"),
+      v.literal("compiled"),
+      v.literal("failed")
+    ),
+  },
+  handler: async (ctx, args) => {
+    const report = await ctx.db
+      .query("reports")
+      .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
+      .first();
+    if (report) {
+      await ctx.db.patch(report._id, {
+        pdfStorageId: args.pdfStorageId,
+        pdfSource: args.pdfSource,
+      });
+    }
+  },
+});
+
 export const patchReportVoice = internalMutation({
   args: { auditId: v.id("audits"), voiceUrl: v.string() },
   handler: async (ctx, args) => {

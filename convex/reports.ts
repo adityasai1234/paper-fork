@@ -34,3 +34,21 @@ export const getGithubOutput = query({
       .first();
   },
 });
+
+export const getReportPdfUrl = query({
+  args: {
+    auditId: v.id("audits"),
+    sessionId: v.optional(v.string()),
+  },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, args) => {
+    const audit = await getAuditOrNull(ctx, args.auditId);
+    if (!audit || !(await canAccessAudit(ctx, audit, args.sessionId))) return null;
+    const report = await ctx.db
+      .query("reports")
+      .withIndex("by_audit", (q) => q.eq("auditId", args.auditId))
+      .first();
+    if (!report?.pdfStorageId) return null;
+    return await ctx.storage.getUrl(report.pdfStorageId);
+  },
+});

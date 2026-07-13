@@ -26,6 +26,7 @@ export default function AuditReportPage() {
   const audit = useQuery(api.audits.getAudit, { auditId, ...sessionArgs });
   const report = useQuery(api.reports.getReport, { auditId, ...sessionArgs });
   const githubOutput = useQuery(api.reports.getGithubOutput, { auditId, ...sessionArgs });
+  const pdfUrl = useQuery(api.reports.getReportPdfUrl, { auditId, ...sessionArgs });
 
   if (!audit || !report) {
     return <main className="loading-state">Loading report…</main>;
@@ -45,6 +46,35 @@ export default function AuditReportPage() {
 
       <div className="report-grid">
         <EvalProtocol protocol={report.evalProtocol} />
+        {report.sectionVerification && report.sectionVerification.length > 0 && (
+          <div className="card">
+            <h2>Section verification</h2>
+            <ul className="section-verification-list">
+              {report.sectionVerification.map((s) => (
+                <li key={s.section} className={`verify-${s.status}`}>
+                  <strong>{s.section}</strong>: {s.status}
+                  {s.discrepancies.length > 0 && (
+                    <ul>
+                      {s.discrepancies.map((d, i) => (
+                        <li key={i}>{d}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {pdfUrl && (
+              <p style={{ marginTop: "1rem" }}>
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                  Download verified paper PDF
+                </a>
+                {report.pdfSource === "arxiv_passthrough" && (
+                  <span className="text-muted"> (arXiv source)</span>
+                )}
+              </p>
+            )}
+          </div>
+        )}
         <ForkLedger items={report.forkLedger} />
         <NeighborTable neighbors={report.neighbors} />
         <Checklist items={report.checklist} />
@@ -57,10 +87,21 @@ export default function AuditReportPage() {
 
       {githubOutput && (
         <div className="card">
-          <h2>GitHub issue draft</h2>
+          <h2>GitHub outputs</h2>
           {githubOutput.issueUrl && (
-            <p><a href={githubOutput.issueUrl}>{githubOutput.issueUrl}</a></p>
+            <p>
+              Issue: <a href={githubOutput.issueUrl}>{githubOutput.issueUrl}</a>
+            </p>
           )}
+          {githubOutput.prUrl && (
+            <p>
+              Pull request: <a href={githubOutput.prUrl}>{githubOutput.prUrl}</a>
+              {githubOutput.branchName && (
+                <span className="text-muted"> (branch {githubOutput.branchName})</span>
+              )}
+            </p>
+          )}
+          <h3>Issue body</h3>
           <pre>{githubOutput.issueBody}</pre>
           <h3 style={{ marginTop: "1rem" }}>README patch</h3>
           <pre>{githubOutput.readmePatch}</pre>

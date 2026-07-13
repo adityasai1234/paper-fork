@@ -17,6 +17,7 @@ import {
 import {
   buildIssueBody,
   buildReadmePatch,
+  buildSectionVerification,
   parseGithubUrl,
   runForkRules,
   type ForkFinding,
@@ -270,6 +271,8 @@ export const run = internalAction({
     });
 
     const forked = findings.filter((f) => f.verdict === "FORKED");
+    const sectionVerification = buildSectionVerification(findings, evalProtocol, repo);
+    const allSectionsVerified = sectionVerification.every((s) => s.status === "verified");
 
     const report = {
       paper: {
@@ -301,6 +304,7 @@ export const run = internalAction({
         url: s.url,
         usedFor: s.used_for,
       })),
+      sectionVerification,
     };
 
     await ctx.runMutation(internal.lib.audit_helpers.insertReport, {
@@ -318,6 +322,11 @@ export const run = internalAction({
     });
 
     await ctx.scheduler.runAfter(0, internal.actions.emitOutputs.run, { auditId: args.auditId });
+    if (allSectionsVerified) {
+      await ctx.scheduler.runAfter(0, internal.actions.compilePaperPdf.run, {
+        auditId: args.auditId,
+      });
+    }
     await ctx.scheduler.runAfter(0, internal.actions.generateVoiceBrief.run, {
       auditId: args.auditId,
     });

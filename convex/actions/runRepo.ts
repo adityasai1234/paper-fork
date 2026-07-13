@@ -12,15 +12,13 @@ import {
 } from "../lib/ai_gateway";
 import { parseGithubUrl } from "../lib/fork_rules";
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-const GITHUB_HEADERS: Record<string, string> = {
-  Accept: "application/vnd.github+json",
-  "User-Agent": "paperfork",
-};
-if (GITHUB_TOKEN) GITHUB_HEADERS.Authorization = `Bearer ${GITHUB_TOKEN}`;
-
-async function ghFetch(path: string) {
-  const res = await fetch(`https://api.github.com${path}`, { headers: GITHUB_HEADERS });
+async function ghFetch(path: string, token: string | null) {
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "paperfork",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(`https://api.github.com${path}`, { headers });
   if (!res.ok) throw new Error(`GitHub ${path}: ${res.status}`);
   return res.json();
 }
@@ -82,23 +80,27 @@ export const run = internalAction({
       status: "running",
     });
 
+    const githubToken = await ctx.runQuery(internal.github.getGithubTokenForUser, {
+      userId: audit.userId,
+    });
+
     try {
       const { owner, repo } = parsed;
-      const repoMeta = await ghFetch(`/repos/${owner}/${repo}`);
+      const repoMeta = await ghFetch(`/repos/${owner}/${repo}`, githubToken);
       const sha = repoMeta.default_branch
-        ? (await ghFetch(`/repos/${owner}/${repo}/git/ref/heads/${repoMeta.default_branch}`)).object?.sha
+        ? (await ghFetch(`/repos/${owner}/${repo}/git/ref/heads/${repoMeta.default_branch}`, githubToken)).object?.sha
         : undefined;
 
       let readme = "";
       try {
-        const readmeData = await ghFetch(`/repos/${owner}/${repo}/readme`);
+        const readmeData = await ghFetch(`/repos/${owner}/${repo}/readme`, githubToken);
         readme = Buffer.from(readmeData.content, "base64").toString("utf-8");
       } catch {
         readme = "";
       }
 
       const treeData = sha
-        ? await ghFetch(`/repos/${owner}/${repo}/git/trees/${sha}?recursive=1`)
+        ? await ghFetch(`/repos/${owner}/${repo}/git/trees/${sha}?recursive=1`, githubToken)
         : { tree: [] };
 
       const pattern = /(readme|eval|train|test|config|requirements|pyproject)/i;
@@ -116,7 +118,7 @@ export const run = internalAction({
         if (!pattern.test(p) && !/^scripts\//.test(p) && !/^configs\//.test(p)) continue;
         if (files.length >= 15) continue;
         try {
-          const fileData = await ghFetch(`/repos/${owner}/${repo}/contents/${p}`);
+          const fileData = await ghFetch(`/repos/${owner}/${repo}/contents/${p}`, githubToken);
           const content = Buffer.from(fileData.content, "base64").toString("utf-8").slice(0, 8000);
           files.push({ path: p, snippet: content.slice(0, 500), fullContent: content });
           const extracted = extractFromContent(p, content);

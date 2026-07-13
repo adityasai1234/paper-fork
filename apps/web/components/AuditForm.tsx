@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { api } from "@convex/_generated/api";
@@ -10,11 +10,38 @@ import { routes } from "@/lib/routes";
 export function AuditForm() {
   const router = useRouter();
   const createAudit = useMutation(api.audits.createAudit);
+  const startGithubOAuth = useMutation(api.github.startGithubOAuth);
+  const disconnectGithub = useMutation(api.github.disconnectGithub);
+  const githubConnection = useQuery(api.github.getGithubConnection);
   const [paperId, setPaperId] = useState("");
   const [paperIdType, setPaperIdType] = useState<"arxiv" | "doi">("arxiv");
   const [githubUrl, setGithubUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
+
+  async function onConnectGithub() {
+    setGithubLoading(true);
+    setError(null);
+    try {
+      const { authorizeUrl } = await startGithubOAuth({});
+      window.location.href = authorizeUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start GitHub connect");
+      setGithubLoading(false);
+    }
+  }
+
+  async function onDisconnectGithub() {
+    setGithubLoading(true);
+    try {
+      await disconnectGithub({});
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to disconnect GitHub");
+    } finally {
+      setGithubLoading(false);
+    }
+  }
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -38,6 +65,35 @@ export function AuditForm() {
 
   return (
     <form className="marketing-card hero-form" onSubmit={onSubmit}>
+      <div className="hero-form-github">
+        {githubConnection === undefined ? (
+          <p className="text-muted">Checking GitHub…</p>
+        ) : githubConnection ? (
+          <p>
+            GitHub connected as <strong>@{githubConnection.githubLogin}</strong>{" "}
+            <button
+              type="button"
+              className="link-button"
+              onClick={onDisconnectGithub}
+              disabled={githubLoading}
+            >
+              Disconnect
+            </button>
+          </p>
+        ) : (
+          <p>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onConnectGithub}
+              disabled={githubLoading}
+            >
+              {githubLoading ? "Redirecting…" : "Connect GitHub"}
+            </button>
+            <span className="text-muted"> — required for PR fixes on your repo</span>
+          </p>
+        )}
+      </div>
       <label htmlFor="paperId">Paper ID (arXiv or DOI)</label>
       <input
         id="paperId"

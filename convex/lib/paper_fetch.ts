@@ -2,7 +2,7 @@ import type { PaperSection, PaperSections } from "./audit_registry";
 import { fetchArxivMetadata, normalizeArxivId } from "./arxiv_fetch";
 
 const SECTION_HEADING =
-  /^(abstract|introduction|background|related work|methods?|methodology|experimental setup|experiments?|results?|discussion|conclusion|appendix)\b/i;
+  /^(abstract|introduction|background|related work|methods?|methodology|evaluation protocol|implementation details|experimental setup|experiments?|results?|discussion|conclusion|appendix)\b/i;
 
 const LTX_SECTION_RE =
   /<section[^>]*id="[^"]*"[^>]*>[\s\S]*?<h2[^>]*class="[^"]*ltx_title[^"]*"[^>]*>([\s\S]*?)<\/h2>([\s\S]*?)(?=<section|<\/section>|$)/gi;
@@ -185,7 +185,8 @@ function normalizeSectionHeading(line: string): PaperSection | null {
   if (!m) return null;
   const h = m[1].toLowerCase();
   if (h.startsWith("method")) return "methods";
-  if (h.startsWith("experiment")) return "experiments";
+  if (h === "methodology" || h === "evaluation protocol" || h === "implementation details") return "methods";
+  if (h.startsWith("experiment") || h === "experimental setup") return "experiments";
   if (h.startsWith("result")) return "results";
   if (h === "background" || h === "related work") return "introduction";
   if (h === "conclusion") return "discussion";

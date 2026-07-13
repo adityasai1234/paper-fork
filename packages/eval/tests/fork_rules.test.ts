@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   buildIssueBody,
   buildReadmePatch,
+  buildSectionVerification,
   parseGithubUrl,
   runForkRules,
   type AuditContext,
@@ -303,5 +304,64 @@ describe("runForkRules helpers", () => {
     const findings = runForkRules(ctx);
     const keys = findings.map((f) => `${f.claim}:${f.paperSource}`);
     assert.equal(keys.length, new Set(keys).size);
+  });
+
+  it("buildSectionVerification marks methods forked when CV rule fires", () => {
+    const ctx = fixtureCtx({
+      literature: {
+        ...fixtureCtx().literature,
+        abstract_claims: ["We use 5-fold cross-validation on all datasets."],
+      },
+      repo: {
+        ...fixtureCtx().repo,
+        splits_found: ["train_test_split"],
+      },
+    });
+    const findings = runForkRules(ctx);
+    const sections = buildSectionVerification(
+      findings,
+      ctx.methods?.evalProtocol,
+      ctx.repo
+    );
+    const methods = sections.find((s) => s.section === "methods");
+    assert.equal(methods?.status, "forked");
+  });
+
+  it("buildSectionVerification all verified when rules pass", () => {
+    const ctx = fixtureCtx({
+      literature: {
+        ...fixtureCtx().literature,
+        abstract_claims: ["We use standard train/test split."],
+      },
+      repo: {
+        ...fixtureCtx().repo,
+        splits_found: ["train_test_split"],
+        seeds_found: ["seed=42", "seed=123"],
+        metrics_found: [{ name: "metric", file: "eval.py", line: 1, snippet: "f1_score" }],
+        baselines_in_code: ["baseline.py"],
+        files: [{ path: "eval.py", snippet: "def eval():" }],
+        readme: "python train.py && python eval.py",
+      },
+      methods: {
+        evalProtocol: {
+          splits: "train/test",
+          seeds: "42",
+          metrics: ["accuracy"],
+          baselines: ["baseline"],
+          datasets: ["mnist"],
+          hardware: null,
+          checkpointPolicy: null,
+          summary: "Standard eval",
+        },
+        sectionClaims: [],
+      },
+    });
+    const findings = runForkRules(ctx).filter((f) => f.verdict !== "UNVERIFIABLE");
+    const sections = buildSectionVerification(
+      findings,
+      ctx.methods?.evalProtocol,
+      ctx.repo
+    );
+    assert.ok(sections.every((s) => s.status === "verified" || s.status === "unverifiable"));
   });
 });

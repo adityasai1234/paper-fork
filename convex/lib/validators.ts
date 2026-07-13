@@ -198,6 +198,31 @@ export const reportDoc = v.object({
     })
   ),
   voiceUrl: v.optional(v.string()),
+  sectionVerification: v.optional(
+    v.array(
+      v.object({
+        section: v.union(
+          v.literal("methods"),
+          v.literal("experiments"),
+          v.literal("results")
+        ),
+        status: v.union(
+          v.literal("verified"),
+          v.literal("forked"),
+          v.literal("unverifiable")
+        ),
+        discrepancies: v.array(v.string()),
+      })
+    )
+  ),
+  pdfStorageId: v.optional(v.id("_storage")),
+  pdfSource: v.optional(
+    v.union(
+      v.literal("arxiv_passthrough"),
+      v.literal("compiled"),
+      v.literal("failed")
+    )
+  ),
   createdAt: v.number(),
 });
 
@@ -208,4 +233,9 @@ export const githubOutputDoc = v.object({
   issueUrl: v.optional(v.string()),
   issueBody: v.string(),
   readmePatch: v.string(),
+  prUrl: v.optional(v.string()),
+  branchName: v.optional(v.string()),
+  applyStatus: v.optional(
+    v.union(v.literal("draft"), v.literal("pr_opened"), v.literal("failed"))
+  ),
 });
