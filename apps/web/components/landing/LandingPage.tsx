@@ -1,20 +1,35 @@
-import { ReportFooter } from "@/components/ReportFooter";
-import { FinalCta } from "./FinalCta";
-import { FeatureGrid } from "./FeatureGrid";
-import { LandingHero } from "./LandingHero";
-import { PartnerStrip } from "./PartnerStrip";
-import { SiteNav } from "@/components/SiteNav";
+import { SmBenchmarks, SmHowItWorks } from "./SmHowItWorks";
+import { SmCompare, SmWhatWeDo } from "./SmSections";
+import { SmEnterprise } from "./SmEnterprise";
+import { SmFaq } from "./SmFaq";
+import { SmFinalCta, SmFooter } from "./SmFooter";
+import { SmHero } from "./SmHero";
+import { SmLogoMarquee } from "./SmLogoMarquee";
+import { SmNav } from "./SmNav";
+import { SmPricing } from "./SmPricing";
+import { SmProductCatalog } from "./SmProductCatalog";
+import { SmTestimonials } from "./SmTestimonials";
+import { SmUseCases } from "./SmUseCases";
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-ink font-body text-white">
-      <SiteNav />
+    <div className="sm-landing">
+      <SmNav />
       <main>
-        <LandingHero />
-        <FeatureGrid />
-        <PartnerStrip />
-        <FinalCta />
-        <ReportFooter className="marketing-footer mx-auto max-w-6xl px-6 pb-12" />
+        <SmHero />
+        <SmLogoMarquee />
+        <SmProductCatalog />
+        <SmWhatWeDo />
+        <SmCompare />
+        <SmHowItWorks />
+        <SmBenchmarks />
+        <SmUseCases />
+        <SmEnterprise />
+        <SmTestimonials />
+        <SmPricing />
+        <SmFaq />
+        <SmFinalCta />
+        <SmFooter />
       </main>
     </div>
   );

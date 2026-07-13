@@ -67,11 +67,11 @@ const PREVIEWS: Record<PreviewKind, ReactNode> = {
 
 export function FeaturePreview({ kind }: { kind: PreviewKind }) {
   return (
-    <div className="overflow-hidden rounded-md border border-white/10 bg-black/25 backdrop-blur-sm">
-      <div className="border-b border-white/10 px-3 py-2 font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">
+    <div className="overflow-hidden rounded-lg border border-white/10 bg-black/30">
+      <div className="border-b border-white/10 px-4 py-2.5 font-mono text-[9px] uppercase tracking-[0.14em] text-white/40">
         Preview
       </div>
-      <div className="aspect-[4/3]">{PREVIEWS[kind]}</div>
+      <div className="min-h-[10rem]">{PREVIEWS[kind]}</div>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { AGENT_TREE } from "@/components/landing/data";
 export function HeroArtPanel() {
   return (
     <div className="relative">
-      <div className="overflow-hidden rounded-xl border border-white/15 bg-black/30 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-sm">
+      <div className="overflow-hidden rounded-xl border border-white/15 bg-black/30">
         <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3">
           <span className="h-2.5 w-2.5 rounded-full bg-red-400/80" />
           <span className="h-2.5 w-2.5 rounded-full bg-amber-300/80" />

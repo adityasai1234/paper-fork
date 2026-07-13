@@ -68,7 +68,7 @@ Verdict colors (`#f87171`, `#6ee7a0`, `#fbbf24`) unchanged for report consistenc
 - `apps/web/app/globals.css` — tokens + marketing styles
 - `apps/web/app/page.tsx` — hero
 - `apps/web/app/signup/page.tsx` — waitlist page
-- `frontend/` — standalone marketing Next.js app (port 3001)
+- ~~`frontend/`~~ — removed; marketing lives in `apps/web` only (`pnpm dev` → :3000)
 - `apps/web/components/WaitlistForm.tsx` — email form
 - `apps/web/components/AuditForm.tsx` — marketing card classes
 - `apps/web/components/ReportFooter.tsx` — optional `className` prop

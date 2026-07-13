@@ -36,7 +36,7 @@ export default function LoginPage() {
         password: resolvedPassword,
         flow: "signIn",
       });
-      router.push(routes.audits());
+      router.push(routes.research());
     } catch {
       try {
         await signIn("password", {
@@ -44,7 +44,7 @@ export default function LoginPage() {
           password: resolvedPassword,
           flow: "signUp",
         });
-        router.push(routes.audits());
+        router.push(routes.research());
       } catch (signUpErr) {
         setError(
           signUpErr instanceof Error ? signUpErr.message : "Sign-in failed"

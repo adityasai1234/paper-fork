@@ -100,9 +100,18 @@ See [`.env.example`](.env.example).
 pnpm install
 cp .env.example .env.local   # fill keys
 npx convex dev                 # backend + HTTP /audit webhook
-pnpm dev                       # frontend
+pnpm dev                       # apps/web → http://localhost:3000
 pnpm eval                      # fixture rubric
 ```
+
+**Note:** The old `frontend/` folder was removed. Everything (landing + app) lives in `apps/web`. Always run `pnpm dev` from the **repo root**, not from `frontend/`.
+
+| URL | What you get |
+|-----|----------------|
+| http://localhost:3000/ | Marketing landing (works logged in or out) |
+| http://localhost:3000/login | Sign in → redirects to `/research` |
+| http://localhost:3000/research | App home (login required) |
+| http://localhost:3000/home | Redirects to `/research` |
 
 Hermes harness (optional): [docs/hermes-telegram.md](docs/hermes-telegram.md)
 

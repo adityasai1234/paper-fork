@@ -16,6 +16,7 @@ const nextConfig = {
       { source: "/audit/:id", destination: "/audits/:id", permanent: false },
       { source: "/report/:id", destination: "/audits/:id/report", permanent: false },
       { source: "/api/audit", destination: "/api/audits", permanent: false },
+      { source: "/home", destination: "/research", permanent: false },
     ];
   },
 };
