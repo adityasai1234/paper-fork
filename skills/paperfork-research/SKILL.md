@@ -45,6 +45,15 @@ Never print these values or place them in a repository, command argument, patch,
 - Commit the exact patch, push `job.resultBranch`, and report both the commit SHA and a GitHub URL in `resultRef`.
 - Paperfork owns keep/revert judgment. Never claim success based on intuition.
 
+## Process lifecycle
+
+- Start `job.runCommand` in its own process group/session (or a Windows Job Object) and retain the process handle before waiting for completion.
+- Wrap every command wait in `try/finally`. Timeout, worker interruption, lease loss, and cancellation must all enter the same cleanup path.
+- During cleanup, terminate the entire process tree/group, allow a short grace period, then force-kill any survivors.
+- Always wait for/reap the child after termination or force-kill, including on Windows. A kill request alone is not proof that the process exited.
+- Do not report a result, delete the workspace, release the pod, or start another job until the child process is confirmed exited.
+- Keep heartbeats active while shutdown is in progress so another worker cannot claim the same experiment while the old process still consumes compute.
+
 ## Report contract
 
 Successful report body:

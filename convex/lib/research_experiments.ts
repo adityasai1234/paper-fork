@@ -10,6 +10,26 @@ export type ExperimentCandidateInput = {
   rank: number;
 };
 
+export function normalizeEvidenceUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const raw = value.trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+    let hostname = parsed.hostname.toLowerCase().replace(/\.$/, "");
+    if (hostname.startsWith("www.")) hostname = hostname.slice(4);
+    const defaultPort =
+      (parsed.protocol === "http:" && parsed.port === "80") ||
+      (parsed.protocol === "https:" && parsed.port === "443");
+    const port = parsed.port && !defaultPort ? `:${parsed.port}` : "";
+    const path = parsed.pathname.toLowerCase().replace(/\/+$/, "");
+    return `${hostname}${port}${path}`;
+  } catch {
+    return null;
+  }
+}
+
 export function normalizeGithubRepositoryUrl(value: string): string | null {
   const trimmed = value.trim().replace(/\/$/, "");
   const match = trimmed.match(

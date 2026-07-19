@@ -1,5 +1,9 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import {
+  normalizeEvidenceUrl,
+  type ExperimentCandidateInput,
+} from "./research_experiments";
 
 export function newSessionId(): string {
   return crypto.randomUUID();
@@ -60,6 +64,133 @@ export type LinkupResearchOutput = {
     rank: number;
   }>;
 };
+
+function recordValue(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function textValue(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function textArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map(textValue).filter(Boolean)
+    : [];
+}
+
+function objectArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(recordValue).filter((row): row is Record<string, unknown> => row !== null);
+}
+
+export function coerceLinkupResearchOutput(value: unknown): LinkupResearchOutput {
+  const root = recordValue(value) ?? {};
+
+  const prior_papers = objectArray(root.prior_papers)
+    .map((paper) => {
+      const title = textValue(paper.title);
+      const url = textValue(paper.url);
+      const year =
+        typeof paper.year === "number" && Number.isFinite(paper.year)
+          ? paper.year
+          : undefined;
+      return {
+        title,
+        url,
+        authors: textArray(paper.authors),
+        year,
+        relevance: textValue(paper.relevance) || "unknown",
+        evidence_quote: textValue(paper.evidence_quote),
+      };
+    })
+    .filter((paper) => paper.title && normalizeEvidenceUrl(paper.url));
+
+  const sources = objectArray(root.sources)
+    .map((source) => {
+      const quote = textValue(source.quote);
+      return {
+        url: textValue(source.url),
+        title: textValue(source.title),
+        source_type: textValue(source.source_type),
+        used_for: textValue(source.used_for),
+        ...(quote ? { quote } : {}),
+      };
+    })
+    .filter((source) => source.title && normalizeEvidenceUrl(source.url));
+
+  const experiment_candidates = objectArray(root.experiment_candidates).map(
+    (candidate, index) => ({
+      title: textValue(candidate.title),
+      hypothesis: textValue(candidate.hypothesis),
+      proposed_change: textValue(candidate.proposed_change),
+      expected_effect: textValue(candidate.expected_effect),
+      evidence_urls: textArray(candidate.evidence_urls),
+      risks: textArray(candidate.risks),
+      rank:
+        typeof candidate.rank === "number" && Number.isFinite(candidate.rank)
+          ? candidate.rank
+          : index + 1,
+    })
+  );
+
+  return {
+    prior_papers,
+    themes: textArray(root.themes),
+    sources,
+    research_gaps: textArray(root.research_gaps),
+    experiment_candidates,
+  };
+}
+
+export function groundExperimentCandidates(
+  output: LinkupResearchOutput
+): ExperimentCandidateInput[] {
+  const retrievedByCanonicalUrl = new Map<string, string>();
+  for (const url of [
+    ...output.prior_papers.map((paper) => paper.url),
+    ...output.sources.map((source) => source.url),
+  ]) {
+    const canonical = normalizeEvidenceUrl(url);
+    if (canonical && !retrievedByCanonicalUrl.has(canonical)) {
+      retrievedByCanonicalUrl.set(canonical, url);
+    }
+  }
+
+  return output.experiment_candidates
+    .map((candidate) => {
+      const evidenceUrls = Array.from(
+        new Set(
+          candidate.evidence_urls
+            .map(normalizeEvidenceUrl)
+            .filter((url): url is string => Boolean(url))
+            .map((url) => retrievedByCanonicalUrl.get(url))
+            .filter((url): url is string => Boolean(url))
+        )
+      );
+      return {
+        title: textValue(candidate.title),
+        hypothesis: textValue(candidate.hypothesis),
+        proposedChange: textValue(candidate.proposed_change),
+        expectedEffect: textValue(candidate.expected_effect),
+        evidenceUrls,
+        risks: textArray(candidate.risks),
+        rank: Math.max(1, Math.trunc(candidate.rank)),
+      };
+    })
+    .filter(
+      (candidate) =>
+        candidate.title &&
+        candidate.hypothesis &&
+        candidate.proposedChange &&
+        candidate.expectedEffect &&
+        candidate.evidenceUrls.length > 0
+    )
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, 3);
+}
 
 export const EMPTY_LINKUP_RESEARCH: LinkupResearchOutput = {
   prior_papers: [],

@@ -7,7 +7,9 @@ import { searchArxivPapers } from "../lib/arxiv_fetch";
 import {
   buildLinkupResearchQuery,
   citationKeyFromTitle,
+  coerceLinkupResearchOutput,
   EMPTY_LINKUP_RESEARCH,
+  groundExperimentCandidates,
   LINKUP_RESEARCH_SCHEMA,
   linkupOutputFromSearchHits,
   type LinkupResearchOutput,
@@ -53,15 +55,12 @@ async function fetchLinkupResearch(
     };
   }
 
-  const data = (await res.json()) as { structuredOutput?: LinkupResearchOutput };
-  const structured = data.structuredOutput ?? (data as unknown as LinkupResearchOutput);
-  const output: LinkupResearchOutput = {
-    prior_papers: structured.prior_papers ?? [],
-    themes: structured.themes ?? [],
-    sources: structured.sources ?? [],
-    research_gaps: structured.research_gaps ?? [],
-    experiment_candidates: structured.experiment_candidates ?? [],
-  };
+  const data = (await res.json()) as unknown;
+  const container =
+    data !== null && typeof data === "object"
+      ? (data as Record<string, unknown>)
+      : null;
+  const output = coerceLinkupResearchOutput(container?.structuredOutput ?? data);
   return { output, provider: "linkup" };
 }
 
@@ -129,31 +128,6 @@ function sourcesFromLinkup(output: LinkupResearchOutput, round: number) {
   }
 
   return { rows, round };
-}
-
-function groundedCandidates(output: LinkupResearchOutput) {
-  const evidenceUrls = new Set([
-    ...output.prior_papers.map((paper) => paper.url),
-    ...output.sources.map((source) => source.url),
-  ]);
-  return output.experiment_candidates
-    .filter(
-      (candidate) =>
-        candidate.title.trim() &&
-        candidate.proposed_change.trim() &&
-        candidate.evidence_urls.some((url) => evidenceUrls.has(url))
-    )
-    .map((candidate) => ({
-      title: candidate.title.trim(),
-      hypothesis: candidate.hypothesis.trim(),
-      proposedChange: candidate.proposed_change.trim(),
-      expectedEffect: candidate.expected_effect.trim(),
-      evidenceUrls: candidate.evidence_urls.filter((url) => evidenceUrls.has(url)),
-      risks: candidate.risks.map((risk) => risk.trim()).filter(Boolean),
-      rank: Math.max(1, Math.trunc(candidate.rank)),
-    }))
-    .sort((a, b) => a.rank - b.rank)
-    .slice(0, 3);
 }
 
 export const runDiscover = internalAction({
@@ -231,7 +205,7 @@ export const runDiscover = internalAction({
       });
     }
 
-    const candidates = run.executionConfig ? groundedCandidates(output) : [];
+    const candidates = run.executionConfig ? groundExperimentCandidates(output) : [];
     const insertedCandidates =
       candidates.length > 0
         ? await ctx.runMutation(internal.research.insertResearchCandidates, {

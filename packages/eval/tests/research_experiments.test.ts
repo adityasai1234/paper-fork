@@ -7,11 +7,14 @@ import {
   isMetricImprovement,
   metricDelta,
   normalizeBaseBranch,
+  normalizeEvidenceUrl,
   normalizeGithubRepositoryUrl,
   readBearerToken,
 } from "../../../convex/lib/research_experiments";
 import {
   buildLinkupResearchQuery,
+  coerceLinkupResearchOutput,
+  groundExperimentCandidates,
   LINKUP_RESEARCH_SCHEMA,
 } from "../../../convex/lib/research_helpers";
 
@@ -26,6 +29,93 @@ describe("research experiment contract", () => {
       "https://github.com/adityasai1234/paper-fork.git"
     );
     assert.equal(normalizeGithubRepositoryUrl("https://example.com/repo"), null);
+  });
+
+  it("normalizes source URLs before evidence matching", () => {
+    assert.equal(normalizeEvidenceUrl("https://www.Example.com/Paper/"), "example.com/paper");
+    assert.equal(normalizeEvidenceUrl("http://example.com/paper"), "example.com/paper");
+    assert.equal(
+      normalizeEvidenceUrl("https://example.com/paper?utm_source=search#results"),
+      "example.com/paper"
+    );
+    assert.equal(normalizeEvidenceUrl("ftp://example.com/paper"), null);
+    assert.equal(normalizeEvidenceUrl(null), null);
+  });
+
+  it("coerces malformed Linkup fields without stringifying null values", () => {
+    const output = coerceLinkupResearchOutput({
+      prior_papers: [
+        {
+          title: " Paper ",
+          url: "https://example.com/paper",
+          authors: null,
+          relevance: null,
+          evidence_quote: null,
+        },
+      ],
+      themes: [null, " grounded theme "],
+      sources: [
+        {
+          title: "Source",
+          url: "https://example.com/source",
+          source_type: null,
+          used_for: null,
+          quote: null,
+        },
+      ],
+      research_gaps: [undefined, " evidence gap "],
+      experiment_candidates: [
+        {
+          title: "Candidate",
+          hypothesis: "hypothesis",
+          proposed_change: "change",
+          expected_effect: "effect",
+          evidence_urls: [null, "https://www.example.com/source/"],
+          risks: [null, " regression "],
+          rank: null,
+        },
+      ],
+    });
+
+    assert.deepEqual(output.themes, ["grounded theme"]);
+    assert.deepEqual(output.research_gaps, ["evidence gap"]);
+    assert.deepEqual(output.prior_papers[0]?.authors, []);
+    assert.equal(output.prior_papers[0]?.relevance, "unknown");
+    assert.equal(output.prior_papers[0]?.evidence_quote, "");
+    assert.equal(output.sources[0]?.source_type, "");
+    assert.equal(output.sources[0]?.used_for, "");
+    assert.equal(output.sources[0]?.quote, undefined);
+    assert.deepEqual(output.experiment_candidates[0]?.risks, ["regression"]);
+    assert.equal(JSON.stringify(output).includes('"null"'), false);
+  });
+
+  it("grounds URL variants to the retrieved source and rejects unrelated evidence", () => {
+    const output = coerceLinkupResearchOutput({
+      sources: [{ title: "Source", url: "https://example.com/source" }],
+      experiment_candidates: [
+        {
+          title: "Grounded",
+          hypothesis: "The change should help.",
+          proposed_change: "Change one setting.",
+          expected_effect: "Lower loss.",
+          evidence_urls: ["http://www.example.com/source/"],
+          rank: 1,
+        },
+        {
+          title: "Ungrounded",
+          hypothesis: "Another change should help.",
+          proposed_change: "Change another setting.",
+          expected_effect: "Higher accuracy.",
+          evidence_urls: ["https://unrelated.example/paper"],
+          rank: 2,
+        },
+      ],
+    });
+
+    const candidates = groundExperimentCandidates(output);
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0]?.title, "Grounded");
+    assert.deepEqual(candidates[0]?.evidenceUrls, ["https://example.com/source"]);
   });
 
   it("rejects unsafe Git ref shapes", () => {

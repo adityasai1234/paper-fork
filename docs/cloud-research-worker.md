@@ -51,3 +51,5 @@ Candidate jobs remain unclaimable until the unmodified baseline has produced the
 ## Trust boundary
 
 The run command is provided by the signed-in Paperfork user and executes code from their selected repository. Run workers in disposable, least-privilege machines with no unrelated credentials or mounted data. Treat repositories and commands as untrusted input.
+
+The Hermes adapter must own the complete subprocess lifecycle. Start each run in an isolated process group/session or Windows Job Object, retain its handle, and wait inside `try/finally`. On timeout, cancellation, interruption, or lease loss, terminate the entire process tree, wait briefly, force-kill survivors, and then wait again to reap the child. Do not report, clean the checkout, release the pod, or claim another job until exit is confirmed. This prevents orphaned training processes from consuming GPU time after Paperfork believes a run has ended.
