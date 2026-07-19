@@ -128,6 +128,7 @@ export async function fetchLinkupLiterature(
       themes: structured.themes ?? [],
       sources: structured.sources ?? [],
       research_gaps: structured.research_gaps ?? [],
+      experiment_candidates: structured.experiment_candidates ?? [],
     };
 
     const primary = output.prior_papers[0];

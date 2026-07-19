@@ -913,6 +913,70 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
   resize: vertical;
 }
 
+.research-execution-contract {
+  margin: 0.25rem 0 1.25rem;
+  padding: 1rem;
+  border: 1px dashed var(--border-strong);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
+}
+
+.research-contract-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.research-contract-heading strong {
+  display: block;
+  color: var(--foreground);
+  font-size: 0.875rem;
+}
+
+.research-contract-heading p {
+  margin-top: 0.25rem;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.research-contract-heading span {
+  flex: 0 0 auto;
+  padding: 0.3rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  font: 0.625rem/1 var(--font-mono, monospace);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.research-contract-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 0.75rem;
+}
+
+.research-contract-wide {
+  grid-column: 1 / -1;
+}
+
+.research-execution-contract .field-hint {
+  margin-top: -0.25rem;
+}
+
+@media (max-width: 640px) {
+  .research-contract-heading {
+    flex-direction: column;
+  }
+
+  .research-contract-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .research-terminal-wrap {
   padding: 0;
   overflow: hidden;
@@ -1061,6 +1125,14 @@ footer { margin-top: 38px; padding-top: 16px; border-top: 1px solid var(--border
 
 .research-baseline-card table {
   margin-top: 0.75rem;
+}
+
+.research-table-scroll {
+  overflow-x: auto;
+}
+
+.research-table-scroll table {
+  min-width: 640px;
 }
 
 .research-baseline-summary {

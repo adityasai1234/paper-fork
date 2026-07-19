@@ -49,8 +49,12 @@ export function ResearchPageContent() {
     <AppShell
       activeNav="research"
       eyebrow="Auto-research loop"
-      title="Literature discovery in progress"
-      description="Linkup search, citation indexing, synthesis, and evaluation — streamed live below."
+      title={run.executionConfig ? "Cloud experiments in progress" : "Literature discovery in progress"}
+      description={
+        run.executionConfig
+          ? `Websearch proposes source-backed train.py changes. Hermes measures them against ${run.executionConfig.metricName} and keeps only improvements.`
+          : "Linkup search, citation indexing, synthesis, and evaluation — streamed live below."
+      }
     >
       <SessionBar
         auditId={runId}

@@ -26,8 +26,9 @@ export function ResearchReportContent() {
     return <main className="loading-state">Report not ready yet.</main>;
   }
 
-  const { run, report, sources, baselineReport } = data;
+  const { run, report, sources, baselineReport, experiments } = data;
   const comparison = report.baselineComparison;
+  const experimentSummary = report.experimentSummary;
   const priorPapers = report.priorPapers.filter(
     (paper) => !/^mock\b/i.test(paper.title) && !/^mock/i.test(paper.citationKey)
   );
@@ -44,14 +45,31 @@ export function ResearchReportContent() {
     <AppShell
       activeNav="research"
       eyebrow="Research report"
-      title="Literature loop results"
-      description="Prior papers, synthesis, loop metrics, and comparison vs prompt-only baseline."
+      title={experimentSummary ? "Cloud research results" : "Literature loop results"}
+      description={
+        experimentSummary
+          ? "Source-backed candidates, measured cloud runs, and the commit that survived the ratchet."
+          : "Prior papers, synthesis, loop metrics, and comparison vs prompt-only baseline."
+      }
     >
       <div className="research-report-grid" aria-label="Run performance">
         <div className="research-stat"><span>Status</span><strong>{run.status}</strong></div>
-        <div className="research-stat"><span>Loop rounds</span><strong>{report.loopMetrics.rounds}</strong></div>
-        <div className="research-stat"><span>Sources indexed</span><strong>{report.loopMetrics.sourceCount}</strong></div>
-        <div className="research-stat"><span>Evidence-backed claims</span><strong>{report.loopMetrics.claimsWithEvidence}</strong></div>
+        {experimentSummary ? (
+          <>
+            <div className="research-stat"><span>Experiments</span><strong>{experimentSummary.attempted}</strong></div>
+            <div className="research-stat"><span>Kept</span><strong>{experimentSummary.accepted}</strong></div>
+            <div className="research-stat">
+              <span>Best {experimentSummary.metricName}</span>
+              <strong>{experimentSummary.bestMetric ?? "—"}</strong>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="research-stat"><span>Loop rounds</span><strong>{report.loopMetrics.rounds}</strong></div>
+            <div className="research-stat"><span>Sources indexed</span><strong>{report.loopMetrics.sourceCount}</strong></div>
+            <div className="research-stat"><span>Evidence-backed claims</span><strong>{report.loopMetrics.claimsWithEvidence}</strong></div>
+          </>
+        )}
       </div>
 
       {comparison && (
@@ -79,6 +97,62 @@ export function ResearchReportContent() {
             </tbody>
           </table>
           <p className="research-baseline-summary">{comparison.summary}</p>
+        </div>
+      )}
+
+      {experimentSummary && (
+        <div className="card research-baseline-card research-report-card">
+          <h2>Experiment ratchet</h2>
+          <p className="research-baseline-summary">
+            Baseline {experimentSummary.metricName}: {experimentSummary.baselineMetric ?? "not measured"}
+            {experimentSummary.bestCommitSha
+              ? ` · winner ${experimentSummary.bestCommitSha.slice(0, 8)}`
+              : ""}
+          </p>
+          <div className="research-table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Run</th>
+                  <th>Result</th>
+                  <th>{experimentSummary.metricName}</th>
+                  <th>Runtime</th>
+                  <th>Commit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {experiments.map((experiment) => (
+                  <tr key={experiment._id}>
+                    <td>{experiment.title}</td>
+                    <td>
+                      {experiment.kind === "baseline"
+                        ? "baseline"
+                        : experiment.status === "failed"
+                          ? "failed"
+                          : experiment.improved
+                            ? "kept"
+                            : "reverted"}
+                    </td>
+                    <td>{experiment.metricValue ?? "—"}</td>
+                    <td>
+                      {experiment.runtimeSeconds !== undefined
+                        ? `${Math.round(experiment.runtimeSeconds)}s`
+                        : "—"}
+                    </td>
+                    <td>
+                      {experiment.resultRef?.startsWith("http") ? (
+                        <a href={experiment.resultRef} target="_blank" rel="noopener noreferrer">
+                          {experiment.commitSha?.slice(0, 8) ?? "view"}
+                        </a>
+                      ) : (
+                        experiment.commitSha?.slice(0, 8) ?? "—"
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 

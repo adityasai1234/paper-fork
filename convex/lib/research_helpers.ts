@@ -50,6 +50,15 @@ export type LinkupResearchOutput = {
     quote?: string;
   }>;
   research_gaps: string[];
+  experiment_candidates: Array<{
+    title: string;
+    hypothesis: string;
+    proposed_change: string;
+    expected_effect: string;
+    evidence_urls: string[];
+    risks: string[];
+    rank: number;
+  }>;
 };
 
 export const EMPTY_LINKUP_RESEARCH: LinkupResearchOutput = {
@@ -57,6 +66,7 @@ export const EMPTY_LINKUP_RESEARCH: LinkupResearchOutput = {
   themes: [],
   sources: [],
   research_gaps: ["Linkup API key not configured"],
+  experiment_candidates: [],
 };
 
 export function linkupOutputFromSearchHits(
@@ -75,6 +85,7 @@ export function linkupOutputFromSearchHits(
       themes: [],
       sources: [],
       research_gaps: ["No papers found for this query"],
+      experiment_candidates: [],
     };
   }
 
@@ -104,6 +115,7 @@ export function linkupOutputFromSearchHits(
       hits.length < 3
         ? ["Limited search results — consider refining the research prompt"]
         : [],
+    experiment_candidates: [],
   };
 }
 
@@ -146,18 +158,41 @@ export function sourcesBasedSynthesis(
   };
 }
 
-export function buildLinkupResearchQuery(prompt: string, gapFocus?: string[]): string {
+export function buildLinkupResearchQuery(
+  prompt: string,
+  gapFocus?: string[],
+  execution?: {
+    repositoryUrl: string;
+    baseBranch: string;
+    targetFile: "train.py";
+    metricName: string;
+    metricDirection: "minimize" | "maximize";
+  }
+): string {
   const gapSection =
     gapFocus && gapFocus.length > 0
-      ? `\n## Gap focus (round follow-up)\nPrioritize filling these gaps:\n${gapFocus.map((g) => `- ${g}`).join("\n")}\n`
+      ? `\n## Experiment feedback (round follow-up)\nUse these measured results to change the next search:\n${gapFocus.map((g) => `- ${g}`).join("\n")}\n`
       : "";
 
-  return `You are the literature discovery agent for Paperfork auto-research.
+  const experimentSection = execution
+    ? `
+## Executable experiment contract
+Repository: ${execution.repositoryUrl}
+Base branch or revision: ${execution.baseBranch}
+Editable file: ${execution.targetFile} (no other file may be changed)
+Objective: ${execution.metricDirection} ${execution.metricName}
+
+Propose up to 3 small, independently testable experiment_candidates. Every candidate must name an exact ${execution.targetFile} change, cite evidence_urls present in the returned sources, state the expected metric effect and risks, and use rank 1 for the strongest candidate. Do not propose infrastructure, dataset, evaluation, or multi-file changes.
+`
+    : "";
+
+  return `You are the web-search lead for Paperfork auto-research.
 
 Research prompt: ${prompt}
 ${gapSection}
+${experimentSection}
 
-Find prior art papers and authoritative sources this research can build on. Perform multiple targeted searches on arXiv, Papers With Code, and Hugging Face. Return structured JSON with prior_papers (title, url, authors, year, relevance, evidence_quote), themes, sources, and research_gaps.`;
+Find prior art papers and authoritative sources this research can build on. Perform multiple targeted searches on arXiv, Papers With Code, and Hugging Face. Return structured JSON with prior_papers, themes, sources, research_gaps, and experiment_candidates. Never invent evidence URLs.`;
 }
 
 export const LINKUP_RESEARCH_SCHEMA = {
@@ -197,6 +232,37 @@ export const LINKUP_RESEARCH_SCHEMA = {
       },
     },
     research_gaps: { type: "array", items: { type: "string" } },
+    experiment_candidates: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string" },
+          hypothesis: { type: "string" },
+          proposed_change: { type: "string" },
+          expected_effect: { type: "string" },
+          evidence_urls: { type: "array", items: { type: "string" } },
+          risks: { type: "array", items: { type: "string" } },
+          rank: { type: "number" },
+        },
+        required: [
+          "title",
+          "hypothesis",
+          "proposed_change",
+          "expected_effect",
+          "evidence_urls",
+          "risks",
+          "rank",
+        ],
+      },
+    },
   },
-  required: ["prior_papers", "themes", "sources", "research_gaps"],
+  required: [
+    "prior_papers",
+    "themes",
+    "sources",
+    "research_gaps",
+    "experiment_candidates",
+  ],
 } as const;

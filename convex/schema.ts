@@ -28,6 +28,7 @@ const researchStep = v.union(
   v.literal("discover"),
   v.literal("cite"),
   v.literal("synthesize"),
+  v.literal("experiment"),
   v.literal("evaluate")
 );
 
@@ -36,6 +37,7 @@ const researchSessionEvent = v.union(
   v.literal("discover"),
   v.literal("cite"),
   v.literal("synthesize"),
+  v.literal("experiment"),
   v.literal("evaluate"),
   v.literal("tool_call"),
   v.literal("llm_turn"),
@@ -56,6 +58,28 @@ const baselineComparison = v.object({
   claimsWithEvidence: v.number(),
   baselineClaimsWithEvidence: v.number(),
   summary: v.string(),
+});
+
+const researchExecutionConfig = v.object({
+  repositoryUrl: v.string(),
+  baseBranch: v.string(),
+  targetFile: v.literal("train.py"),
+  runCommand: v.string(),
+  metricName: v.string(),
+  metricDirection: v.union(v.literal("minimize"), v.literal("maximize")),
+  minimumImprovement: v.number(),
+  maxExperiments: v.number(),
+  maxRuntimeSeconds: v.number(),
+});
+
+const researchExperimentSummary = v.object({
+  metricName: v.string(),
+  metricDirection: v.union(v.literal("minimize"), v.literal("maximize")),
+  baselineMetric: v.optional(v.number()),
+  bestMetric: v.optional(v.number()),
+  attempted: v.number(),
+  accepted: v.number(),
+  bestCommitSha: v.optional(v.string()),
 });
 
 const verdict = v.union(
@@ -315,6 +339,10 @@ export default defineSchema({
     step: v.optional(researchStep),
     sessionId: v.string(),
     userId: v.optional(v.id("users")),
+    executionConfig: v.optional(researchExecutionConfig),
+    baselineMetric: v.optional(v.number()),
+    bestMetric: v.optional(v.number()),
+    bestCommitSha: v.optional(v.string()),
     error: v.optional(v.string()),
     createdAt: v.number(),
   })
@@ -346,8 +374,67 @@ export default defineSchema({
       claimsWithEvidence: v.number(),
     }),
     baselineComparison: v.optional(baselineComparison),
+    experimentSummary: v.optional(researchExperimentSummary),
     createdAt: v.number(),
   }).index("by_run", ["runId"]),
+
+  researchCandidates: defineTable({
+    runId: v.id("researchRuns"),
+    round: v.number(),
+    candidateKey: v.string(),
+    title: v.string(),
+    hypothesis: v.string(),
+    proposedChange: v.string(),
+    expectedEffect: v.string(),
+    evidenceUrls: v.array(v.string()),
+    risks: v.array(v.string()),
+    rank: v.number(),
+    status: v.union(
+      v.literal("proposed"),
+      v.literal("queued"),
+      v.literal("running"),
+      v.literal("accepted"),
+      v.literal("rejected"),
+      v.literal("failed")
+    ),
+    createdAt: v.number(),
+  })
+    .index("by_run_round_rank", ["runId", "round", "rank"])
+    .index("by_run_key", ["runId", "candidateKey"]),
+
+  researchExperiments: defineTable({
+    runId: v.id("researchRuns"),
+    candidateId: v.optional(v.id("researchCandidates")),
+    kind: v.union(v.literal("baseline"), v.literal("candidate")),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("claimed"),
+      v.literal("running"),
+      v.literal("succeeded"),
+      v.literal("failed")
+    ),
+    workerId: v.optional(v.string()),
+    leaseToken: v.optional(v.string()),
+    leaseExpiresAt: v.optional(v.number()),
+    metricValue: v.optional(v.number()),
+    improved: v.optional(v.boolean()),
+    delta: v.optional(v.number()),
+    commitSha: v.optional(v.string()),
+    resultRef: v.optional(v.string()),
+    patch: v.optional(v.string()),
+    runtimeSeconds: v.optional(v.number()),
+    hardware: v.optional(v.string()),
+    stdoutTail: v.optional(v.string()),
+    error: v.optional(v.string()),
+    startedAt: v.optional(v.number()),
+    completedAt: v.optional(v.number()),
+    createdAt: v.number(),
+  })
+    .index("by_run", ["runId"])
+    .index("by_run_kind", ["runId", "kind"])
+    .index("by_candidate", ["candidateId"])
+    .index("by_status_created", ["status", "createdAt"])
+    .index("by_status_lease", ["status", "leaseExpiresAt"]),
 
   researchSessions: defineTable({
     runId: v.id("researchRuns"),

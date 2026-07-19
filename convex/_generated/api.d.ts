@@ -41,6 +41,7 @@ import type * as lib_fork_rules from "../lib/fork_rules.js";
 import type * as lib_hermes_parse from "../lib/hermes_parse.js";
 import type * as lib_linkup_fetch from "../lib/linkup_fetch.js";
 import type * as lib_paper_fetch from "../lib/paper_fetch.js";
+import type * as lib_research_experiments from "../lib/research_experiments.js";
 import type * as lib_research_helpers from "../lib/research_helpers.js";
 import type * as lib_research_query from "../lib/research_query.js";
 import type * as lib_s2_fetch from "../lib/s2_fetch.js";
@@ -50,6 +51,7 @@ import type * as memories from "../memories.js";
 import type * as reports from "../reports.js";
 import type * as requests from "../requests.js";
 import type * as research from "../research.js";
+import type * as researchWorker from "../researchWorker.js";
 import type * as waitlist from "../waitlist.js";
 
 import type {
@@ -92,6 +94,7 @@ declare const fullApi: ApiFromModules<{
   "lib/hermes_parse": typeof lib_hermes_parse;
   "lib/linkup_fetch": typeof lib_linkup_fetch;
   "lib/paper_fetch": typeof lib_paper_fetch;
+  "lib/research_experiments": typeof lib_research_experiments;
   "lib/research_helpers": typeof lib_research_helpers;
   "lib/research_query": typeof lib_research_query;
   "lib/s2_fetch": typeof lib_s2_fetch;
@@ -101,6 +104,7 @@ declare const fullApi: ApiFromModules<{
   reports: typeof reports;
   requests: typeof requests;
   research: typeof research;
+  researchWorker: typeof researchWorker;
   waitlist: typeof waitlist;
 }>;
 

@@ -5,7 +5,13 @@ import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
 
-export const RESEARCH_STEPS = ["discover", "cite", "synthesize", "evaluate"] as const;
+export const RESEARCH_STEPS = [
+  "discover",
+  "cite",
+  "synthesize",
+  "experiment",
+  "evaluate",
+] as const;
 export type ResearchStep = (typeof RESEARCH_STEPS)[number];
 export type ResearchStepFilter = ResearchStep | "all";
 
@@ -13,6 +19,7 @@ const STEP_EVENTS: Record<ResearchStep, string[]> = {
   discover: ["discover", "tool_call"],
   cite: ["cite"],
   synthesize: ["synthesize", "llm_turn"],
+  experiment: ["experiment"],
   evaluate: ["evaluate"],
 };
 
@@ -40,6 +47,12 @@ function formatLine(
   }
   if (event === "synthesize" && typeof p.synthesisPreview === "string") {
     return `${prefix}\n  → ${p.claimsWithEvidence ?? 0} claims · ${p.synthesisPreview}…`;
+  }
+  if (event === "experiment") {
+    const label = typeof p.title === "string" ? p.title : p.kind ?? "experiment";
+    return `${prefix}\n  → ${label}: ${p.state ?? "updated"}${
+      p.metricValue !== undefined ? ` · ${p.metricName ?? "metric"} ${p.metricValue}` : ""
+    }`;
   }
   if (event === "evaluate") {
     const cont = p.shouldContinue ? "continue" : "finish";
@@ -170,6 +183,9 @@ export function ResearchProgress({
       <h2>Loop progress</h2>
       <p className="hierarchy-subtitle">
         Round {progress.run.loopRound + 1} · {progress.sourceCount} sources indexed
+        {progress.run.executionConfig
+          ? ` · ${progress.experimentCounts.completed}/${progress.run.executionConfig.maxExperiments} experiments · ${progress.experimentCounts.accepted} kept`
+          : ""}
         {activeStep !== "all" ? ` · filtering: ${activeStep}` : ""}
       </p>
       <div className="research-step-chips" role="toolbar" aria-label="Filter loop steps">
