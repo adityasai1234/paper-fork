@@ -55,7 +55,13 @@ export function ResearchForm() {
   }
 
   return (
-    <form className="marketing-card hero-form" onSubmit={onSubmit}>
+    <form className="card form-panel" onSubmit={onSubmit}>
+      <div className="form-section-heading">
+        <div>
+          <h2>Research goal</h2>
+          <p>Start with literature only, or add an execution contract for measured experiments.</p>
+        </div>
+      </div>
       <div className="field">
         <label htmlFor="researchPrompt">Research prompt</label>
         <textarea
@@ -70,11 +76,12 @@ export function ResearchForm() {
         />
       </div>
 
-      <div className="research-execution-contract">
+      <fieldset className="research-execution-contract">
+        <legend>Cloud experiment contract <span>Optional</span></legend>
         <div className="research-contract-heading">
           <div>
-            <strong>Cloud experiment contract</strong>
-            <p>Optional. Add a repository to let Hermes test source-backed changes to train.py.</p>
+            <strong>Measure candidates against your repository</strong>
+            <p>Add a repository to let Hermes test source-backed changes to <code>train.py</code>.</p>
           </div>
           <span>{repositoryUrl.trim() ? "armed" : "literature only"}</span>
         </div>
@@ -167,16 +174,19 @@ export function ResearchForm() {
           The worker checks out the current winner, may edit only train.py, and keeps a commit only
           when the configured metric improves.
         </p>
-      </div>
+      </fieldset>
 
-      {error && <p className="form-error">{error}</p>}
-      <button type="submit" disabled={loading || prompt.trim().length < 10}>
-        {loading
-          ? "Starting…"
-          : repositoryUrl.trim()
-            ? "Start cloud research loop"
-            : "Start literature run"}
-      </button>
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <div className="form-submit-row">
+        <p>{repositoryUrl.trim() ? "A baseline runs before any candidate can be claimed." : "No code executes in a literature-only run."}</p>
+        <button type="submit" disabled={loading || prompt.trim().length < 10}>
+          {loading
+            ? "Starting…"
+            : repositoryUrl.trim()
+              ? "Start cloud research loop"
+              : "Start literature run"}
+        </button>
+      </div>
     </form>
   );
 }

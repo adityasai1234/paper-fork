@@ -8,15 +8,15 @@ import { ReportFooter } from "@/components/ReportFooter";
 export function ResearchHomeClient() {
   return (
     <AppShell
-      eyebrow="#02 · Research"
-      title="Auto-research loop"
-      description="Turn web evidence into measured code experiments. Linkup finds the ideas; Hermes runs the train.py ratchet on your cloud worker."
+      eyebrow="Evidence-backed experimentation"
+      title="Run the research loop"
+      description="Start with a research question. Optionally attach a repository so grounded ideas become measured cloud experiments with a keep-or-revert decision."
       activeNav="research"
     >
       <ResumeResearchBanner />
       <ResearchForm />
-      <p className="mt-6 font-mono text-xs tracking-wide text-muted">
-        prompt · websearch · candidates · cloud experiments · keep or revert
+      <p className="capability-line">
+        Websearch <span>·</span> Grounded candidates <span>·</span> Cloud experiments <span>·</span> Keep or revert
       </p>
       <ReportFooter />
     </AppShell>

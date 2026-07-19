@@ -25,5 +25,7 @@ describe("ForkLedger", () => {
     assert.match(html, /Dimension/);
     assert.match(html, /verdict-FORKED/);
     assert.match(html, /CV mismatch/);
+    assert.match(html, /Paper claims compared with repository evidence/);
+    assert.match(html, /scope="col"/);
   });
 });

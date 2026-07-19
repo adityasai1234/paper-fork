@@ -5,11 +5,9 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
 import { AppShell } from "@/components/AppShell";
-import {
-  ResearchProgress,
-  ResearchTerminal,
-  type ResearchStepFilter,
-} from "@/components/ResearchTerminal";
+import { ResearchProgress } from "@/components/ResearchProgress";
+import { ResearchTerminal } from "@/components/ResearchTerminal";
+import type { ResearchStepFilter } from "@/components/researchSteps";
 import { ReportFooter } from "@/components/ReportFooter";
 import { SessionBar } from "@/components/SessionBar";
 import { api } from "@convex/_generated/api";
@@ -36,11 +34,11 @@ export function ResearchPageContent() {
   }, [reportUrl, router, run?.status]);
 
   if (run === undefined) {
-    return <main className="loading-state">Loading research run…</main>;
+    return <main id="main-content" className="loading-state" aria-live="polite">Loading research run…</main>;
   }
 
   if (!run) {
-    return <main className="loading-state">Research run not found.</main>;
+    return <main id="main-content" className="loading-state">Research run not found.</main>;
   }
 
   const showReportLink = run.status === "done" || live?.reportReady === true;

@@ -19,11 +19,11 @@ export function ResearchReportContent() {
   const data = useQuery(api.research.getResearchReport, { runId, ...sessionArgs });
 
   if (data === undefined) {
-    return <main className="loading-state">Loading report…</main>;
+    return <main id="main-content" className="loading-state" aria-live="polite">Loading report…</main>;
   }
 
   if (!data) {
-    return <main className="loading-state">Report not ready yet.</main>;
+    return <main id="main-content" className="loading-state">Report not ready yet.</main>;
   }
 
   const { run, report, sources, baselineReport, experiments } = data;
@@ -75,27 +75,30 @@ export function ResearchReportContent() {
       {comparison && (
         <div className="card research-baseline-card research-report-card">
           <h2>vs prompt-only baseline</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Metric</th>
-                <th>Baseline</th>
-                <th>Paperfork research</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Sources cited</td>
-                <td>{baselineReport?.loopMetrics.sourceCount ?? 0}</td>
-                <td>{report.loopMetrics.sourceCount}</td>
-              </tr>
-              <tr>
-                <td>Evidence-backed claims</td>
-                <td>{comparison.baselineClaimsWithEvidence}</td>
-                <td>{comparison.claimsWithEvidence}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div className="data-table-scroll">
+            <table>
+              <caption className="sr-only">Prompt-only baseline compared with Paperfork research</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Metric</th>
+                  <th scope="col">Baseline</th>
+                  <th scope="col">Paperfork research</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Sources cited</td>
+                  <td>{baselineReport?.loopMetrics.sourceCount ?? 0}</td>
+                  <td>{report.loopMetrics.sourceCount}</td>
+                </tr>
+                <tr>
+                  <td>Evidence-backed claims</td>
+                  <td>{comparison.baselineClaimsWithEvidence}</td>
+                  <td>{comparison.claimsWithEvidence}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <p className="research-baseline-summary">{comparison.summary}</p>
         </div>
       )}
@@ -111,13 +114,14 @@ export function ResearchReportContent() {
           </p>
           <div className="research-table-scroll">
             <table>
+              <caption className="sr-only">Baseline and candidate experiment results</caption>
               <thead>
                 <tr>
-                  <th>Run</th>
-                  <th>Result</th>
-                  <th>{experimentSummary.metricName}</th>
-                  <th>Runtime</th>
-                  <th>Commit</th>
+                  <th scope="col">Run</th>
+                  <th scope="col">Result</th>
+                  <th scope="col">{experimentSummary.metricName}</th>
+                  <th scope="col">Runtime</th>
+                  <th scope="col">Commit</th>
                 </tr>
               </thead>
               <tbody>

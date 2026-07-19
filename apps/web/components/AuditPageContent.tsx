@@ -25,11 +25,11 @@ export function AuditPageContent() {
   const report = useQuery(api.reports.getReport, { auditId, ...sessionArgs });
 
   if (audit === undefined) {
-    return <main className="loading-state">Loading audit…</main>;
+    return <main id="main-content" className="loading-state" aria-live="polite">Loading audit…</main>;
   }
 
   if (!audit) {
-    return <main className="loading-state">Audit not found.</main>;
+    return <main id="main-content" className="loading-state">Audit not found.</main>;
   }
 
   const isComplete = audit.status === "done" || audit.status === "blocked";

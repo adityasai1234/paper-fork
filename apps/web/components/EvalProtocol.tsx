@@ -15,8 +15,8 @@ export function EvalProtocol({ protocol }: { protocol?: EvalProtocolData }) {
   return (
     <div className="card">
       <h2>How are you evaluating your model?</h2>
-      <p style={{ marginTop: "0.75rem", lineHeight: 1.5 }}>{protocol.summary}</p>
-      <dl style={{ marginTop: "1rem", display: "grid", gap: "0.5rem" }}>
+      <p className="card-summary">{protocol.summary}</p>
+      <dl className="definition-list">
         {protocol.splits && (
           <>
             <dt className="field-label">Splits</dt>

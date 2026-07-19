@@ -10,24 +10,27 @@ export function NeighborTable({ neighbors }: { neighbors: Neighbor[] }) {
   return (
     <div className="card">
       <h2>Neighbors</h2>
-      <table style={{ marginTop: "0.75rem" }}>
-        <thead>
-          <tr>
-            <th>Title</th>
-            <th>Year</th>
-            <th>S2 ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          {neighbors.map((n) => (
-            <tr key={n.s2Id}>
-              <td>{n.title}</td>
-              <td>{n.year ?? "-"}</td>
-              <td>{n.s2Id}</td>
+      <div className="data-table-scroll">
+        <table>
+          <caption className="sr-only">Related papers and Semantic Scholar identifiers</caption>
+          <thead>
+            <tr>
+              <th scope="col">Title</th>
+              <th scope="col">Year</th>
+              <th scope="col">S2 ID</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {neighbors.map((n) => (
+              <tr key={n.s2Id}>
+                <td>{n.title}</td>
+                <td>{n.year ?? "-"}</td>
+                <td>{n.s2Id}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

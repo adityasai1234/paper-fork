@@ -20,7 +20,7 @@ export function AgentChips({
   return (
     <div className="card">
       <h2>Agents</h2>
-      <div style={{ marginTop: "0.75rem" }}>
+      <div className="chip-list" aria-label="Agent statuses">
         {items.map((item) => (
           <span key={item.label} className={`chip ${item.status}`}>
             {item.label}: {item.status}

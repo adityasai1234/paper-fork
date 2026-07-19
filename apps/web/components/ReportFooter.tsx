@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 export function ReportFooter({ className }: { className?: string }) {
   return (
     <footer className={cn("report-footer", className)}>
-      <div className="report-footer-inner report-footer-inner--dark">
+      <div className="report-footer-inner">
         <div>
-          <p className="report-footer-eyebrow">Paperfork · open source research audit</p>
+          <p className="report-footer-eyebrow">Paperfork · open-source research evidence</p>
           <p className="report-footer-contact">{contactEmail}</p>
         </div>
         <p>

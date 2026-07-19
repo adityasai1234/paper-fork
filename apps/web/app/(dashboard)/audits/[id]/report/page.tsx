@@ -29,7 +29,7 @@ export default function AuditReportPage() {
   const pdfUrl = useQuery(api.reports.getReportPdfUrl, { auditId, ...sessionArgs });
 
   if (!audit || !report) {
-    return <main className="loading-state">Loading report…</main>;
+    return <main id="main-content" className="loading-state" aria-live="polite">Loading report…</main>;
   }
 
   return (
@@ -64,7 +64,7 @@ export default function AuditReportPage() {
               ))}
             </ul>
             {pdfUrl && (
-              <p style={{ marginTop: "1rem" }}>
+              <p className="card-action-row">
                 <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
                   Download verified paper PDF
                 </a>
@@ -82,7 +82,7 @@ export default function AuditReportPage() {
         <ReproAppendix repro={report.reproAppendix} />
         <VoicePlayer voiceUrl={report.voiceUrl} />
         <UserRequestCard auditId={auditId} sessionId={sessionId} />
-        <CronScheduleCard auditId={auditId} githubUrl={audit.githubUrl} sessionId={sessionId} />
+        <CronScheduleCard auditId={auditId} sessionId={sessionId} />
       </div>
 
       {githubOutput && (
@@ -90,12 +90,12 @@ export default function AuditReportPage() {
           <h2>GitHub outputs</h2>
           {githubOutput.issueUrl && (
             <p>
-              Issue: <a href={githubOutput.issueUrl}>{githubOutput.issueUrl}</a>
+              Issue: <a href={githubOutput.issueUrl} target="_blank" rel="noopener noreferrer">{githubOutput.issueUrl}</a>
             </p>
           )}
           {githubOutput.prUrl && (
             <p>
-              Pull request: <a href={githubOutput.prUrl}>{githubOutput.prUrl}</a>
+              Pull request: <a href={githubOutput.prUrl} target="_blank" rel="noopener noreferrer">{githubOutput.prUrl}</a>
               {githubOutput.branchName && (
                 <span className="text-muted"> (branch {githubOutput.branchName})</span>
               )}
@@ -103,7 +103,7 @@ export default function AuditReportPage() {
           )}
           <h3>Issue body</h3>
           <pre>{githubOutput.issueBody}</pre>
-          <h3 style={{ marginTop: "1rem" }}>README patch</h3>
+          <h3 className="card-subheading">README patch</h3>
           <pre>{githubOutput.readmePatch}</pre>
         </div>
       )}
@@ -114,7 +114,7 @@ export default function AuditReportPage() {
           <ul>
             {report.linkupSources.map((s: { url: string; usedFor: string }, i: number) => (
               <li key={i}>
-                <a href={s.url}>{s.usedFor}</a>
+                <a href={s.url} target="_blank" rel="noopener noreferrer">{s.usedFor}</a>
               </li>
             ))}
           </ul>

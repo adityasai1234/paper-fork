@@ -64,10 +64,16 @@ export function AuditForm() {
   }
 
   return (
-    <form className="marketing-card hero-form" onSubmit={onSubmit}>
-      <div className="hero-form-github">
+    <form className="card form-panel" onSubmit={onSubmit}>
+      <div className="form-section-heading">
+        <div>
+          <h2>Audit inputs</h2>
+          <p>Paperfork reads the paper and repository without modifying the default branch.</p>
+        </div>
+      </div>
+      <div className="github-connection">
         {githubConnection === undefined ? (
-          <p className="text-muted">Checking GitHub…</p>
+          <p className="text-muted" aria-live="polite">Checking GitHub…</p>
         ) : githubConnection ? (
           <p>
             GitHub connected as <strong>@{githubConnection.githubLogin}</strong>{" "}
@@ -90,40 +96,54 @@ export function AuditForm() {
             >
               {githubLoading ? "Redirecting…" : "Connect GitHub"}
             </button>
-            <span className="text-muted"> — required for PR fixes on your repo</span>
+            <span className="text-muted"> Required only when you want Paperfork to propose a PR fix.</span>
           </p>
         )}
       </div>
-      <label htmlFor="paperId">Paper ID (arXiv or DOI)</label>
-      <input
-        id="paperId"
-        value={paperId}
-        onChange={(e) => setPaperId(e.target.value)}
-        placeholder="2401.12345"
-        required
-        autoFocus
-      />
-      <label htmlFor="paperIdType">ID type</label>
-      <select
-        id="paperIdType"
-        value={paperIdType}
-        onChange={(e) => setPaperIdType(e.target.value as "arxiv" | "doi")}
-      >
-        <option value="arxiv">arXiv</option>
-        <option value="doi">DOI</option>
-      </select>
-      <label htmlFor="githubUrl">GitHub repository URL</label>
-      <input
-        id="githubUrl"
-        value={githubUrl}
-        onChange={(e) => setGithubUrl(e.target.value)}
-        placeholder="https://github.com/owner/repo"
-        required
-      />
-      <button type="submit" disabled={loading}>
+      <div className="form-grid form-grid-paper">
+        <div className="field">
+          <label htmlFor="paperId">Paper ID</label>
+          <input
+            id="paperId"
+            value={paperId}
+            onChange={(e) => setPaperId(e.target.value)}
+            placeholder="2401.12345"
+            aria-describedby="paper-id-hint"
+            required
+            autoFocus
+          />
+          <span className="field-hint" id="paper-id-hint">An arXiv identifier or DOI.</span>
+        </div>
+        <div className="field">
+          <label htmlFor="paperIdType">ID type</label>
+          <select
+            id="paperIdType"
+            value={paperIdType}
+            onChange={(e) => setPaperIdType(e.target.value as "arxiv" | "doi")}
+          >
+            <option value="arxiv">arXiv</option>
+            <option value="doi">DOI</option>
+          </select>
+        </div>
+      </div>
+      <div className="field">
+        <label htmlFor="githubUrl">GitHub repository URL</label>
+        <input
+          id="githubUrl"
+          type="url"
+          value={githubUrl}
+          onChange={(e) => setGithubUrl(e.target.value)}
+          placeholder="https://github.com/owner/repo"
+          required
+        />
+      </div>
+      <div className="form-submit-row">
+        <p>Results stay tied to the repository commit that was inspected.</p>
+        <button type="submit" disabled={loading}>
         {loading ? "Starting audit…" : "Find the fork"}
-      </button>
-      {error ? <p className="form-status-error">{error}</p> : null}
+        </button>
+      </div>
+      {error ? <p className="form-error" role="alert">{error}</p> : null}
     </form>
   );
 }
