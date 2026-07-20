@@ -12,10 +12,10 @@ export function ReproAppendix({ repro }: { repro: Repro }) {
   return (
     <div className="card">
       <h2>Reproduction appendix</h2>
-      <ul style={{ marginTop: "0.75rem", listStyle: "none" }}>
+      <ul className="repro-list">
         {Object.entries(repro).map(([k, v]) =>
           v ? (
-            <li key={k} style={{ marginBottom: "0.35rem" }}>
+            <li key={k}>
               <strong>{k}:</strong> {v}
             </li>
           ) : null

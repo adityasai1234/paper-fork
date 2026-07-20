@@ -3,7 +3,7 @@ import { ResearchPageContent } from "@/components/ResearchPageContent";
 
 export default function ResearchRunPage() {
   return (
-    <Suspense fallback={<main className="loading-state">Loading research run…</main>}>
+    <Suspense fallback={<main id="main-content" className="loading-state" aria-live="polite">Loading research run…</main>}>
       <ResearchPageContent />
     </Suspense>
   );

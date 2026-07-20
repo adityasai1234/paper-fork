@@ -1,25 +1,39 @@
 import type { Metadata } from "next";
-import { DM_Sans, Instrument_Serif } from "next/font/google";
-import { ConvexAuthNextjsServerProvider } from "@convex-dev/auth/nextjs/server";
-import { ConvexClientProvider } from "@/components/ConvexClientProvider";
+import { Geist, Geist_Mono } from "next/font/google";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
+const geist = Geist({
   subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
+  variable: "--font-geist",
+  display: "swap",
 });
 
-const dmSans = DM_Sans({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-dm-sans",
+  variable: "--font-geist-mono",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "PaperFork",
-  description: "Evidence-led research audit",
+  metadataBase: new URL(siteUrl()),
+  title: {
+    default: "Paperfork — evidence for research code",
+    template: "%s | Paperfork",
+  },
+  description:
+    "Compare research papers with their repositories, trace reproducibility gaps, and run source-backed cloud experiments.",
+  openGraph: {
+    title: "Paperfork — evidence for research code",
+    description:
+      "Audit paper-to-code gaps and turn web evidence into measured research experiments.",
+    type: "website",
+    url: "/",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({
@@ -28,11 +42,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${instrumentSerif.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${geist.variable} ${geistMono.variable}`}>
       <body>
-        <ConvexAuthNextjsServerProvider>
-          <ConvexClientProvider>{children}</ConvexClientProvider>
-        </ConvexAuthNextjsServerProvider>
+        <a className="skip-link" href="#main-content">
+          Skip to main content
+        </a>
+        {children}
       </body>
     </html>
   );

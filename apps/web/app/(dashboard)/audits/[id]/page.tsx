@@ -3,7 +3,7 @@ import { AuditPageContent } from "@/components/AuditPageContent";
 
 export default function AuditDetailPage() {
   return (
-    <Suspense fallback={<main className="loading-state">Loading audit…</main>}>
+    <Suspense fallback={<main id="main-content" className="loading-state" aria-live="polite">Loading audit…</main>}>
       <AuditPageContent />
     </Suspense>
   );

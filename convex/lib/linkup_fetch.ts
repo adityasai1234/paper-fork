@@ -1,4 +1,9 @@
-import { citationKeyFromTitle, LINKUP_RESEARCH_SCHEMA, type LinkupResearchOutput } from "./research_helpers";
+import {
+  citationKeyFromTitle,
+  coerceLinkupResearchOutput,
+  LINKUP_RESEARCH_SCHEMA,
+  type LinkupResearchOutput,
+} from "./research_helpers";
 
 export type LiteratureNeighbor = {
   s2Id: string;
@@ -121,14 +126,12 @@ export async function fetchLinkupLiterature(
       };
     }
 
-    const data = (await res.json()) as { structuredOutput?: LinkupResearchOutput };
-    const structured = data.structuredOutput ?? (data as unknown as LinkupResearchOutput);
-    const output: LinkupResearchOutput = {
-      prior_papers: structured.prior_papers ?? [],
-      themes: structured.themes ?? [],
-      sources: structured.sources ?? [],
-      research_gaps: structured.research_gaps ?? [],
-    };
+    const data = (await res.json()) as unknown;
+    const container =
+      data !== null && typeof data === "object"
+        ? (data as Record<string, unknown>)
+        : null;
+    const output = coerceLinkupResearchOutput(container?.structuredOutput ?? data);
 
     const primary = output.prior_papers[0];
     return {

@@ -8,15 +8,15 @@ import { ReportFooter } from "@/components/ReportFooter";
 export function ResearchHomeClient() {
   return (
     <AppShell
-      eyebrow="#02 · Research"
-      title="Auto-research loop"
-      description="Submit a research prompt. Linkup discovers prior papers, builds citations, and runs a literature loop — compared against a prompt-only baseline."
+      eyebrow="Evidence-backed experimentation"
+      title="Run the research loop"
+      description="Start with a research question. Optionally attach a repository so grounded ideas become measured cloud experiments with a keep-or-revert decision."
       activeNav="research"
     >
       <ResumeResearchBanner />
       <ResearchForm />
-      <p className="mt-6 font-mono text-xs tracking-wide text-muted">
-        prompt · linkup · citations · synthesis · baseline
+      <p className="capability-line">
+        Websearch <span>·</span> Grounded candidates <span>·</span> Cloud experiments <span>·</span> Keep or revert
       </p>
       <ReportFooter />
     </AppShell>

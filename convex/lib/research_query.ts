@@ -18,6 +18,22 @@ export const getRunInternal = internalQuery({
       mainRunId: v.optional(v.id("researchRuns")),
       loopRound: v.number(),
       sessionId: v.string(),
+      executionConfig: v.optional(
+        v.object({
+          repositoryUrl: v.string(),
+          baseBranch: v.string(),
+          targetFile: v.literal("train.py"),
+          runCommand: v.string(),
+          metricName: v.string(),
+          metricDirection: v.union(v.literal("minimize"), v.literal("maximize")),
+          minimumImprovement: v.number(),
+          maxExperiments: v.number(),
+          maxRuntimeSeconds: v.number(),
+        })
+      ),
+      baselineMetric: v.optional(v.number()),
+      bestMetric: v.optional(v.number()),
+      bestCommitSha: v.optional(v.string()),
     }),
     v.null()
   ),
@@ -33,6 +49,10 @@ export const getRunInternal = internalQuery({
       mainRunId: run.mainRunId,
       loopRound: run.loopRound,
       sessionId: run.sessionId,
+      executionConfig: run.executionConfig,
+      baselineMetric: run.baselineMetric,
+      bestMetric: run.bestMetric,
+      bestCommitSha: run.bestCommitSha,
     };
   },
 });
@@ -106,5 +126,39 @@ export const countSourcesInternal = internalQuery({
       .withIndex("by_run", (q) => q.eq("runId", args.runId))
       .collect();
     return sources.length;
+  },
+});
+
+export const listExperimentsInternal = internalQuery({
+  args: { runId: v.id("researchRuns") },
+  returns: v.array(
+    v.object({
+      kind: v.union(v.literal("baseline"), v.literal("candidate")),
+      status: v.union(
+        v.literal("queued"),
+        v.literal("claimed"),
+        v.literal("running"),
+        v.literal("succeeded"),
+        v.literal("failed")
+      ),
+      metricValue: v.optional(v.number()),
+      improved: v.optional(v.boolean()),
+      commitSha: v.optional(v.string()),
+      error: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const rows = await ctx.db
+      .query("researchExperiments")
+      .withIndex("by_run", (q) => q.eq("runId", args.runId))
+      .collect();
+    return rows.map((row) => ({
+      kind: row.kind,
+      status: row.status,
+      metricValue: row.metricValue,
+      improved: row.improved,
+      commitSha: row.commitSha,
+      error: row.error,
+    }));
   },
 });

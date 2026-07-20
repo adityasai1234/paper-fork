@@ -1,5 +1,9 @@
 import type { Doc, Id } from "../_generated/dataModel";
 import type { MutationCtx, QueryCtx } from "../_generated/server";
+import {
+  normalizeEvidenceUrl,
+  type ExperimentCandidateInput,
+} from "./research_experiments";
 
 export function newSessionId(): string {
   return crypto.randomUUID();
@@ -50,13 +54,150 @@ export type LinkupResearchOutput = {
     quote?: string;
   }>;
   research_gaps: string[];
+  experiment_candidates: Array<{
+    title: string;
+    hypothesis: string;
+    proposed_change: string;
+    expected_effect: string;
+    evidence_urls: string[];
+    risks: string[];
+    rank: number;
+  }>;
 };
+
+function recordValue(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function textValue(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function textArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map(textValue).filter(Boolean)
+    : [];
+}
+
+function objectArray(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(recordValue).filter((row): row is Record<string, unknown> => row !== null);
+}
+
+export function coerceLinkupResearchOutput(value: unknown): LinkupResearchOutput {
+  const root = recordValue(value) ?? {};
+
+  const prior_papers = objectArray(root.prior_papers)
+    .map((paper) => {
+      const title = textValue(paper.title);
+      const url = textValue(paper.url);
+      const year =
+        typeof paper.year === "number" && Number.isFinite(paper.year)
+          ? paper.year
+          : undefined;
+      return {
+        title,
+        url,
+        authors: textArray(paper.authors),
+        year,
+        relevance: textValue(paper.relevance) || "unknown",
+        evidence_quote: textValue(paper.evidence_quote),
+      };
+    })
+    .filter((paper) => paper.title && normalizeEvidenceUrl(paper.url));
+
+  const sources = objectArray(root.sources)
+    .map((source) => {
+      const quote = textValue(source.quote);
+      return {
+        url: textValue(source.url),
+        title: textValue(source.title),
+        source_type: textValue(source.source_type),
+        used_for: textValue(source.used_for),
+        ...(quote ? { quote } : {}),
+      };
+    })
+    .filter((source) => source.title && normalizeEvidenceUrl(source.url));
+
+  const experiment_candidates = objectArray(root.experiment_candidates).map(
+    (candidate, index) => ({
+      title: textValue(candidate.title),
+      hypothesis: textValue(candidate.hypothesis),
+      proposed_change: textValue(candidate.proposed_change),
+      expected_effect: textValue(candidate.expected_effect),
+      evidence_urls: textArray(candidate.evidence_urls),
+      risks: textArray(candidate.risks),
+      rank:
+        typeof candidate.rank === "number" && Number.isFinite(candidate.rank)
+          ? candidate.rank
+          : index + 1,
+    })
+  );
+
+  return {
+    prior_papers,
+    themes: textArray(root.themes),
+    sources,
+    research_gaps: textArray(root.research_gaps),
+    experiment_candidates,
+  };
+}
+
+export function groundExperimentCandidates(
+  output: LinkupResearchOutput
+): ExperimentCandidateInput[] {
+  const retrievedByCanonicalUrl = new Map<string, string>();
+  for (const url of [
+    ...output.prior_papers.map((paper) => paper.url),
+    ...output.sources.map((source) => source.url),
+  ]) {
+    const canonical = normalizeEvidenceUrl(url);
+    if (canonical && !retrievedByCanonicalUrl.has(canonical)) {
+      retrievedByCanonicalUrl.set(canonical, url);
+    }
+  }
+
+  return output.experiment_candidates
+    .map((candidate) => {
+      const evidenceUrls = Array.from(
+        new Set(
+          candidate.evidence_urls
+            .map(normalizeEvidenceUrl)
+            .filter((url): url is string => Boolean(url))
+            .map((url) => retrievedByCanonicalUrl.get(url))
+            .filter((url): url is string => Boolean(url))
+        )
+      );
+      return {
+        title: textValue(candidate.title),
+        hypothesis: textValue(candidate.hypothesis),
+        proposedChange: textValue(candidate.proposed_change),
+        expectedEffect: textValue(candidate.expected_effect),
+        evidenceUrls,
+        risks: textArray(candidate.risks),
+        rank: Math.max(1, Math.trunc(candidate.rank)),
+      };
+    })
+    .filter(
+      (candidate) =>
+        candidate.title &&
+        candidate.hypothesis &&
+        candidate.proposedChange &&
+        candidate.expectedEffect &&
+        candidate.evidenceUrls.length > 0
+    )
+    .sort((a, b) => a.rank - b.rank)
+    .slice(0, 3);
+}
 
 export const EMPTY_LINKUP_RESEARCH: LinkupResearchOutput = {
   prior_papers: [],
   themes: [],
   sources: [],
   research_gaps: ["Linkup API key not configured"],
+  experiment_candidates: [],
 };
 
 export function linkupOutputFromSearchHits(
@@ -75,6 +216,7 @@ export function linkupOutputFromSearchHits(
       themes: [],
       sources: [],
       research_gaps: ["No papers found for this query"],
+      experiment_candidates: [],
     };
   }
 
@@ -104,6 +246,7 @@ export function linkupOutputFromSearchHits(
       hits.length < 3
         ? ["Limited search results — consider refining the research prompt"]
         : [],
+    experiment_candidates: [],
   };
 }
 
@@ -146,18 +289,41 @@ export function sourcesBasedSynthesis(
   };
 }
 
-export function buildLinkupResearchQuery(prompt: string, gapFocus?: string[]): string {
+export function buildLinkupResearchQuery(
+  prompt: string,
+  gapFocus?: string[],
+  execution?: {
+    repositoryUrl: string;
+    baseBranch: string;
+    targetFile: "train.py";
+    metricName: string;
+    metricDirection: "minimize" | "maximize";
+  }
+): string {
   const gapSection =
     gapFocus && gapFocus.length > 0
-      ? `\n## Gap focus (round follow-up)\nPrioritize filling these gaps:\n${gapFocus.map((g) => `- ${g}`).join("\n")}\n`
+      ? `\n## Experiment feedback (round follow-up)\nUse these measured results to change the next search:\n${gapFocus.map((g) => `- ${g}`).join("\n")}\n`
       : "";
 
-  return `You are the literature discovery agent for Paperfork auto-research.
+  const experimentSection = execution
+    ? `
+## Executable experiment contract
+Repository: ${execution.repositoryUrl}
+Base branch or revision: ${execution.baseBranch}
+Editable file: ${execution.targetFile} (no other file may be changed)
+Objective: ${execution.metricDirection} ${execution.metricName}
+
+Propose up to 3 small, independently testable experiment_candidates. Every candidate must name an exact ${execution.targetFile} change, cite evidence_urls present in the returned sources, state the expected metric effect and risks, and use rank 1 for the strongest candidate. Do not propose infrastructure, dataset, evaluation, or multi-file changes.
+`
+    : "";
+
+  return `You are the web-search lead for Paperfork auto-research.
 
 Research prompt: ${prompt}
 ${gapSection}
+${experimentSection}
 
-Find prior art papers and authoritative sources this research can build on. Perform multiple targeted searches on arXiv, Papers With Code, and Hugging Face. Return structured JSON with prior_papers (title, url, authors, year, relevance, evidence_quote), themes, sources, and research_gaps.`;
+Find prior art papers and authoritative sources this research can build on. Perform multiple targeted searches on arXiv, Papers With Code, and Hugging Face. Return structured JSON with prior_papers, themes, sources, research_gaps, and experiment_candidates. Never invent evidence URLs.`;
 }
 
 export const LINKUP_RESEARCH_SCHEMA = {
@@ -197,6 +363,37 @@ export const LINKUP_RESEARCH_SCHEMA = {
       },
     },
     research_gaps: { type: "array", items: { type: "string" } },
+    experiment_candidates: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          title: { type: "string" },
+          hypothesis: { type: "string" },
+          proposed_change: { type: "string" },
+          expected_effect: { type: "string" },
+          evidence_urls: { type: "array", items: { type: "string" } },
+          risks: { type: "array", items: { type: "string" } },
+          rank: { type: "number" },
+        },
+        required: [
+          "title",
+          "hypothesis",
+          "proposed_change",
+          "expected_effect",
+          "evidence_urls",
+          "risks",
+          "rank",
+        ],
+      },
+    },
   },
-  required: ["prior_papers", "themes", "sources", "research_gaps"],
+  required: [
+    "prior_papers",
+    "themes",
+    "sources",
+    "research_gaps",
+    "experiment_candidates",
+  ],
 } as const;

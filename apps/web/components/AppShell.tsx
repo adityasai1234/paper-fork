@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GITHUB_REPO } from "@/components/landing/data";
 import { routes } from "@/lib/routes";
 
 export function AppShell({
@@ -16,38 +17,40 @@ export function AppShell({
 }) {
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <Link className="brand" href={routes.research()} aria-label="Paperfork home">
-          <span className="brand-mark" aria-hidden="true">PF</span>
-          <span>Paperfork</span>
-        </Link>
-        <nav className="side-nav" aria-label="Primary navigation">
+      <header className="app-header">
+        <div className="app-header-inner">
+          <Link className="brand" href="/" aria-label="Paperfork home">
+            <span className="brand-mark" aria-hidden="true">pf/</span>
+            <span>Paperfork</span>
+          </Link>
+          <nav className="app-nav" aria-label="Workspace navigation">
           <Link
             className={`nav-item${activeNav === "audit" ? " active" : ""}`}
             href={routes.audits()}
+            aria-current={activeNav === "audit" ? "page" : undefined}
           >
-            <span className="nav-index">01</span>
             Audit
           </Link>
           <Link
             className={`nav-item${activeNav === "research" ? " active" : ""}`}
             href={routes.research()}
+            aria-current={activeNav === "research" ? "page" : undefined}
           >
-            <span className="nav-index">02</span>
             Research
           </Link>
-        </nav>
-        <div className="sidebar-note">
-          <span className="status-dot" />
-          Evidence systems online
+          </nav>
+          <a
+            className="app-header-link"
+            href={GITHUB_REPO}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub
+          </a>
         </div>
-      </aside>
+      </header>
       <div className="workspace">
-        <header className="topbar">
-          <span>Context-enriched autoresearch</span>
-          <span className="mono">LINKUP / CONVEX</span>
-        </header>
-        <main className="main-surface">
+        <main className="main-surface" id="main-content">
           <header className="page-header">
             <p className="eyebrow">{eyebrow}</p>
             <h1>{title}</h1>

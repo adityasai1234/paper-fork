@@ -116,6 +116,38 @@ export const run = internalAction({
       },
     });
 
+    if (run.executionConfig) {
+      const prepared = await ctx.runMutation(
+        internal.researchWorker.prepareExperimentRound,
+        {
+          runId: args.runId,
+          round: args.round,
+        }
+      );
+      if (prepared.candidateQueued) {
+        return null;
+      }
+
+      if (args.round + 1 < run.executionConfig.maxExperiments) {
+        await ctx.scheduler.runAfter(0, internal.actions.runResearchDiscover.runDiscover, {
+          runId: args.runId,
+          round: args.round + 1,
+          gapFocus: [
+            ...args.linkupGaps,
+            "No source-grounded train.py candidate survived validation. Search for a smaller, directly evidenced change.",
+          ],
+        });
+        return null;
+      }
+
+      await ctx.scheduler.runAfter(
+        0,
+        internal.actions.runResearchPipeline.runFinalizeFromExperiments,
+        { runId: args.runId }
+      );
+      return null;
+    }
+
     await ctx.runMutation(internal.research.patchResearchRun, {
       runId: args.runId,
       step: "evaluate",

@@ -1,4 +1,4 @@
-import { SmNav } from "@/components/landing/SmNav";
+import { MarketingNav } from "@/components/landing/MarketingNav";
 
 export function MarketingShell({
   children,
@@ -8,9 +8,12 @@ export function MarketingShell({
   centered?: boolean;
 }) {
   return (
-    <div className="sm-landing min-h-screen">
-      <SmNav />
-      <main className={centered ? "mx-auto max-w-lg px-6 py-12" : undefined}>
+    <div className="marketing-shell">
+      <MarketingNav />
+      <main
+        id="main-content"
+        className={centered ? "auth-main" : "marketing-main"}
+      >
         {children}
       </main>
     </div>

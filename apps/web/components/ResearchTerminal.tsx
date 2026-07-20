@@ -4,17 +4,7 @@ import { useEffect, useRef } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@convex/_generated/api";
 import type { Id } from "@convex/_generated/dataModel";
-
-export const RESEARCH_STEPS = ["discover", "cite", "synthesize", "evaluate"] as const;
-export type ResearchStep = (typeof RESEARCH_STEPS)[number];
-export type ResearchStepFilter = ResearchStep | "all";
-
-const STEP_EVENTS: Record<ResearchStep, string[]> = {
-  discover: ["discover", "tool_call"],
-  cite: ["cite"],
-  synthesize: ["synthesize", "llm_turn"],
-  evaluate: ["evaluate"],
-};
+import { STEP_EVENTS, type ResearchStepFilter } from "@/components/researchSteps";
 
 function formatLine(
   event: string,
@@ -41,6 +31,12 @@ function formatLine(
   if (event === "synthesize" && typeof p.synthesisPreview === "string") {
     return `${prefix}\n  → ${p.claimsWithEvidence ?? 0} claims · ${p.synthesisPreview}…`;
   }
+  if (event === "experiment") {
+    const label = typeof p.title === "string" ? p.title : p.kind ?? "experiment";
+    return `${prefix}\n  → ${label}: ${p.state ?? "updated"}${
+      p.metricValue !== undefined ? ` · ${p.metricName ?? "metric"} ${p.metricValue}` : ""
+    }`;
+  }
   if (event === "evaluate") {
     const cont = p.shouldContinue ? "continue" : "finish";
     return `${prefix}\n  → ${cont}: ${p.reasoning ?? ""}`;
@@ -59,24 +55,6 @@ function formatLine(
   }
 
   return prefix;
-}
-
-function stepStatus(
-  step: ResearchStep,
-  current: ResearchStep | undefined,
-  runStatus: string
-): "pending" | "running" | "done" {
-  if (runStatus === "done") return "done";
-  if (runStatus === "failed") {
-    return current === step ? "running" : "pending";
-  }
-
-  const stepIndex = RESEARCH_STEPS.indexOf(step);
-  const currentIndex = current ? RESEARCH_STEPS.indexOf(current) : -1;
-
-  if (current === step) return "running";
-  if (currentIndex > stepIndex) return "done";
-  return "pending";
 }
 
 function sessionMatchesFilter(event: string, filter: ResearchStepFilter): boolean {
@@ -117,13 +95,13 @@ export function ResearchTerminal({
   return (
     <div className="card research-terminal-wrap">
       <div className="research-terminal-header">
-        <span className="research-terminal-dot red" />
-        <span className="research-terminal-dot amber" />
-        <span className="research-terminal-dot green" />
+        <span className="research-terminal-dot red" aria-hidden="true" />
+        <span className="research-terminal-dot amber" aria-hidden="true" />
+        <span className="research-terminal-dot green" aria-hidden="true" />
         <span className="research-terminal-title">paperfork — research loop</span>
         <span className="research-terminal-status">{progress.run.status}</span>
       </div>
-      <div className="research-terminal" ref={streamRef}>
+      <div className="research-terminal" ref={streamRef} role="log" aria-live="polite" aria-relevant="additions text">
         {visibleSessions.length === 0 ? (
           <p className="research-terminal-line muted">
             {stepFilter === "all"
@@ -140,61 +118,6 @@ export function ResearchTerminal({
         {isRunning && stepFilter === "all" && (
           <p className="research-terminal-line research-terminal-cursor">▌</p>
         )}
-      </div>
-    </div>
-  );
-}
-
-export function ResearchProgress({
-  runId,
-  sessionId,
-  activeStep = "all",
-  onStepClick,
-}: {
-  runId: Id<"researchRuns">;
-  sessionId?: string;
-  activeStep?: ResearchStepFilter;
-  onStepClick?: (step: ResearchStepFilter) => void;
-}) {
-  const progress = useQuery(api.research.getResearchLiveProgress, {
-    runId,
-    ...(sessionId ? { sessionId } : {}),
-  });
-
-  if (!progress) return null;
-
-  const current = progress.run.step;
-
-  return (
-    <div className="card research-progress">
-      <h2>Loop progress</h2>
-      <p className="hierarchy-subtitle">
-        Round {progress.run.loopRound + 1} · {progress.sourceCount} sources indexed
-        {activeStep !== "all" ? ` · filtering: ${activeStep}` : ""}
-      </p>
-      <div className="research-step-chips" role="toolbar" aria-label="Filter loop steps">
-        <button
-          type="button"
-          className={`research-step-chip ${activeStep === "all" ? "active" : ""}`}
-          onClick={() => onStepClick?.("all")}
-        >
-          all
-        </button>
-        {RESEARCH_STEPS.map((step) => {
-          const status = stepStatus(step, current, progress.run.status);
-          const isActive = activeStep === step;
-          return (
-            <button
-              key={step}
-              type="button"
-              className={`research-step-chip ${status} ${isActive ? "active" : ""}`}
-              onClick={() => onStepClick?.(isActive ? "all" : step)}
-              aria-pressed={isActive}
-            >
-              {step}
-            </button>
-          );
-        })}
       </div>
     </div>
   );

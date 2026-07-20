@@ -1,61 +1,21 @@
-import { SmBenchmarks, SmHowItWorks } from "./SmHowItWorks";
-import { SmCompare, SmWhatWeDo } from "./SmSections";
-import { SmEnterprise } from "./SmEnterprise";
-import { SmFaq } from "./SmFaq";
-import { SmFinalCta, SmFooter } from "./SmFooter";
-import { SmHero } from "./SmHero";
-import { SmLogoMarquee } from "./SmLogoMarquee";
-import { SmNav } from "./SmNav";
-import { SmPricing } from "./SmPricing";
-import { SmProductCatalog } from "./SmProductCatalog";
-import { SmReveal } from "./SmReveal";
-import { SmTestimonials } from "./SmTestimonials";
-import { SmUseCases } from "./SmUseCases";
+import { EvidenceLedgerSection } from "./EvidenceLedgerSection";
+import { LandingFooter } from "./LandingFooter";
+import { LandingHero } from "./LandingHero";
+import { MarketingNav } from "./MarketingNav";
+import { ProductPaths } from "./ProductPaths";
+import { ResearchLoopSection } from "./ResearchLoopSection";
 
 export function LandingPage() {
   return (
-    <div className="sm-landing">
-      <SmNav />
-      <main>
-        <SmHero />
-        <SmReveal>
-          <SmLogoMarquee />
-        </SmReveal>
-        <SmReveal delay={40}>
-          <SmProductCatalog />
-        </SmReveal>
-        <SmReveal>
-          <SmWhatWeDo />
-        </SmReveal>
-        <SmReveal>
-          <SmCompare />
-        </SmReveal>
-        <SmReveal>
-          <SmHowItWorks />
-        </SmReveal>
-        <SmReveal>
-          <SmBenchmarks />
-        </SmReveal>
-        <SmReveal>
-          <SmUseCases />
-        </SmReveal>
-        <SmReveal>
-          <SmEnterprise />
-        </SmReveal>
-        <SmReveal>
-          <SmTestimonials />
-        </SmReveal>
-        <SmReveal>
-          <SmPricing />
-        </SmReveal>
-        <SmReveal>
-          <SmFaq />
-        </SmReveal>
-        <SmReveal>
-          <SmFinalCta />
-        </SmReveal>
-        <SmFooter />
+    <div className="marketing-shell">
+      <MarketingNav />
+      <main id="main-content" className="marketing-main">
+        <LandingHero />
+        <ProductPaths />
+        <ResearchLoopSection />
+        <EvidenceLedgerSection />
       </main>
+      <LandingFooter />
     </div>
   );
 }

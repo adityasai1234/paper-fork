@@ -37,15 +37,15 @@ export function UserRequestCard({
           {r.command && <pre>{r.command}</pre>}
           {r.simulatedOutput && <pre>{r.simulatedOutput}</pre>}
           {r.status === "pending" && (
-            <div style={{ marginTop: "0.5rem", display: "flex", gap: "0.5rem" }}>
-              <button onClick={() => approve({ requestId: r._id, ...sessionArgs })}>Approve</button>
-              <button className="secondary" onClick={() => deny({ requestId: r._id, ...sessionArgs })}>
+            <div className="request-actions">
+              <button type="button" onClick={() => approve({ requestId: r._id, ...sessionArgs })}>Approve</button>
+              <button type="button" className="secondary" onClick={() => deny({ requestId: r._id, ...sessionArgs })}>
                 Deny
               </button>
             </div>
           )}
           {r.status === "denied" && (
-            <p style={{ color: "#f87171", marginTop: "0.5rem" }}>
+            <p className="request-denied">
               Fork remains open — run locally and re-audit
             </p>
           )}

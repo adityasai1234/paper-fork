@@ -9,7 +9,7 @@ export function GapFills({ items }: { items: GapFill[] }) {
     <div className="card">
       <h2>Gap fills</h2>
       {items.map((g, i) => (
-        <div key={i} style={{ marginTop: "1rem" }}>
+        <div key={i} className="gap-fill">
           <strong>{g.type}</strong>
           <p className="text-detail">{g.evidence}</p>
           <pre>{g.content}</pre>

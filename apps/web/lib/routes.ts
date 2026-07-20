@@ -7,7 +7,7 @@ function withSession(path: string, sessionId?: string): string {
 export const routes = {
   login: () => "/login",
   signup: () => "/signup",
-  home: () => "/home",
+  home: () => "/",
   audits: () => "/audits",
   audit: (id: string, sessionId?: string) => withSession(`/audits/${id}`, sessionId),
   auditReport: (id: string, sessionId?: string) =>

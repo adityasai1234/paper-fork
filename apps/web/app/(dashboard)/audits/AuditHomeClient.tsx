@@ -8,15 +8,15 @@ import { ReportFooter } from "@/components/ReportFooter";
 export function AuditHomeClient() {
   return (
     <AppShell
-      eyebrow="#01 · Audit"
-      title="Find the fork"
-      description="Submit an arXiv ID or DOI plus a GitHub repo. Paperfork runs literature, repo, web, and methods workers — then judges where the paper diverged from the code."
+      eyebrow="Paper-to-code audit"
+      title="Find the reproducibility gap"
+      description="Give Paperfork an arXiv ID or DOI and its GitHub repository. The report ties every mismatch to a paper claim and a code path."
       activeNav="audit"
     >
       <ResumeAuditBanner />
       <AuditForm />
-      <p className="mt-6 font-mono text-xs tracking-wide text-muted">
-        arxiv · doi · github · fork ledger · voice brief
+      <p className="capability-line">
+        arXiv or DOI <span>·</span> GitHub evidence <span>·</span> Fork ledger <span>·</span> Voice brief
       </p>
       <ReportFooter />
     </AppShell>

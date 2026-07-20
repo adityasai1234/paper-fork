@@ -7,7 +7,9 @@ import { searchArxivPapers } from "../lib/arxiv_fetch";
 import {
   buildLinkupResearchQuery,
   citationKeyFromTitle,
+  coerceLinkupResearchOutput,
   EMPTY_LINKUP_RESEARCH,
+  groundExperimentCandidates,
   LINKUP_RESEARCH_SCHEMA,
   linkupOutputFromSearchHits,
   type LinkupResearchOutput,
@@ -17,14 +19,21 @@ const MAX_ROUNDS = 3;
 
 async function fetchLinkupResearch(
   prompt: string,
-  gapFocus?: string[]
+  gapFocus?: string[],
+  execution?: {
+    repositoryUrl: string;
+    baseBranch: string;
+    targetFile: "train.py";
+    metricName: string;
+    metricDirection: "minimize" | "maximize";
+  }
 ): Promise<{ output: LinkupResearchOutput; provider: string }> {
   const linkupKey = process.env.LINKUP_API_KEY;
   if (!linkupKey) {
     return { output: EMPTY_LINKUP_RESEARCH, provider: "none" };
   }
 
-  const q = buildLinkupResearchQuery(prompt, gapFocus);
+  const q = buildLinkupResearchQuery(prompt, gapFocus, execution);
   const res = await fetch("https://api.linkup.so/v1/search", {
     method: "POST",
     headers: {
@@ -46,14 +55,12 @@ async function fetchLinkupResearch(
     };
   }
 
-  const data = (await res.json()) as { structuredOutput?: LinkupResearchOutput };
-  const structured = data.structuredOutput ?? (data as unknown as LinkupResearchOutput);
-  const output: LinkupResearchOutput = {
-    prior_papers: structured.prior_papers ?? [],
-    themes: structured.themes ?? [],
-    sources: structured.sources ?? [],
-    research_gaps: structured.research_gaps ?? [],
-  };
+  const data = (await res.json()) as unknown;
+  const container =
+    data !== null && typeof data === "object"
+      ? (data as Record<string, unknown>)
+      : null;
+  const output = coerceLinkupResearchOutput(container?.structuredOutput ?? data);
   return { output, provider: "linkup" };
 }
 
@@ -144,7 +151,11 @@ export const runDiscover = internalAction({
       loopRound: args.round,
     });
 
-    const query = buildLinkupResearchQuery(run.prompt, args.gapFocus);
+    const query = buildLinkupResearchQuery(
+      run.prompt,
+      args.gapFocus,
+      run.executionConfig
+    );
     await ctx.runMutation(internal.research.logResearchSession, {
       runId: args.runId,
       agent: "research:discover",
@@ -154,7 +165,11 @@ export const runDiscover = internalAction({
 
     let provider = "linkup";
     let discoverMeta: Record<string, unknown> = {};
-    const linkup = await fetchLinkupResearch(run.prompt, args.gapFocus);
+    const linkup = await fetchLinkupResearch(
+      run.prompt,
+      args.gapFocus,
+      run.executionConfig
+    );
     let output = linkup.output;
     provider = linkup.provider;
 
@@ -176,6 +191,7 @@ export const runDiscover = internalAction({
         priorPaperCount: output.prior_papers.length,
         sourceCount: output.sources.length,
         gaps: output.research_gaps,
+        candidateCount: output.experiment_candidates.length,
         ...discoverMeta,
       },
     });
@@ -188,6 +204,16 @@ export const runDiscover = internalAction({
         sources: rows,
       });
     }
+
+    const candidates = run.executionConfig ? groundExperimentCandidates(output) : [];
+    const insertedCandidates =
+      candidates.length > 0
+        ? await ctx.runMutation(internal.research.insertResearchCandidates, {
+            runId: args.runId,
+            round: args.round,
+            candidates,
+          })
+        : 0;
 
     await ctx.runMutation(internal.research.patchResearchRun, {
       runId: args.runId,
@@ -203,6 +229,7 @@ export const runDiscover = internalAction({
         inserted: rows.length,
         provider,
         message: `Indexed ${rows.length} sources with citation keys`,
+        candidatesInserted: insertedCandidates,
       },
     });
 
